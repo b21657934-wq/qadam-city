@@ -185,6 +185,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webki
 .g-cost rect{fill:var(--surface);stroke:var(--line-2)}
 [data-theme=dark] .g-cost rect{fill:#28305A}
 .g-cost text{font-size:11px;fill:var(--text-2)}
+.g-h rect{fill:var(--surface-2);stroke:var(--line)}.g-h text{font-size:10.5px;fill:var(--text-2);text-anchor:middle;font-weight:600}
 .g-node{cursor:pointer;outline:none}
 .g-node circle{fill:var(--surface);stroke:var(--line-2);stroke-width:1.5;transition:fill var(--t2),stroke var(--t2)}
 [data-theme=dark] .g-node circle,[data-theme=dark] .t-leaf rect,[data-theme=dark] .bn-node rect,[data-theme=dark] .b-bar rect,[data-theme=dark] .t-node path{fill:#28305A}
@@ -401,3 +402,35 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webki
 .bk-pn .right{text-align:right}
 .refs{font-family:Inter,sans-serif;font-size:14px;line-height:22px}
 @media (max-width:419px){.bk-h1{font-size:28px;line-height:36px}.bk-prose{font-size:16px;line-height:26px}.bk-pn{grid-template-columns:1fr}}
+
+/* drills */
+.num-row{display:flex;gap:8px}
+.num-row .btn{flex:none;padding:0 16px}
+.num-in{flex:1;min-width:0;height:48px;border:0;border-radius:var(--r2);padding:0 14px;font:600 20px/24px Inter,sans-serif;font-feature-settings:"tnum";color:var(--text);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-2);transition:box-shadow var(--t1);-webkit-appearance:none;appearance:none}
+.num-in::placeholder{color:var(--text-3);font-weight:500;font-size:16px}
+.num-in:focus{outline:0;box-shadow:inset 0 0 0 2px var(--accent)}
+.num-in.no{box-shadow:inset 0 0 0 2px var(--bad);animation:shake .3s}
+.num-in.ok{box-shadow:inset 0 0 0 2px var(--ok);color:var(--ok)}
+.dr-chips{display:flex;flex-wrap:wrap;gap:6px}
+.dr-chip{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:56px;padding:6px 10px;border-radius:10px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.dr-chip i{font-style:normal;font-size:12px;line-height:16px;color:var(--text-2)}
+.dr-chip b{font-size:16px;line-height:20px;font-weight:700;font-feature-settings:"tnum"}
+.dr-chip.hot{background:var(--bad-soft);box-shadow:inset 0 0 0 1px rgba(232,103,74,.35)}
+.dr-chip.hot b{color:var(--bad)}
+.dr-fig .fig{max-height:26vh}
+.sol{padding:12px 14px;border-radius:var(--r2);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);animation:sheetIn var(--t2) var(--ease)}
+.sol p{margin-top:4px;font-size:14px;line-height:20px}
+.dr-prog{display:flex;align-items:center;gap:6px}
+.dr-prog i{width:28px;height:6px;border-radius:3px;background:var(--line-2);transition:background var(--t2)}
+.dr-prog i.on{background:var(--ok)}
+.dr-prog .cap{margin-left:6px}
+.fig-wrap.off{pointer-events:none;opacity:.6}
+
+/* story */
+.say{display:flex;gap:12px;align-items:flex-start}
+.say-face{flex:none;width:56px;height:56px;border-radius:28px;overflow:hidden;box-shadow:0 0 0 2px var(--surface),var(--sh1)}
+.say-face .face{display:block}
+.say-b{position:relative;flex:1;min-width:0;padding:10px 14px;border-radius:4px var(--r2) var(--r2) var(--r2);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.say-n{font-size:13px;line-height:16px;font-weight:700}
+.say-n span{font-weight:500;color:var(--text-2)}
+.say-b p{margin-top:4px;font-size:15px;line-height:22px;color:var(--text)}

@@ -18,7 +18,11 @@ export class Mission {
     if (spec.sim) { this.sim = spec.sim(this); app.engine.hooks.push(this.sim); }
     this.render();
   }
-  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; this.running = false; this.dv = undefined; this.replaying = null; }
+  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; this.running = false; this.dv = undefined; this.replaying = null; this.round = null; this.streak = 0; this.showSol = false; this.tries = 0; this.order = null; }
+  newRound() {
+    const g = this.S.gens; let k; do { k = Math.floor(Math.random() * g.length); } while (g.length > 1 && k === this.lastGen);
+    this.lastGen = k; this.round = g[k](); this.ws = {}; this.tries = 0; this.showSol = false; this.hl = 0; this.lock = false; window.__dr = this.round;
+  }
   defaultStart() {
     const c = this.city.districts[this.i], portrait = innerWidth < innerHeight;
     this.app.rig.flyTo({ target: [c.center[0], 0.7, c.center[1]], zoom: c.cam.zoom * (portrait ? 1.06 : 1.12), az: c.cam.az, pol: c.cam.pol }, 1.5);
@@ -27,12 +31,12 @@ export class Mission {
   get S() { return this.spec.steps[this.step]; }
   stars() { return this.hints === 0 && this.mistakes <= 1 ? 3 : this.mistakes <= 3 && this.hints <= 1 ? 2 : 1; }
   head() {
-    const s = this.S, n = this.spec.steps.length;
-    return `<div class="m-head"><span class="tag gold">${esc(t('stepOf', { n: this.step + 1, m: n }))}</span><div class="grow"></div>
-      <button class="hint-btn" data-h ${this.hl >= 2 ? 'disabled style="opacity:.45"' : ''}>${icon('hint')}${esc(t(this.hl ? 'hintMore' : 'hint'))}</button>
+    const s = this.S, n = this.spec.steps.length, H = s.kind === 'drill' ? (this.round && this.round.hint) : s.h, exam = s.kind === 'drill' && s.exam;
+    return `<div class="m-head"><span class="tag gold">${esc(exam ? t('examTag') : t('stepOf', { n: this.step + 1, m: n }))}</span><div class="grow"></div>
+      ${exam || !H ? '' : `<button class="hint-btn" data-h ${this.hl >= 2 ? 'disabled style="opacity:.45"' : ''}>${icon('hint')}${esc(t(this.hl ? 'hintMore' : 'hint'))}</button>`}
       <button class="icon-btn" data-x aria-label="${esc(t('close'))}">${icon('close')}</button></div>
       <div class="h3">${esc(tr(s.t))}</div>${s.i ? `<p class="sub mt1">${esc(tr(s.i))}</p>` : ''}
-      ${this.hl ? `<div class="hint">${icon('hint')}<span>${esc(tr(s.h[this.hl - 1]))}</span></div>` : ''}`;
+      ${this.hl && H ? `<div class="hint">${icon('hint')}<span>${esc(tr(H[this.hl - 1]))}</span></div>` : ''}`;
   }
   foot() {
     const last = this.step >= this.spec.steps.length - 1, s = this.S;
@@ -47,7 +51,8 @@ export class Mission {
       const v = s.values[this.dv ?? s.start];
       body = `<div class="stepper mt3"><button class="icon-btn" data-dv="-1" aria-label="−" ${this.solved ? 'disabled' : ''}><span class="pm">−</span></button><div class="grow center"><div class="cap">${esc(tr(s.label))}</div><div class="pc-b">${esc(s.fmt ? s.fmt(v) : v)}</div></div><button class="icon-btn" data-dv="1" aria-label="+" ${this.solved ? 'disabled' : ''}><span class="pm">+</span></button></div><div class="live cap mt2" data-live>${esc(s.live ? s.live(this, v) : '')}</div>`;
     } else if (s.kind === 'pick') {
-      body = `<div class="picks ${s.opts.length === 2 ? 'two' : s.opts.length === 4 ? 'four' : ''}">${s.opts.map(o => `<button class="pick ${this.picked === o.id ? 'ok' : ''} ${this.wrongPick[o.id] && !s.compare ? 'no' : ''} ${this.solved && s.compare ? 'replay' : ''} ${this.replaying === o.id ? 'busy' : ''}" data-pick="${o.id}" ${this.solved && !s.compare ? 'disabled' : ''}><span class="tile">${icon(o.icon)}</span><span class="pick-l">${esc(tr(o.l))}</span></button>`).join('')}</div>${s.live ? `<div class="live cap mt2" data-live>${esc(s.live(this))}</div>` : ''}${this.solved && s.compare && s.cmp ? `<div class="cmp">${s.cmp(this).map(r => `<div class="cmp-r ${r[2] || ''}"><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join('')}</div><p class="cap mt2">${esc(t('compareHint'))}</p>` : ''}`;
+      if (!this.order) { this.order = s.opts.map((_, k) => k); if (!s.keep) for (let k = this.order.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [this.order[k], this.order[j]] = [this.order[j], this.order[k]]; } }
+      body = `<div class="picks ${s.opts.length === 2 ? 'two' : s.opts.length === 4 ? 'four' : ''}">${this.order.map(k => s.opts[k]).map(o => `<button class="pick ${this.picked === o.id ? 'ok' : ''} ${this.wrongPick[o.id] && !s.compare ? 'no' : ''} ${this.solved && s.compare ? 'replay' : ''} ${this.replaying === o.id ? 'busy' : ''}" data-pick="${o.id}" ${this.solved && !s.compare ? 'disabled' : ''}><span class="tile">${icon(o.icon)}</span><span class="pick-l">${esc(tr(o.l))}</span></button>`).join('')}</div>${s.live ? `<div class="live cap mt2" data-live>${esc(s.live(this))}</div>` : ''}${this.solved && s.compare && s.cmp ? `<div class="cmp">${s.cmp(this).map(r => `<div class="cmp-r ${r[2] || ''}"><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join('')}</div><p class="cap mt2">${esc(t('compareHint'))}</p>` : ''}`;
     } else if (s.kind === 'sort') {
       const keys = Object.keys(s.slots), left = s.cards.filter(c => !this.placed[c.id]);
       body = `<div class="slots ${keys.length === 2 ? 'two' : ''}">${keys.map(k => `<button class="slot ${this.sel ? 'ready' : ''}" data-slot="${k}" aria-label="${esc(tr(s.slots[k]))}"><span class="sl-h"><b>${k}</b>${esc(tr(s.slots[k]))}</span><span class="fill">${s.cards.filter(c => this.placed[c.id] === k).map(c => `<span class="placed">${icon('check')}${esc(tr(c.l))}</span>`).join('')}</span></button>`).join('')}</div>
@@ -58,6 +63,13 @@ export class Mission {
         ${s.qs.length > 1 ? `<div class="row mt3" style="gap:6px">${s.qs.map((_, k) => `<span class="tag ${k === this.q ? 'gold' : ''}" style="${k > this.q ? 'opacity:.5' : ''}">${k < this.q ? icon('check') : ''}${k + 1}/${s.qs.length}</span>`).join('')}</div>` : ''}
         <p class="q">${esc(tr(q.q))}</p>
         <div class="opts ${q.a.some(o => tr(o).length > 20) ? 'one' : ''}">${order.map(k => `<button class="opt" data-opt="${k}">${esc(tr(q.a[k]))}</button>`).join('')}</div>`;
+    } else if (s.kind === 'drill') {
+      if (!this.round) this.newRound();
+      const r = this.round, need = s.need || 1;
+      body = s.exam ? `<div class="dr-prog mt3">${[...Array(need)].map((_, k) => `<i class="${k < this.streak ? 'on' : ''}"></i>`).join('')}<span class="cap">${esc(t('examRule', { n: need }))}</span></div>` : '';
+      if (r.w) body += `<p class="q">${esc(tr(r.t))}</p><div class="fig-wrap mt2 w-${r.w} ${this.showSol ? 'off' : ''}">${W[r.w].render(this.ws, r)}</div>`;
+      else body += `<p class="q">${esc(tr(r.q))}</p>${r.fig ? `<div class="dr-fig mt2">${typeof r.fig === 'function' ? r.fig(tr) : r.fig}</div>` : ''}${this.solved || this.showSol ? '' : `<div class="num-row mt3"><input class="num-in" data-num type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" placeholder="${esc(t('yourAnswer'))}" aria-label="${esc(t('yourAnswer'))}"><button class="btn btn-primary" data-check>${icon('check')}${esc(t('check'))}</button></div>`}`;
+      if (this.showSol) body += `<div class="sol mt3"><div class="label">${esc(t('solution'))}</div><p>${esc(tr(r.sol))}</p></div><button class="btn btn-primary btn-block mt3" data-newround data-focus>${icon('reset')}${esc(t('newTask'))}</button>`;
     } else {
       body = `<div class="fig-wrap mt3 w-${s.w}">${W[s.w].render(this.ws, s)}</div>`;
     }
@@ -80,7 +92,7 @@ export class Mission {
   fb(msg, ok) { const f = this.app.sheet.querySelector('.feedback'); if (f) { f.textContent = msg || ''; f.classList.toggle('ok', !!ok); } }
   bind(root) {
     root.querySelector('[data-x]').addEventListener('click', () => this.close());
-    root.querySelector('[data-h]').addEventListener('click', () => { if (this.hl >= 2) return; this.hl++; this.hints++; this.render(); });
+    const hb = root.querySelector('[data-h]'); hb && hb.addEventListener('click', () => { if (this.hl >= 2) return; this.hl++; this.hints++; this.render(); });
     const s = this.S;
     const nx = root.querySelector('[data-next]'); if (nx) nx.addEventListener('click', () => this.advance());
     if (this.solved && s.kind === 'pick' && s.compare) {
@@ -112,6 +124,39 @@ export class Mission {
     } else if (s.kind === 'sort') {
       root.querySelectorAll('[data-card]').forEach(b => { b.addEventListener('click', () => { if (this.dragged) return; this.sel = this.sel === b.dataset.card ? null : b.dataset.card; this.render(); }); this.dragable(b); });
       root.querySelectorAll('[data-slot]').forEach(b => b.addEventListener('click', () => this.drop(b.dataset.slot)));
+    } else if (s.kind === 'drill') {
+      const r = this.round;
+      const nr = root.querySelector('[data-newround]'); if (nr) nr.addEventListener('click', () => { this.newRound(); this.render(); });
+      if (this.showSol) return;
+      const win = () => {
+        this.streak++;
+        if (this.streak >= (s.need || 1)) { this.lastSol = r.sol; this.lock = false; return this.stepDone(); }
+        this.fb(tr(r.sol), true); this.lock = true;
+        setTimeout(() => { if (this.app.mission !== this || this.round !== r) return; this.newRound(); this.render(); }, 2600);
+      };
+      const lose = msg => {
+        this.mistakes++; this.tries++;
+        if (s.exam || this.tries >= 2) { this.streak = 0; this.showSol = true; this.render(); this.fb(msg || t(s.exam ? 'examFail' : 'wrongCalc')); }
+        else this.fb(msg || t('tryAgainCalc'));
+      };
+      if (r.w) {
+        const api = {
+          ok: () => { if (this.lock) return; this.lock = true; setTimeout(() => { this.lock = false; win(); }, 450); },
+          bad: msg => lose(msg), fb: msg => this.fb(msg),
+          redraw: () => { const w = root.querySelector('.fig-wrap'); w.innerHTML = W[r.w].render(this.ws, r); W[r.w].bind(w, this.ws, api, r); },
+        };
+        W[r.w].bind(root.querySelector('.fig-wrap'), this.ws, api, r);
+      } else {
+        const inp = root.querySelector('[data-num]'), cb = root.querySelector('[data-check]');
+        const go = () => {
+          if (this.lock) return;
+          const v = parseFloat(String(inp.value).trim().replace(',', '.').replace(/[−–]/g, '-'));
+          if (isNaN(v)) return this.fb(t('enterNumber'));
+          if (Math.abs(v - r.ans) <= (r.tol || 0) + 1e-9) { inp.classList.add('ok'); inp.disabled = true; cb.disabled = true; win(); }
+          else { inp.classList.remove('no'); void inp.offsetWidth; inp.classList.add('no'); lose(); }
+        };
+        cb.addEventListener('click', go); inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+      }
     } else if (s.kind === 'quiz') {
       root.querySelectorAll('[data-opt]').forEach(b => b.addEventListener('click', () => this.answer(+b.dataset.opt, b)));
     } else {
@@ -164,7 +209,8 @@ export class Mission {
     setTimeout(() => { this.lock = false; if (this.q + 1 >= s.qs.length) this.stepDone(); else { this.q++; this.render(); } }, q.why ? 1600 : 650);
   }
   stepDone() {
-    if (this.spec.onStep) this.spec.onStep(this, this.step); else this.city.preview(this.i, (this.step + 1) / (this.spec.steps.length + 1));
+    if (this.S.kind === 'drill') this.city.preview(this.i, (this.step + 1) / (this.spec.steps.length + 1));
+    else if (this.spec.onStep) this.spec.onStep(this, this.step); else this.city.preview(this.i, (this.step + 1) / (this.spec.steps.length + 1));
     this.solved = true; this.lock = false; this.render();
   }
   advance() {

@@ -15,6 +15,8 @@ Version 1 (islands) stays unchanged for comparison: https://b21657934-wq.github.
 | Result | numbers in a panel | visible in the city: search wave and car, melting queue, probability column, lit windows |
 | Teaching | paragraphs of text | pulsing “tap here” coach, 1–2 sentences per screen |
 | Link to the topic | island unrelated to the task | one sentence after each step (“This is A*: …”) |
+| Story | none | a blizzard hits Astana in 10 days; each district has a resident with a problem; finale “night of the blizzard” |
+| Can you pass by guessing? | yes | no: every district ends with practice and an exam — fresh random numbers, 2 in a row without hints, the student computes the answer or runs the algorithm by hand |
 | Translations | diagram and lab labels English only | everything EN/RU/KZ, incl. 143 diagram labels |
 | Look | default three.js scene, emoji icons | ACES, soft shadows, day/night, bloom, own palette, own SVG icons and logo |
 | Labs | live JS + Python | same, verified: identical output to Python on 83 parameter sets |

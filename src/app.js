@@ -7,6 +7,8 @@ import { SPECS } from './missions/specs.js';
 import logoSvg from './ui/logo.svg';
 import { Book } from './book/book.js';
 import { K } from './world/city.js';
+import { STORY, portrait } from './story.js';
+const say = (i, txt) => `<div class="say mt3"><div class="say-face">${portrait(i)}</div><div class="say-b"><div class="say-n">${esc(tr(STORY[i].name))}<span> · ${esc(tr(STORY[i].role))}</span></div><p>${esc(typeof txt === 'string' ? txt : tr(txt))}</p></div></div>`;
 
 const logoURL = 'data:image/svg+xml,' + encodeURIComponent(logoSvg);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -54,7 +56,7 @@ export class App {
   renderHud() {
     const b = this.built(), night = store.get().night;
     this.hud.innerHTML = `<img class="logo" src="${logoURL}" alt="Qadam City">
-      <div class="prog"><div class="lbl">${esc(t('cityBuilt', { p: this.pct() }))}</div><div class="bar" role="progressbar" aria-label="${esc(t('progressLabel'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${this.pct()}"><i style="width:${this.pct()}%"></i></div></div>
+      <div class="prog"><div class="lbl">${esc(this.built() < 10 ? t('daysLeft', { n: 10 - this.built() }) : t(store.get().storm ? 'stormDone' : 'stormNow'))} · ${this.pct()} %</div><div class="bar" role="progressbar" aria-label="${esc(t('progressLabel'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${this.pct()}"><i style="width:${this.pct()}%"></i></div></div>
       <div class="chip-stars" aria-label="${store.totalStars()} / 30 ${esc(t('stars'))}">${icon('starf')}${store.totalStars()}/30</div>
       <button class="icon-btn hud-reset" data-act="resetAsk" aria-label="${esc(t('restartTitle'))}" title="${esc(t('restartTitle'))}">${icon('reset')}</button>
       <button class="icon-btn" data-act="theme" aria-label="${esc(t(night ? 'day' : 'night'))}">${icon(night ? 'sun' : 'moon')}</button>
@@ -92,15 +94,20 @@ export class App {
   vHome() {
     const b = this.built();
     this.city.setBeacon(b < 10 ? b : -1);
+    if (b >= 10 && !store.get().storm) return this.setSheet(`
+      <div class="row"><div class="tile">${icon('snow')}</div><div class="grow"><div class="label">${esc(t('stormNow'))}</div><div class="h3">${esc(t('stormT'))}</div></div></div>
+      ${say(0, t('stormIntro'))}
+      <button class="btn btn-primary btn-block mt4" data-act="storm" data-focus>${icon('play')}${esc(t('stormGo'))}</button>`);
     if (b >= 10) return this.setSheet(`
-      <div class="row"><div class="tile">${icon('starf')}</div><div class="grow"><div class="h3">${esc(t('finaleT'))}</div><div class="cap">${esc(t('cityBuilt', { p: 100 }))}</div></div></div>
-      <p class="sub mt3">${esc(t('finale'))}</p>
-      <button class="btn btn-primary btn-block mt4" data-act="tour">${icon('orbit')}${esc(t('tour'))}</button>`);
+      <div class="row"><div class="tile">${icon('starf')}</div><div class="grow"><div class="h3">${esc(t('finaleT'))}</div><div class="cap">${esc(t('stormDone'))}</div></div></div>
+      ${say(0, t('finale'))}
+      <button class="btn btn-primary btn-block mt4" data-act="tour">${icon('orbit')}${esc(t('tour'))}</button>
+      <button class="btn btn-ghost btn-block mt2" data-act="storm">${icon('snow')}${esc(t('stormAgain'))}</button>`);
     const d = D[b];
     if (!store.get().gest) { store.set({ gest: true }); setTimeout(() => this.toast(t(matchMedia('(pointer: coarse)').matches ? 'gestureHint' : 'gestureHintDesk')), 900); }
     this.setSheet(`
       <div class="row"><div class="tile">${icon(d.icon)}</div><div class="grow"><div class="label">${esc(t('nextGoal'))}</div><div class="h3">${esc(tr(d.title))}</div></div><span class="tag gold">${esc(t('week', { n: b + 1 }))}</span></div>
-      <p class="sub mt3">${esc(tr(d.task))}</p>
+      ${say(b, STORY[b].intro)}
       <button class="btn btn-primary btn-block mt4" data-act="open" data-i="${b}" data-focus>${esc(t('openDistrict'))}${icon('arrow')}</button>`);
   }
   vDistrict(i, quiet) {
@@ -113,7 +120,7 @@ export class App {
     let body = '';
     if (st === 'locked') body = `<p class="sub mt3 row" style="gap:8px">${icon('lock')}<span>${esc(t('locked', { prev: tr(D[b].title) }))}</span></p>`;
     else if (!has) body = `<p class="sub mt3">${esc(tr(d.task))}</p><p class="cap mt2">${esc(t('soon'))}</p>`;
-    else body = `<p class="sub mt3">${esc(tr(d.task))}</p><button class="btn ${st === 'built' ? 'btn-secondary' : 'btn-primary'} btn-block mt4" data-act="mission" data-i="${i}" data-focus>${icon(st === 'built' ? 'reset' : 'play')}${esc(t(st === 'built' ? 'playAgain' : 'startMission'))}</button><button class="btn btn-ghost btn-block mt2" data-act="read" data-i="${i}">${icon('book')}${esc(t('readChapter', { n: i + 1 }))}</button>`;
+    else body = `${say(i, st === 'built' ? STORY[i].outro : STORY[i].intro)}<p class="sub mt3 row" style="gap:8px">${icon('flag')}<span>${esc(tr(d.task))}</span></p><button class="btn ${st === 'built' ? 'btn-secondary' : 'btn-primary'} btn-block mt4" data-act="mission" data-i="${i}" data-focus>${icon(st === 'built' ? 'reset' : 'play')}${esc(t(st === 'built' ? 'playAgain' : 'startMission'))}</button><button class="btn btn-ghost btn-block mt2" data-act="read" data-i="${i}">${icon('book')}${esc(t('readChapter', { n: i + 1 }))}</button>`;
     this.setSheet(`
       <div class="row"><div class="tile ${st === 'locked' ? 'muted' : ''}">${icon(d.icon)}</div>
         <div class="grow"><div class="row" style="gap:8px"><span class="tag ${st === 'next' ? 'gold' : ''}">${esc(t('week', { n: i + 1 }))}</span>${st === 'built' ? starRow : ''}</div><div class="h3 mt1">${esc(tr(d.title))}</div></div>
@@ -161,6 +168,7 @@ export class App {
     if (a === 'obDone') { store.set({ onboarded: true }); this.view = 'home'; return this.show('district', 0); }
     if (a === 'mission') return this.startMission(+ds.i);
     if (a === 'tour') return this.tour();
+    if (a === 'storm') return this.storm();
     if (a === 'resetAsk') { if (this.mission) { this.mission.close(); } return this.show('resetAsk'); }
     if (a === 'reset') {
       store.reset(); store.set({ onboarded: false, coach: {} }); this.book.quiz = {};
@@ -194,12 +202,28 @@ export class App {
       <div class="big-stars" aria-label="${stars}/3">${[0, 1, 2].map(k => `<span class="${k < stars ? '' : 'off'}">${icon('starf')}</span>`).join('')}</div>
       <div class="h3 center">${esc(t('resultTitle'))}</div>
       <div class="center mt1"><span class="tag gold">${esc(t('cityPlus'))}</span></div>
-      <p class="sub mt3 center">${esc(this.resultText || '')}</p>
+      ${say(i, STORY[i].outro)}
       <button class="btn btn-primary btn-block mt4" data-act="grow" data-focus>${icon('play')}${esc(t('watchGrow'))}</button>
       <p class="cap mt2 center">${esc(t('starRule'))}</p>`, s => {
         s.querySelector('[data-act=grow]').addEventListener('click', e => { e.stopPropagation(); this.growDistrict(i, wasBuilt); });
       });
     void L;
+  }
+  async storm() {
+    this.busy = true; this.hideSheet(); this.rig.autoOrbit = false;
+    if (!store.get().night) { this.setTheme(true); this.renderHud(); }
+    this.snow.storm = true;
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    for (let i = 0; i < 10; i++) {
+      const c = this.city.districts[i];
+      this.rig.flyTo({ target: [c.center[0], 0.6, c.center[1]], zoom: 0.78, az: c.cam.az + 0.3, pol: 0.92 }, 1.4);
+      this.city.wave(c.center[0], c.center[1]);
+      this.toast(tr(STORY[i].storm)); await wait(2600);
+    }
+    this.snow.storm = false; store.set({ storm: true }); this.renderHud();
+    await this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, pol: 0.9, az: this.rig.az + 0.8 }, 2.2, true);
+    this.toast(t('stormDone'));
+    this.rig.autoOrbit = true; this.busy = false; this.show('home');
   }
   async tour() {
     this.busy = true; this.hideSheet(); this.rig.autoOrbit = false;

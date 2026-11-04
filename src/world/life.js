@@ -69,6 +69,7 @@ export class Snow {
   look(n) { this.m.color.set(0xffffff).lerp(new THREE.Color(0xC8D4FF), n); this.m.opacity = 0.9 - n * 0.15; }
   update(dt, t) {
     if (REDUCED) return;
+    if (this.storm) this.gust = Math.max(this.gust, 3.2);
     const p = this.geo.attributes.position.array, g = this.gust > 0 ? 1 + this.gust * 1.6 : 1; this.gust = Math.max(0, this.gust - dt);
     for (let i = 0; i < this.v.length; i++) {
       p[i * 3 + 1] -= this.v[i] * dt * g;

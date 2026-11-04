@@ -1,3 +1,4 @@
+import { DRILLS } from './drills.js';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { M1, S, tr } from '../i18n.js';
@@ -248,7 +249,7 @@ const pickMove = (j) => async m => { if (!m.revealed) { m.revealed = true; await
 const w4 = {
   start(m) { fly(m, [-2.7, 1.7, 5.4], 0.44, 0.1, 0.72); m.app.qadam.goTo(-2.6, 3.6); },
   steps: [
-    { kind: 'pick', t: L('Your move: which one?', 'Твой ход: какой выбрать?', 'Сенің жүрісің: қайсысын таңдайсың?'),
+    { kind: 'pick', keep: true, t: L('Your move: which one?', 'Твой ход: какой выбрать?', 'Сенің жүрісің: қайсысын таңдайсың?'),
       i: L('Numbers are kumalak you win. The robot answers to leave you as few as possible.', 'Числа — құмалақ, которые ты выиграешь. Робот ответит так, чтобы тебе досталось меньше.', 'Сандар — сен ұтатын құмалақ. Робот саған азырақ қалатындай жауап береді.'),
       enter: drawTree,
       opts: [
@@ -327,7 +328,7 @@ const live6 = m => tr(L('Chance of a blizzard: {p}%', 'Вероятность б
 const w6 = {
   start(m) { fly(m, [6.6, 0.8, -1.6], 0.55, 0.7, 0.86); },
   steps: [
-    { kind: 'pick', t: L('The pressure sensor went off', 'Сработал датчик давления', 'Қысым датчигі іске қосылды'), i: L('Blizzard on 10% of days; the sensor fires on 90% of blizzard days and 20% of calm ones. Chance of a blizzard now?', 'Буран в 10\u00A0% дней; датчик срабатывает в 90\u00A0% буранных и 20\u00A0% спокойных дней. Шанс бурана сейчас?', 'Боран күндердің 10\u00A0%-ында; датчик боранды күндердің 90\u00A0%-ында, тыныштардың 20\u00A0%-ында қосылады. Қазір боран мүмкіндігі?'),
+    { kind: 'pick', keep: true, t: L('The pressure sensor went off', 'Сработал датчик давления', 'Қысым датчигі іске қосылды'), i: L('Blizzard on 10% of days; the sensor fires on 90% of blizzard days and 20% of calm ones. Chance of a blizzard now?', 'Буран в 10\u00A0% дней; датчик срабатывает в 90\u00A0% буранных и 20\u00A0% спокойных дней. Шанс бурана сейчас?', 'Боран күндердің 10\u00A0%-ында; датчик боранды күндердің 90\u00A0%-ында, тыныштардың 20\u00A0%-ында қосылады. Қазір боран мүмкіндігі?'),
       enter: m => { st(m).clear(); m.bar6 = null; m.bar6L = null; prob(m, 0.1); lbl(m, tr(L('Sensor 1', 'Датчик 1', '1-датчик')), 6.2, 2.3, 0.4, { size: 0.28, bg: 'rgba(232,103,74,0.95)', fg: '#fff' }); }, live: live6,
       opts: [
         { id: 'p27', icon: 'gauge', l: L('27%', '27\u00A0%', '27\u00A0%'), why: L('27% is the share of all days with an alarm, not of blizzards among them.', '27\u00A0% — доля всех дней с тревогой, а не буранов среди них.', '27\u00A0% — дабылды барлық күндердің үлесі, олардың ішіндегі боран емес.') },
@@ -366,7 +367,7 @@ const w7 = {
       go: async m => { const s = st(m); const d = s.disc(0.75, 7.25, 0.12, 0x2F7F8A, { ring: false }); s.pulse(d); await s.wait(0.5); belief(m, [0.1, 0.7, 0.2]); await s.wait(0.5); },
       learn: L('This is filtering: multiply each guess by how well it fits the GPS, then normalise.', 'Это фильтрация: каждую догадку умножаем на то, насколько она согласуется с GPS, и нормализуем.', 'Бұл сүзгілеу: әр болжамды GPS-ке қаншалықты сәйкес екеніне көбейтіп, нормалаймыз.'),
       h: [L('Press the button and watch the clouds.', 'Нажми кнопку и смотри на облака.', 'Батырманы басып, бұлттарға қара.'), L('A big cloud means a likely stop.', 'Большое облако — вероятная остановка.', 'Үлкен бұлт — ықтимал аялдама.')] },
-    { kind: 'pick', t: L('Send the passenger to the right stop', 'Отправь пассажира на нужную остановку', 'Жолаушыны дұрыс аялдамаға жібер'), i: L('Pick the most likely stop.', 'Выбери самую вероятную остановку.', 'Ең ықтимал аялдаманы таңда.'),
+    { kind: 'pick', keep: true, t: L('Send the passenger to the right stop', 'Отправь пассажира на нужную остановку', 'Жолаушыны дұрыс аялдамаға жібер'), i: L('Pick the most likely stop.', 'Выбери самую вероятную остановку.', 'Ең ықтимал аялдаманы таңда.'),
       opts: [0, 1, 2].map(k => ({ id: 's' + k, icon: 'bus', ok: k === 1, l: L(`Stop ${k + 1}`, `Остановка ${k + 1}`, `${k + 1}-аялдама`), why: L(`Only ${[10, 70, 20][k]}% for this stop.`, `У этой остановки только ${[10, 70, 20][k]} %.`, `Бұл аялдамада тек ${[10, 70, 20][k]} %.`),
         play: k === 1 ? async m => { const s = st(m), bus = s.car(GOLD, 2); st(m).place(bus, -2.2, 6.2, 0); bus.rotation.y = 0.9;
           m.app.calc(tr(L('Filtering', 'Фильтрация', 'Сүзгілеу')), [0, 1, 2].map(j => [tr(L(`Stop ${j + 1}`, `Остановка ${j + 1}`, `${j + 1}-аялдама`)), `P = ${[0.1, 0.7, 0.2][j]}`, j === 1 ? 'ok' : '']).concat([[tr(L('Go to', 'Едем на', 'Барамыз')), tr(L('Stop 2', 'Остановку 2', '2-аялдамаға')), 'sum']]));
@@ -459,7 +460,7 @@ const say = (m, text, ok = true) => { const s = st(m); if (m.bub) s.g.remove(m.b
 const w10 = {
   start(m) { fly(m, [0, 3.0, -2.7], 0.6, -0.15, 0.98); },
   steps: [
-    { kind: 'pick', t: L('A resident asks the way to EXPO', 'Житель спрашивает дорогу до EXPO', 'Тұрғын EXPO-ға жол сұрайды'), i: L('Pick the temperature for an exact answer.', 'Выбери температуру для точного ответа.', 'Нақты жауап үшін температураны таңда.'),
+    { kind: 'pick', keep: true, t: L('A resident asks the way to EXPO', 'Житель спрашивает дорогу до EXPO', 'Тұрғын EXPO-ға жол сұрайды'), i: L('Pick the temperature for an exact answer.', 'Выбери температуру для точного ответа.', 'Нақты жауап үшін температураны таңда.'),
       enter: m => { st(m).clear(); m.bub = null; },
       opts: [
         { id: 't0', icon: 'thermo', ok: true, l: L('Temperature 0', 'Температура 0', 'Температура 0'), play: async m => { say(m, tr(L('Bus 10 to EXPO, every 8 min', 'Автобус 10 до EXPO, каждые 8 мин', 'EXPO-ға 10-автобус, әр 8 мин'))); await st(m).wait(0.6); } },
@@ -490,3 +491,9 @@ const w10 = {
 };
 
 export const SPECS = [w1, w2, w3, w4, w5, w6, w7, w8, w9, w10];
+const PRAC = { t: L('Now do it yourself', 'Теперь сам', 'Енді өзің'), i: L('New numbers every time. Two wrong tries — I show the solution and give a new task.', 'Числа каждый раз новые. Две ошибки — покажу решение и дам новую задачу.', 'Сандар әр жолы жаңа. Екі қате — шешімін көрсетіп, жаңа есеп беремін.') };
+const EXAM = { t: L('District exam', 'Экзамен района', 'Аудан емтиханы'), i: L('Solve 2 new tasks in a row, no hints. A mistake shows the solution and starts over.', 'Реши 2 новые задачи подряд без подсказок. Ошибка — покажу решение, и счёт начнётся заново.', 'Қатарынан 2 жаңа есепті кеңессіз шеш. Қате болса — шешімі көрсетіліп, қайтадан басталады.') };
+SPECS.forEach((sp, i) => sp.steps.push(
+  { kind: 'drill', gens: DRILLS[i], need: 1, ...PRAC, learn: m => m.lastSol, enter: m => { m.app.calcHide(); if (m.app.rig.fp) m.app.rig.fpEnd(); m.app.stage.clear(); } },
+  { kind: 'drill', gens: DRILLS[i], need: 2, exam: true, ...EXAM, learn: m => m.lastSol },
+));

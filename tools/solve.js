@@ -14,6 +14,17 @@ window.__solve = async function (upto) {
       else if (s.kind === 'dial') { while (!Q('[data-next]') && m.dv !== s.values.indexOf(0.7)) { click(Q('[data-dv="1"]')); await sleep(200); } for (let k = 0; k < 20 && !Q('[data-next]'); k++) await sleep(200); }
       else if (s.kind === 'sort') { for (const c of s.cards) { m.sel = c.id; m.drop(c.slot); await sleep(30); } await sleep(900); }
       else if (s.kind === 'quiz') { for (let q = 0; q < s.qs.length; q++) { click(Q(`[data-opt="${s.qs[q].ok}"]`)); await sleep(s.qs[q].why ? 1800 : 800); } await sleep(200); }
+      else if (s.kind === 'drill') {
+        for (let r = 0; r < 6 && !Q('[data-next]'); r++) {
+          const d = m.round;
+          if (d.w === 'path') { for (const k of d.data.bestPath.slice(1)) { click(node(k)); await sleep(40); } }
+          else if (d.w === 'tree') { for (let j = 0; j < 3; j++) { const L = d.data.leaves.slice(j * 3, j * 3 + 3); click(Q(`[data-leaf="${j * 3 + L.indexOf(Math.min(...L))}"]`)); await sleep(40); } click(Q(`[data-min="${d.data.best}"]`)); }
+          else if (d.w === 'bars') click(Q(`[data-bar="${d.data.stop}"]`));
+          else { Q('[data-num]').value = String(d.ans).replace('.', ','); click(Q('[data-check]')); }
+          for (let k = 0; k < 20 && m.round === d && !Q('[data-next]'); k++) await sleep(200);
+          if (m.round === d && !Q('[data-next]')) { log.push(['DRILL STUCK', i, st, d.w || 'num', String(d.ans), Q('.feedback') && Q('.feedback').textContent]); break; }
+        }
+      }
       else if (s.w === 'bfs') { for (const k of s.data.order) { click(node(k)); await sleep(40); } await sleep(1800); }
       else if (s.w === 'path') { for (const k of ['C', 'E', 'B', 'G']) { click(node(k)); await sleep(40); } await sleep(1800); }
       else if (s.w === 'bars') { click(Q(`[data-bar="${s.data.stop}"]`)); await sleep(1800); }

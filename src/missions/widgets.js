@@ -11,9 +11,11 @@ export const GRAPH = {
   edges: [['S', 'C', 2], ['S', 'E', 5], ['C', 'A', 2], ['C', 'E', 2], ['E', 'B', 3], ['A', 'B', 4], ['A', 'G', 6], ['B', 'G', 2]],
 };
 const cost = (a, b) => { const e = GRAPH.edges.find(e => (e[0] === a && e[1] === b) || (e[0] === b && e[1] === a)); return e ? e[2] : null; };
-function graphSVG(st, opt = {}) {
+export const BASE_W = GRAPH.edges.map(e => e[2]);
+export function setWeights(w) { GRAPH.edges.forEach((e, i) => e[2] = w[i]); }
+export function graphSVG(st, opt = {}) {
   const N = GRAPH.nodes, onPath = (a, b) => { const p = st.path || []; for (let i = 0; i < p.length - 1; i++) if ((p[i] === a && p[i + 1] === b) || (p[i] === b && p[i + 1] === a)) return true; return false; };
-  let s = '<svg class="fig graph" viewBox="0 0 320 200" role="img">';
+  let s = `<svg class="fig graph" viewBox="0 0 320 ${opt.h ? 210 : 200}" role="img">`;
   for (const [a, b, c] of GRAPH.edges) {
     const [x1, y1] = N[a], [x2, y2] = N[b], mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
     s += `<line class="g-edge ${onPath(a, b) ? 'on' : ''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
@@ -22,7 +24,7 @@ function graphSVG(st, opt = {}) {
   for (const k in N) {
     const [x, y] = N[k], ord = (st.order || []).indexOf(k), inP = (st.path || []).includes(k), last = st.path && st.path[st.path.length - 1] === k;
     s += `<g class="g-node ${ord >= 0 || inP ? 'on' : ''} ${last ? 'cur' : ''} ${k === 'S' || k === 'G' ? 'end' : ''}" data-node="${k}" role="button" tabindex="0" aria-label="${k}">
-      <circle cx="${x}" cy="${y}" r="20"/><text x="${x}" y="${y + 5}">${k}</text>
+      <circle cx="${x}" cy="${y}" r="20"/><text x="${x}" y="${y + 5}">${k}</text>${opt.h ? `<g class="g-h"><rect x="${x - 14}" y="${y + 23}" width="28" height="17" rx="6"/><text x="${x}" y="${y + 35.5}">h${opt.h[k]}</text></g>` : ''}
       ${ord >= 0 ? `<g class="g-badge"><circle cx="${x + 15}" cy="${y - 15}" r="9"/><text x="${x + 15}" y="${y - 11}">${ord + 1}</text></g>` : ''}</g>`;
   }
   return s + '</svg>';
@@ -47,9 +49,9 @@ export const W = {
   },
   // build the cheapest route S -> G
   path: {
-    render: st => `${graphSVG(st)}<div class="row mt2"><div class="grow cap">${esc(t('routeCost', { c: pathCost(st.path || ['S']) }))}</div><button class="btn btn-secondary" data-reset style="height:40px">${icon('reset')}${esc(t('again'))}</button></div>`,
+    render: (st, step) => { if (step && step.weights) setWeights(step.weights); return `${graphSVG(st)}<div class="row mt2"><div class="grow cap">${esc(t('routeCost', { c: pathCost(st.path || ['S']) }))}</div><button class="btn btn-secondary" data-reset style="height:40px">${icon('reset')}${esc(t('again'))}</button></div>`; },
     bind(root, st, api, step) {
-      st.path = st.path || ['S'];
+      st.path = st.path || ['S']; if (step.weights) setWeights(step.weights);
       root.querySelector('[data-reset]').addEventListener('click', () => { st.path = ['S']; api.redraw(); });
       nodeTaps(root, (k, el) => {
         const last = st.path[st.path.length - 1];
