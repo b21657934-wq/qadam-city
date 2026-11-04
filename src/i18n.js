@@ -132,6 +132,7 @@ export const S = {
   restartText: { en: 'The city turns back into an empty steppe and all stars are cleared.', ru: 'Город снова станет пустой степью, все звёзды обнулятся.', kk: 'Қала қайта бос далаға айналады, барлық жұлдыз нөлденеді.' },
   restartYes: { en: 'Yes, start over', ru: 'Да, начать заново', kk: 'Иә, қайта бастау' },
   cancel: { en: 'Cancel', ru: 'Отмена', kk: 'Болдырмау' },
+  compareHint: { en: 'Tap any algorithm to replay its search and route.', ru: 'Нажимай на алгоритмы, чтобы увидеть путь каждого отдельно.', kk: 'Әр алгоритмнің жолын бөлек көру үшін оларды бас.' },
   aboutBuild: { en: 'Stage 2 preview · one district playable', ru: 'Превью этапа 2 · играбелен один район', kk: '2-кезең алдын ала көрінісі · бір аудан ойналады' },
 };
 

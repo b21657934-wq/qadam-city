@@ -151,6 +151,12 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webki
 .pick.no{background:var(--bad-soft);box-shadow:inset 0 0 0 1.5px var(--bad);animation:shake .32s}
 .pick.no .tile{background:var(--bad-soft);color:var(--bad)}
 .pick[disabled]:not(.ok){opacity:.5}
+.pick.replay:not(.ok){opacity:1}
+.pick.replay{cursor:pointer}
+.cmp{margin-top:var(--s2);border-radius:var(--r2);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);padding:4px 12px}
+.cmp-r{display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:18px;padding:6px 0;font-feature-settings:"tnum"}
+.cmp-r+.cmp-r{border-top:1px solid var(--line)}
+.cmp-r b{font-weight:600}.cmp-r.ok b{color:var(--ok)}.cmp-r.no b{color:var(--bad)}
 .pick.busy{box-shadow:inset 0 0 0 2px var(--focus),var(--sh2)}
 .picks.two{grid-template-columns:1fr 1fr}
 .picks.four{grid-template-columns:1fr 1fr}
@@ -161,7 +167,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webki
 .learn{display:flex;gap:10px;margin-top:var(--s3);padding:12px 14px;border-radius:var(--r2);background:var(--ok-soft);color:var(--text);font-size:14px;line-height:20px;font-weight:500;animation:sheetIn var(--t2) var(--ease)}
 .learn .ic{width:18px;height:18px;color:var(--ok);margin-top:1px}
 /* coach: first-time "tap here" */
-.coach{position:fixed;z-index:8;pointer-events:none}
+.has-coach{position:relative}
+.coach{position:absolute;inset:-6px;z-index:3;pointer-events:none}
 .coach-ring{position:absolute;inset:0;border-radius:20px;box-shadow:0 0 0 3px var(--accent),0 0 0 8px rgba(242,181,68,.25);animation:coachPulse 1.4s var(--ease) infinite}
 .coach-arrow{position:absolute;left:50%;top:-38px;width:32px;height:32px;margin-left:-16px;border-radius:16px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;box-shadow:var(--sh2);animation:coachBob 1s ease-in-out infinite}
 .coach-arrow .ic{width:18px;height:18px}

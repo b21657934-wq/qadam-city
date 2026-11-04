@@ -123,7 +123,7 @@ async function runSearch(m, mode) {
   const title = algName[mode], chk = tr(L('Checked crossings', 'Проверено перекрёстков', 'Тексерілген қиылыс'));
   let n = 0;
   for (const k of r.order) { n++; s.pulse(m.g2.disc[k], k === 'G' ? RED : TEAL); app.calc(title, [[chk, String(n)], [tr(L('Now checking', 'Сейчас проверяет', 'Қазір тексеруде')), nm(k)]]); await s.wait(0.32); }
-  const pts = r.path.map(k => G2.pos[k]); s.tube(pts, GOLD, 0.06); await s.wait(0.4);
+  const pts = r.path.map(k => G2.pos[k]); s.tube(pts, ALGC[mode] || GOLD, 0.07); await s.wait(0.4);
   const car = s.car(GOLD); st(m).place(car, pts[0][0], pts[0][1], 0); car.rotation.y = Math.atan2(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1]);
   app.rig.fpStart(car, { eye: 0.55, ahead: 2.4 });
   const rows = [[chk, String(r.order.length)]]; let g = 0;
@@ -138,13 +138,15 @@ async function runSearch(m, mode) {
 }
 const algName = { bfs: 'BFS', dfs: 'DFS', ucs: 'UCS', astar: 'A*', greedy: 'Greedy' };
 const res2 = m => m.last ? tr(L('{a}: {c} min · checked {n} crossings', '{a}: {c} мин · проверено перекрёстков: {n}', '{a}: {c} мин · тексерілген қиылыс: {n}')).replace('{a}', algName[m.lastMode]).replace('{c}', m.last.cost).replace('{n}', m.last.order.length) : tr(L('Tap an algorithm to watch it search.', 'Нажми на алгоритм — увидишь, как он ищет.', 'Алгоритмді бас — оның қалай іздейтінін көресің.'));
-const play2 = mode => async m => { m.lastMode = mode; await runSearch(m, mode); };
+const play2 = mode => async m => { m.lastMode = mode; const r = await runSearch(m, mode); m.cmp = m.cmp || {}; m.cmp[mode] = { c: r.cost, n: r.order.length }; };
+const ALGC = { bfs: TEAL, dfs: 0xC4846A, greedy: 0x8DA3B8, ucs: GOLD, astar: GREEN };
+const cmp2 = ids => m => ids.filter(k => m.cmp && m.cmp[k]).map(k => [algName[k], tr(L('{c} min · {n} crossings', '{c} мин · перекрёстков: {n}', '{c} мин · қиылыс: {n}')).replace('{c}', m.cmp[k].c).replace('{n}', m.cmp[k].n), m.cmp[k].c === 9 ? 'ok' : 'no']);
 const w2 = {
   start(m) { fly(m, [0.4, 0.6, -3.6], 0.6, -0.15, 0.82); m.app.qadam.goTo(-0.2, -6.6); },
   steps: [
     { kind: 'pick', t: L('Deliver the parcel to the hospital fastest', 'Доставь посылку в больницу быстрее всех', 'Сәлемдемені ауруханаға ең жылдам жеткіз'),
       i: L('Numbers are minutes. Pick how to search for the road.', 'Числа — минуты. Выбери, как искать дорогу.', 'Сандар — минуттар. Жолды қалай іздейтінін таңда.'),
-      enter: m => drawGraph(m, true), live: res2,
+      enter: m => drawGraph(m, true), live: res2, compare: true, cmp: cmp2(['bfs', 'dfs', 'greedy', 'ucs']),
       opts: [
         { id: 'bfs', icon: 'grid', l: L('BFS', 'BFS', 'BFS'), play: play2('bfs'), why: L('BFS found the route with fewest turns, but it takes 10 min.', 'BFS нашёл путь с меньшим числом поворотов, но он занимает 10 мин.', 'BFS бұрылысы аз жолды тапты, бірақ ол 10 минут алады.') },
         { id: 'dfs', icon: 'route', l: L('DFS', 'DFS', 'DFS'), play: play2('dfs'), why: L('DFS dived deep and took the first route it hit: 10 min.', 'DFS ушёл вглубь и взял первый попавшийся путь: 10 мин.', 'DFS тереңге кетіп, алғашқы кездескен жолды алды: 10 мин.') },
@@ -155,7 +157,7 @@ const w2 = {
       h: [L('“Fastest” means fewest minutes, not fewest turns.', '«Быстрее» — это меньше минут, а не поворотов.', '«Жылдам» — бұрылыс емес, минут аз деген сөз.'), L('Only one of these looks at the minutes on the roads.', 'Только один из них смотрит на минуты на дорогах.', 'Тек біреуі ғана жолдағы минуттарға қарайды.')] },
     { kind: 'pick', t: L('Just as fast, but check fewer crossings', 'Так же быстро, но проверь меньше перекрёстков', 'Дәл солай жылдам, бірақ қиылысты азырақ тексер'),
       i: L('h is a guess of minutes left to the hospital.', 'h — догадка, сколько минут осталось до больницы.', 'h — ауруханаға дейін қалған минуттың болжамы.'),
-      enter: m => { m.last = null; drawGraph(m, true); }, live: res2,
+      enter: m => { m.last = null; drawGraph(m, true); }, live: res2, compare: true, cmp: cmp2(['ucs', 'astar', 'greedy', 'bfs']),
       opts: [
         { id: 'ucs', icon: 'target', l: L('UCS', 'UCS', 'UCS'), play: play2('ucs'), why: m => L(`UCS is 9 min again, but checked ${m.last.order.length} crossings.`, `UCS снова 9 мин, но проверил ${m.last.order.length} перекрёстков.`, `UCS тағы 9 мин, бірақ ${m.last.order.length} қиылысты тексерді.`) },
         { id: 'astar', icon: 'pin', ok: true, l: L('A*', 'A*', 'A*'), play: play2('astar') },

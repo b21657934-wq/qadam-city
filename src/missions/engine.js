@@ -18,7 +18,7 @@ export class Mission {
     if (spec.sim) { this.sim = spec.sim(this); app.engine.hooks.push(this.sim); }
     this.render();
   }
-  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; this.running = false; this.dv = undefined; }
+  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; this.running = false; this.dv = undefined; this.replaying = null; }
   defaultStart() {
     const c = this.city.districts[this.i], portrait = innerWidth < innerHeight;
     this.app.rig.flyTo({ target: [c.center[0], 0.7, c.center[1]], zoom: c.cam.zoom * (portrait ? 1.06 : 1.12), az: c.cam.az, pol: c.cam.pol }, 1.5);
@@ -47,7 +47,7 @@ export class Mission {
       const v = s.values[this.dv ?? s.start];
       body = `<div class="stepper mt3"><button class="icon-btn" data-dv="-1" aria-label="−" ${this.solved ? 'disabled' : ''}><span class="pm">−</span></button><div class="grow center"><div class="cap">${esc(tr(s.label))}</div><div class="pc-b">${esc(s.fmt ? s.fmt(v) : v)}</div></div><button class="icon-btn" data-dv="1" aria-label="+" ${this.solved ? 'disabled' : ''}><span class="pm">+</span></button></div><div class="live cap mt2" data-live>${esc(s.live ? s.live(this, v) : '')}</div>`;
     } else if (s.kind === 'pick') {
-      body = `<div class="picks ${s.opts.length === 2 ? 'two' : s.opts.length === 4 ? 'four' : ''}">${s.opts.map(o => `<button class="pick ${this.picked === o.id ? 'ok' : ''} ${this.wrongPick[o.id] ? 'no' : ''}" data-pick="${o.id}" ${this.solved ? 'disabled' : ''}><span class="tile">${icon(o.icon)}</span><span class="pick-l">${esc(tr(o.l))}</span></button>`).join('')}</div>${s.live ? `<div class="live cap mt2" data-live>${esc(s.live(this))}</div>` : ''}`;
+      body = `<div class="picks ${s.opts.length === 2 ? 'two' : s.opts.length === 4 ? 'four' : ''}">${s.opts.map(o => `<button class="pick ${this.picked === o.id ? 'ok' : ''} ${this.wrongPick[o.id] && !s.compare ? 'no' : ''} ${this.solved && s.compare ? 'replay' : ''} ${this.replaying === o.id ? 'busy' : ''}" data-pick="${o.id}" ${this.solved && !s.compare ? 'disabled' : ''}><span class="tile">${icon(o.icon)}</span><span class="pick-l">${esc(tr(o.l))}</span></button>`).join('')}</div>${s.live ? `<div class="live cap mt2" data-live>${esc(s.live(this))}</div>` : ''}${this.solved && s.compare && s.cmp ? `<div class="cmp">${s.cmp(this).map(r => `<div class="cmp-r ${r[2] || ''}"><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join('')}</div><p class="cap mt2">${esc(t('compareHint'))}</p>` : ''}`;
     } else if (s.kind === 'sort') {
       const keys = Object.keys(s.slots), left = s.cards.filter(c => !this.placed[c.id]);
       body = `<div class="slots ${keys.length === 2 ? 'two' : ''}">${keys.map(k => `<button class="slot ${this.sel ? 'ready' : ''}" data-slot="${k}" aria-label="${esc(tr(s.slots[k]))}"><span class="sl-h"><b>${k}</b>${esc(tr(s.slots[k]))}</span><span class="fill">${s.cards.filter(c => this.placed[c.id] === k).map(c => `<span class="placed">${icon('check')}${esc(tr(c.l))}</span>`).join('')}</span></button>`).join('')}</div>
@@ -72,10 +72,8 @@ export class Mission {
     if (!tg) return;
     const c = document.createElement('div'); c.className = 'coach'; c.setAttribute('aria-hidden', 'true');
     c.innerHTML = '<div class="coach-ring"></div>';
-    document.body.appendChild(c);
-    const place = () => { const r = tg.getBoundingClientRect(); Object.assign(c.style, { left: r.left - 6 + 'px', top: r.top - 6 + 'px', width: r.width + 12 + 'px', height: r.height + 12 + 'px' }); };
-    place(); setTimeout(place, 320);
-    const off = () => { c.remove(); store.set({ coach: Object.assign({}, store.get().coach, { [this.i]: true }) }); this.app.sheet.removeEventListener('pointerdown', off, true); };
+    tg.classList.add('has-coach'); tg.appendChild(c);
+    const off = () => { c.remove(); tg.classList.remove('has-coach'); store.set({ coach: Object.assign({}, store.get().coach, { [this.i]: true }) }); this.app.sheet.removeEventListener('pointerdown', off, true); };
     this.app.sheet.addEventListener('pointerdown', off, true);
   }
   live() { const s = this.S, e = this.app.sheet.querySelector('[data-live]'); if (e && s.live) e.textContent = s.live(this); }
@@ -85,6 +83,12 @@ export class Mission {
     root.querySelector('[data-h]').addEventListener('click', () => { if (this.hl >= 2) return; this.hl++; this.hints++; this.render(); });
     const s = this.S;
     const nx = root.querySelector('[data-next]'); if (nx) nx.addEventListener('click', () => this.advance());
+    if (this.solved && s.kind === 'pick' && s.compare) {
+      root.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', async () => {
+        const o = s.opts.find(x => x.id === b.dataset.pick); if (this.lock || !o.play) return;
+        this.lock = true; this.replaying = o.id; this.render(); await o.play(this); this.lock = false; this.replaying = null; if (this.app.mission === this) this.render();
+      }));
+    }
     if (this.solved) return;
     if (s.kind === 'run') {
       const rb = root.querySelector('[data-run]');
