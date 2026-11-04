@@ -17,7 +17,7 @@ export class Mission {
     if (spec.sim) { this.sim = spec.sim(this); app.engine.hooks.push(this.sim); }
     this.render();
   }
-  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; }
+  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; this.running = false; this.dv = undefined; }
   defaultStart() {
     const c = this.city.districts[this.i], portrait = innerWidth < innerHeight;
     this.app.rig.flyTo({ target: [c.center[0], 0.7, c.center[1]], zoom: c.cam.zoom * (portrait ? 0.78 : 0.85), az: c.cam.az, pol: c.cam.pol }, 1.5);
@@ -35,12 +35,18 @@ export class Mission {
   }
   foot() {
     const last = this.step >= this.spec.steps.length - 1, s = this.S;
-    if (this.solved) return `<div class="learn">${icon('check')}<span>${esc(tr(s.learn || s.okText || { en: '' }))}</span></div><button class="btn btn-primary btn-block mt3" data-next>${esc(t(last ? 'finish' : 'next'))}${icon('arrow')}</button><div class="dots mt3">${this.spec.steps.map((_, k) => `<i class="${k === this.step ? 'on' : ''}"></i>`).join('')}</div>`;
+    if (this.solved) return `<div class="learn">${icon('check')}<span>${esc(tr(typeof s.learn === 'function' ? s.learn(this) : (s.learn || s.okText || { en: '' })))}</span></div><button class="btn btn-primary btn-block mt3" data-next>${esc(t(last ? 'finish' : 'next'))}${icon('arrow')}</button><div class="dots mt3">${this.spec.steps.map((_, k) => `<i class="${k === this.step ? 'on' : ''}"></i>`).join('')}</div>`;
     return `<div class="feedback" aria-live="polite"></div><div class="dots mt2">${this.spec.steps.map((_, k) => `<i class="${k === this.step ? 'on' : ''}"></i>`).join('')}</div>`; }
   render() {
     const s = this.S; let body = '';
-    if (s.kind === 'pick') {
-      body = `<div class="picks">${s.opts.map(o => `<button class="pick ${this.picked === o.id ? 'ok' : ''} ${this.wrongPick[o.id] ? 'no' : ''}" data-pick="${o.id}" ${this.solved ? 'disabled' : ''}><span class="tile">${icon(o.icon)}</span><span class="pick-l">${esc(tr(o.l))}</span></button>`).join('')}</div>${s.live ? `<div class="live cap mt2" data-live>${esc(s.live(this))}</div>` : ''}`;
+    if (this.entered !== this.step) { this.entered = this.step; if (s.enter) s.enter(this); }
+    if (s.kind === 'run') {
+      body = `${s.live ? `<div class="live cap mt3" data-live>${esc(s.live(this))}</div>` : ''}${this.solved ? '' : `<button class="btn btn-primary btn-block mt3" data-run ${this.running ? 'disabled' : ''}>${icon(s.icon || 'play')}${esc(tr(s.btn))}</button>`}`;
+    } else if (s.kind === 'dial') {
+      const v = s.values[this.dv ?? s.start];
+      body = `<div class="stepper mt3"><button class="icon-btn" data-dv="-1" aria-label="−" ${this.solved ? 'disabled' : ''}><span class="pm">−</span></button><div class="grow center"><div class="cap">${esc(tr(s.label))}</div><div class="pc-b">${esc(s.fmt ? s.fmt(v) : v)}</div></div><button class="icon-btn" data-dv="1" aria-label="+" ${this.solved ? 'disabled' : ''}><span class="pm">+</span></button></div><div class="live cap mt2" data-live>${esc(s.live ? s.live(this, v) : '')}</div>`;
+    } else if (s.kind === 'pick') {
+      body = `<div class="picks ${s.opts.length === 2 ? 'two' : ''}">${s.opts.map(o => `<button class="pick ${this.picked === o.id ? 'ok' : ''} ${this.wrongPick[o.id] ? 'no' : ''}" data-pick="${o.id}" ${this.solved ? 'disabled' : ''}><span class="tile">${icon(o.icon)}</span><span class="pick-l">${esc(tr(o.l))}</span></button>`).join('')}</div>${s.live ? `<div class="live cap mt2" data-live>${esc(s.live(this))}</div>` : ''}`;
     } else if (s.kind === 'sort') {
       const keys = Object.keys(s.slots), left = s.cards.filter(c => !this.placed[c.id]);
       body = `<div class="slots ${keys.length === 2 ? 'two' : ''}">${keys.map(k => `<button class="slot ${this.sel ? 'ready' : ''}" data-slot="${k}" aria-label="${esc(tr(s.slots[k]))}"><span class="sl-h"><b>${k}</b>${esc(tr(s.slots[k]))}</span><span class="fill">${s.cards.filter(c => this.placed[c.id] === k).map(c => `<span class="placed">${icon('check')}${esc(tr(c.l))}</span>`).join('')}</span></button>`).join('')}</div>
@@ -79,10 +85,23 @@ export class Mission {
     const s = this.S;
     const nx = root.querySelector('[data-next]'); if (nx) nx.addEventListener('click', () => this.advance());
     if (this.solved) return;
-    if (s.kind === 'pick') {
-      root.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
+    if (s.kind === 'run') {
+      const rb = root.querySelector('[data-run]');
+      rb && rb.addEventListener('click', async () => { if (this.running) return; this.running = true; rb.disabled = true; await s.go(this); this.running = false; if (this.app.mission === this) this.stepDone(); });
+    } else if (s.kind === 'dial') {
+      root.querySelectorAll('[data-dv]').forEach(b => b.addEventListener('click', () => {
+        const n = Math.max(0, Math.min(s.values.length - 1, (this.dv ?? s.start) + +b.dataset.dv)); if (n === (this.dv ?? s.start)) return;
+        this.dv = n; const v = s.values[n]; s.onChange && s.onChange(this, v);
+        if (s.ok(v)) { this.render(); setTimeout(() => this.stepDone(), 700); } else { this.mistakes += s.countMistakes ? 1 : 0; this.render(); }
+      }));
+    } else if (s.kind === 'pick') {
+      root.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', async () => {
+        if (this.lock) return;
         const o = s.opts.find(x => x.id === b.dataset.pick);
-        if (!o.ok) { this.mistakes++; this.wrongPick[o.id] = true; b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); this.fb(tr(o.why)); return; }
+        if (o.play) { this.lock = true; root.querySelectorAll('[data-pick]').forEach(x => x.classList.toggle('busy', x === b)); await o.play(this); this.lock = false; if (!this.app.mission) return; }
+        const bb = this.app.sheet.querySelector(`[data-pick="${o.id}"]`) || b;
+        this.app.sheet.querySelectorAll('[data-pick]').forEach(x => x.classList.remove('busy'));
+        if (!o.ok) { this.mistakes++; this.wrongPick[o.id] = true; bb.classList.remove('no'); void bb.offsetWidth; bb.classList.add('no'); this.fb(tr(typeof o.why === 'function' ? o.why(this) : o.why)); return; }
         this.picked = o.id; this.spec.onPick && this.spec.onPick(this, o); this.stepDone();
       }));
     } else if (s.kind === 'sort') {
@@ -147,14 +166,17 @@ export class Mission {
     if (this.step >= this.spec.steps.length - 1) return this.finish();
     this.step++; this.hl = 0; this.reset(); this.render();
   }
+  cleanup() { this.app.stage && this.app.stage.clear(); if (this.spec.cleanup) this.spec.cleanup(this); }
   stopSim() { if (this.sim) { const h = this.app.engine.hooks; h.splice(h.indexOf(this.sim), 1); this.sim.stop && this.sim.stop(); this.sim = null; } }
   finish() {
+    this.cleanup();
     this.stopSim(); document.querySelectorAll('.coach').forEach(e => e.remove());
     this.app.rig.autoOrbit = true;
     this.app.resultText = tr(this.spec.done);
     this.app.finishMission(this.i, this.stars());
   }
   close() {
+    this.cleanup();
     this.stopSim(); document.querySelectorAll('.coach').forEach(e => e.remove());
     const built = store.builtCount() > this.i;
     if (this.spec.close) this.spec.close(this, built); else if (!built) this.city.unpreview(this.i);

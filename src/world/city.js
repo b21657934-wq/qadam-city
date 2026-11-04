@@ -34,9 +34,9 @@ function mesh(g, m, cast = true, recv = true) { const o = new THREE.Mesh(g, m); 
 // Windows: one instanced mesh for the whole city. aBorn = pop-in time, aLit = (threshold, on)
 const winMat = new THREE.MeshStandardMaterial({ color: P.glass, roughness: 0.3, metalness: 0.2 });
 winMat.onBeforeCompile = sh => {
-  sh.uniforms.uTime = U.uTime; sh.uniforms.uNight = U.uNight;
+  sh.uniforms.uTime = U.uTime; sh.uniforms.uNight = U.uNight; sh.uniforms.uForce = U.uForce;
   sh.vertexShader = 'uniform float uTime;\nattribute float aBorn;\nattribute vec2 aLit;\nvarying vec2 vLit;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvLit = aLit;\nfloat bornK = smoothstep(aBorn, aBorn + 0.35, uTime);\ntransformed *= bornK;');
-  sh.fragmentShader = 'uniform float uNight;\nvarying vec2 vLit;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\nfloat lit = vLit.y * smoothstep(vLit.x, vLit.x + 0.08, uNight * 1.08);\ndiffuseColor.rgb *= 1.0 - 0.75 * uNight;\ntotalEmissiveRadiance += mix(vec3(2.3, 1.45, 0.62), vec3(1.6, 1.75, 1.95), step(0.86, vLit.x)) * lit;');
+  sh.fragmentShader = 'uniform float uNight;\nuniform float uForce;\nvarying vec2 vLit;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\nfloat lit = max(vLit.y * smoothstep(vLit.x, vLit.x + 0.08, uNight * 1.08), smoothstep(vLit.x * 0.9, vLit.x * 0.9 + 0.06, uForce));\ndiffuseColor.rgb *= 1.0 - 0.75 * uNight;\ntotalEmissiveRadiance += mix(vec3(2.3, 1.45, 0.62), vec3(1.6, 1.75, 1.95), step(0.86, vLit.x)) * lit;');
 };
 // trees sway in the wind
 function swayMat(c) {
@@ -225,6 +225,7 @@ export class City {
     this.road([[4.8, -6.9], [4.8, -1.3], [4.85, 4.14], [4.2, 7.4]], 0.5);
     this.bridge(-2.2); this.bridge(4.85);
     this.depotBuild(-0.9, -6.6);
+    this.hospital(3.4, -0.3);
 
     // 2 — Blocks & buses (week 3)
     this.district(2, [-4.6, -5.2], { az: -0.55, zoom: 0.55, pol: 0.9 });
@@ -418,6 +419,12 @@ export class City {
     const rf = mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.34, 16, 1, false, 0, Math.PI), mat(P.roofSlate)); rf.rotation.z = Math.PI / 2; rf.rotation.y = Math.PI / 2; rf.position.y = 0.8; rf.scale.set(1, 1, 0.35); g.add(rf);
     for (let i = 0; i < 2; i++) { const dr = mesh(rbox(0.4, 0.46, 0.04, 0.03, 2), mat(0xD9DEE6)); dr.position.set(-0.3 + i * 0.6, 0.25, 0.46); g.add(dr); for (let k = 0; k < 4; k++) { const ln = mesh(new THREE.BoxGeometry(0.38, 0.01, 0.01), mat(0xAEB6C3), false); ln.position.set(-0.3 + i * 0.6, 0.08 + k * 0.1, 0.485); g.add(ln); } }
     return this.item(g, this.cur.items.length * 0.12, [x, z, 1.3, 0.9]);
+  }
+  hospital(x, z) {
+    const g = this.building(x, z, 1.1, 0.9, 1.3, P.white);
+    const crossM = glowMat(0xE8674A, 0.35, 1.6);
+    [[0.34, 0.1], [0.1, 0.34]].forEach(([w, h]) => { const c = mesh(new THREE.BoxGeometry(w, h, 0.03), crossM, false); c.position.set(-0.22, 0.92, 0.47); g.add(c); });
+    return g;
   }
   shelter(x, z) {
     const g = new THREE.Group(); g.position.set(x, 0, z);

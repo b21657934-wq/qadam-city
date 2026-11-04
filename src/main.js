@@ -4,6 +4,7 @@ import { Engine } from './world/engine.js';
 import { CameraRig } from './world/camera.js';
 import { City } from './world/city.js';
 import { Qadam, Snow } from './world/life.js';
+import { Stage } from './world/stage.js';
 import { App } from './app.js';
 import { store } from './store.js';
 import { setLang } from './i18n.js';
@@ -29,7 +30,9 @@ requestAnimationFrame(() => {
   const snow = new Snow(engine);
   if (Q.has('demo')) { const n = +Q.get('demo'); for (let i = 0; i < 10; i++) if (i < n) store.get().stars[i] = store.get().stars[i] || 3; else delete store.get().stars[i]; store.set({ onboarded: true }); }
   city.setBuilt(store.builtCount());
+  const stage = new Stage(engine);
   const app = window.__app = new App({ engine, rig, city, qadam, snow });
+  app.stage = stage;
   app.setTheme(night, true);
   engine.resize();
   if (!store.get().onboarded && !Q.has('view')) app.show('onboard', 0); else app.show(Q.get('view') || 'home', Q.has('arg') ? +Q.get('arg') : undefined);
