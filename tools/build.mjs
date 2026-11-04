@@ -13,7 +13,7 @@ const res = await esbuild.build({
   loader: { '.css': 'text', '.svg': 'text' },
   define: { 'process.env.NODE_ENV': '"production"' },
 });
-const js = res.outputFiles[0].text;
+const js = res.outputFiles[0].text + (process.env.TEST ? fs.readFileSync(path.join(root, 'tools/solve.js'), 'utf8') : '');
 
 const f = n => fs.readFileSync(path.join(root, 'fonts', n)).toString('base64');
 const faces = [

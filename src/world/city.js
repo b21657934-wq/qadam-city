@@ -578,15 +578,36 @@ export class City {
         if (o.userData.station) { this.stationAll(true); if (was) return; }
         if (o.userData.road) {
           const r = o.userData.road;
-          if (anim) this.anims.push({ kind: 'road', r, t0: now + o.userData.delay, dur: 1.3 }); else this.roadK(r, 1);
+          if (!was) { if (anim) this.anims.push({ kind: 'road', r, t0: now + o.userData.delay, dur: 1.3 }); else this.roadK(r, 1); }
           r.live = true;
-        } else if (anim) { o.scale.setScalar(0.001); this.anims.push({ kind: 'grow', o, t0: now + o.userData.delay + 0.2 }); }
+        } else if (was) return;
+        else if (anim) { o.scale.setScalar(0.001); this.anims.push({ kind: 'grow', o, t0: now + o.userData.delay + 0.2 }); }
         else o.scale.setScalar(o.userData.baseScale || 1);
       });
       for (let k = 0; k < this.wins.length; k++) if (this.wins[k].d === d.i) this.winBorn.array[k] = anim ? now + this.wins[k].born : -10;
       this.winBorn.needsUpdate = true;
     });
     this.assignCars();
+  }
+  // show part of a district while its mission is in progress
+  preview(i, frac) {
+    const d = this.districts[i]; if (!d || d.built) return;
+    const now = U.uTime.value, k = Math.ceil(d.items.length * frac);
+    let n = 0;
+    d.items.slice(0, k).forEach(o => {
+      if (o.visible) return; o.visible = true;
+      if (o.userData.road) { if (REDUCED) this.roadK(o.userData.road, 1); else { this.roadK(o.userData.road, 0); this.anims.push({ kind: 'road', r: o.userData.road, t0: now + n * 0.15, dur: 1.2 }); } }
+      else if (REDUCED) o.scale.setScalar(o.userData.baseScale || 1);
+      else { o.scale.setScalar(0.001); this.anims.push({ kind: 'grow', o, t0: now + n * 0.15 }); }
+      n++;
+    });
+    if (d.plot) d.plot.visible = true;
+    this.wave(d.center[0], d.center[1], 0x4F98A3);
+  }
+  unpreview(i) {
+    const d = this.districts[i]; if (!d || d.built) return;
+    this.anims = this.anims.filter(a => !d.items.includes(a.o) && !(a.r && a.r.district === i));
+    d.items.forEach(o => { o.visible = false; });
   }
   roadK(r, k) {
     r.mesh.geometry.setDrawRange(0, Math.floor(r.n * k) * 6);

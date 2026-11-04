@@ -24,7 +24,7 @@ export class CameraRig {
   resize(w, h) {
     this.cam.fov = w < h ? 36 : 30;
     // keep the city centred in the area not covered by the bottom sheet
-    const off = Math.min(this.uiBottom, h * 0.45) * 0.5;
+    const off = Math.min(this.uiBottom, h * 0.72) * 0.5;
     this.cam.setViewOffset(w, h, 0, off, w, h);
     this.cam.updateProjectionMatrix();
   }

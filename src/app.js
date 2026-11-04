@@ -2,12 +2,13 @@ import * as THREE from 'three';
 import { t, tr, D, LANGS, LANG_LABEL, getLang, setLang } from './i18n.js';
 import { icon } from './ui/icons.js';
 import { store } from './store.js';
-import { Mission1 } from './missions/m1.js';
+import { Mission } from './missions/engine.js';
+import { SPECS } from './missions/specs.js';
 import logoSvg from './ui/logo.svg';
 
 const logoURL = 'data:image/svg+xml,' + encodeURIComponent(logoSvg);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const MISSIONS = { 0: Mission1 };
+const MISSIONS = SPECS;
 
 export class App {
   constructor({ engine, rig, city, qadam, snow }) {
@@ -153,9 +154,9 @@ export class App {
     this.show('district', hit.object.userData.district);
   }
   startMission(i) {
-    const M = MISSIONS[i]; if (!M) return;
+    const spec = MISSIONS[i]; if (!spec) return;
     this.view = 'mission'; this.renderHud();
-    this.mission = new M(this, i);
+    this.mission = new Mission(this, i, spec);
   }
   finishMission(i, stars) {
     const wasBuilt = i < this.built();
