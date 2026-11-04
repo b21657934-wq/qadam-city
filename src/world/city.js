@@ -9,10 +9,12 @@ export const P = {
   white: 0xF6F3EC, roofRed: 0xB0634C, roofSlate: 0x56677E, pine: 0x4E7A64, pineDark: 0x3C6352, gold: 0xF2B544,
   glass: 0x6F8BA6, ink: 0x1B2340, steel: 0x48506A,
 };
-export const R = 10, R0 = R - 0.35;
-export const riverZ = x => 3 + 1.25 * Math.sin(x * 0.33 + 0.4);
-const RW = 0.85;
-export function distRiver(x, z) { return Math.abs(z - riverZ(x)) / Math.sqrt(1 + Math.pow(1.25 * 0.33 * Math.cos(x * 0.33 + 0.4), 2)); }
+export const K = 1.35; // world spread: positions are authored for a 10-unit plate and scaled by K
+export const R = 10 * K, R0 = R - 0.35;
+export const riverZ = x => K * (3 + 1.25 * Math.sin(x / K * 0.33 + 0.4));
+const riverD = x => 1.25 * 0.33 * Math.cos(x / K * 0.33 + 0.4);
+const RW = 0.95;
+export function distRiver(x, z) { return Math.abs(z - riverZ(x)) / Math.sqrt(1 + Math.pow(riverD(x), 2)); }
 
 let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -70,7 +72,7 @@ export class City {
 
   // ---------- diorama plate ----------
   base() {
-    const rings = 70, segs = 180;
+    const rings = 80, segs = 200;
     const pos = [], col = [], idx = [];
     const cS = new THREE.Color(P.snow), cB = new THREE.Color(P.snowShade), tmp = new THREE.Color();
     pos.push(0, 0, 0); col.push(cS.r, cS.g, cS.b);
@@ -93,9 +95,9 @@ export class City {
     g.setIndex(idx); g.computeVertexNormals();
     this.root.add(mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.93 }), false, true));
     // river ribbon, clipped to the plate
-    const rp = [], ri = [], n = 220, rr = R0 - 0.02;
+    const rp = [], ri = [], n = 280, rr = R0 - 0.02;
     for (let i = 0; i <= n; i++) {
-      const x = -R + 2 * R * i / n, z = riverZ(x), dz = 1.25 * 0.33 * Math.cos(x * 0.33 + 0.4), L = Math.hypot(1, dz), nx = -dz / L, nz = 1 / L;
+      const x = -R + 2 * R * i / n, z = riverZ(x), dz = riverD(x), L = Math.hypot(1, dz), nx = -dz / L, nz = 1 / L;
       [1, -1].forEach(sd => { let px = x + nx * RW * sd, pz = z + nz * RW * sd; const d = Math.hypot(px, pz); if (d > rr) { px *= rr / d; pz *= rr / d; } rp.push(px, 0.06, pz); });
       if (i < n) ri.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);
     }
@@ -104,8 +106,8 @@ export class City {
     const riv = mesh(rg, this.riverMat, false, true); this.root.add(riv);
     // ice floes drifting on the river
     const floeG = new THREE.CylinderGeometry(0.12, 0.13, 0.03, 7);
-    this.floes = new THREE.InstancedMesh(floeG, mat(0xE8F1F4, { roughness: 0.4 }), 14);
-    this.floeT = Array.from({ length: 14 }, () => [rnd() * 20 - 10, rnd() * 1.1 - 0.55, 0.6 + rnd() * 0.8]);
+    this.floes = new THREE.InstancedMesh(floeG, mat(0xE8F1F4, { roughness: 0.4 }), 18);
+    this.floeT = Array.from({ length: 18 }, () => [(rnd() * 20 - 10) * K, rnd() * 1.1 - 0.55, 0.6 + rnd() * 0.8]);
     this.root.add(this.floes);
     // sides with strata
     const prof = [];
@@ -122,12 +124,13 @@ export class City {
     const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
     const gr = x.createRadialGradient(64, 64, 22, 64, 64, 64); gr.addColorStop(0, 'rgba(20,25,45,0.42)'); gr.addColorStop(1, 'rgba(20,25,45,0)');
     x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
-    const sh = new THREE.Mesh(new THREE.PlaneGeometry(31, 31), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+    const sh = new THREE.Mesh(new THREE.PlaneGeometry(31 * K, 31 * K), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
     sh.rotation.x = -Math.PI / 2; sh.position.y = -2.75; this.root.add(sh);
   }
 
   // ---------- districts ----------
   district(i, center, cam) {
+    center = [center[0] * K, center[1] * K];
     const d = { i, center, cam, group: new THREE.Group(), items: [], roads: [], foot: [], built: false };
     this.root.add(d.group); this.districts[i] = d; this.cur = d; return d;
   }
@@ -137,6 +140,7 @@ export class City {
     return obj;
   }
   building(x, z, w, dd, h, color, o = {}) {
+    x *= K; z *= K;
     const d = this.cur; this.block(x, z, w / 2 + 0.15, dd / 2 + 0.15);
     const g = new THREE.Group(); g.position.set(x, 0, z); if (o.ry) g.rotation.y = o.ry;
     const body = mesh(rbox(w, h, dd, Math.min(0.09, w * 0.1)), mat(color)); body.position.y = h / 2; g.add(body);
@@ -165,6 +169,7 @@ export class City {
     return this.item(g, this.cur.items.length * 0.18, [x, z, w, dd]);
   }
   road(pts, w = 0.55) {
+    pts = pts.map(p => [p[0] * K, p[1] * K]);
     const d = this.cur;
     const curve = new THREE.CatmullRomCurve3(pts.map(p => V3(p[0], 0.03, p[1])), false, 'catmullrom', 0.2);
     const n = Math.ceil(curve.getLength() * 6), pos = [], idx = [];
@@ -198,7 +203,8 @@ export class City {
     grp.userData.road = r; d.roads.push(r); this.roads.push(r);
     return this.item(grp, d.items.length * 0.12);
   }
-  bridge(x, len = 2.8) {
+  bridge(x, len = 3.1) {
+    x *= K;
     const z = riverZ(x), g = new THREE.Group(); g.position.set(x, 0, z);
     const deck = mesh(rbox(0.75, 0.12, len, 0.04, 2), mat(P.white)); deck.position.y = 0.1; g.add(deck);
     const arch = new THREE.CatmullRomCurve3([[-1.3, 0], [-0.6, 0.85], [0, 1.05], [0.6, 0.85], [1.3, 0]].map(p => V3(0, p[1] + 0.12, p[0])));
@@ -293,11 +299,12 @@ export class City {
       hit.position.set(d.center[0], 1.5, d.center[1]); hit.userData.district = d.i; this.root.add(hit); this.hits.push(hit);
     }
     this.libHit = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2, 1.4), new THREE.MeshBasicMaterial({ visible: false }));
-    this.libHit.position.set(0.2, 1, 0.55); this.libHit.userData.library = true; this.root.add(this.libHit);
+    this.libHit.position.set(0.2 * K, 1, 0.55 * K); this.libHit.userData.library = true; this.root.add(this.libHit);
   }
 
   // ---------- landmarks ----------
   libraryBuild(x, z) {
+    x *= K; z *= K;
     this.block(x, z, 0.85, 0.65);
     const g = new THREE.Group(); g.position.set(x, 0, z); this.root.add(g);
     const steps = mesh(rbox(1.6, 0.12, 1.2, 0.04, 2), mat(P.cream)); steps.position.y = 0.06; g.add(steps);
@@ -315,6 +322,7 @@ export class City {
     this.libBake = () => { if (this.libBaked) return; this.libBaked = true; this.bakeObjects([g]); g.visible = false; };
   }
   stationBuild(x, z) {
+    x *= K; z *= K;
     const d = this.cur; this.block(x, z, 1.1, 1.1);
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const parts = {};
@@ -397,7 +405,7 @@ export class City {
   }
   // practice yard for week 1: a loop with snowdrifts and lamps
   yardBuild() {
-    const Y0 = this.yardC = { x: -5.0, z: 0.3, rx: 1.5, rz: 0.55 };
+    const Y0 = this.yardC = { x: -5.0 * K, z: 0.3 * K, rx: 1.6, rz: 0.6 };
     this.yardDrifts = [0.5, 1.25, 1.85].map(k => k * Math.PI);
     const g = this.yard = new THREE.Group(); this.root.add(g); g.visible = false;
     const track = mesh(new THREE.RingGeometry(0.97, 1.03, 96).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xB8C4D2, transparent: true, opacity: 0.6, depthWrite: false }), false, false);
@@ -414,6 +422,7 @@ export class City {
   yardPoint(a, off = 0) { const c = this.yardC; return [c.x + Math.cos(a) * (c.rx + off), c.z + Math.sin(a) * (c.rz + off * 0.6)]; }
   yardLampsOn(anim) { this.yardLamps.forEach((l, k) => { if (anim && !REDUCED) { l.scale.setScalar(0.001); this.anims.push({ kind: 'grow', o: l, t0: U.uTime.value + k * 0.15, uniform: true }); } else l.scale.setScalar(1); }); }
   depotBuild(x, z) {
+    x *= K; z *= K;
     this.block(x, z, 0.8, 0.6);
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const b = mesh(rbox(1.3, 0.8, 0.9, 0.08), mat(P.terracotta)); b.position.y = 0.4; g.add(b);
@@ -428,6 +437,7 @@ export class City {
     return g;
   }
   shelter(x, z) {
+    x *= K; z *= K;
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const rf = mesh(rbox(0.6, 0.04, 0.26, 0.015, 2), mat(P.river)); rf.position.y = 0.42; g.add(rf);
     const back = mesh(new THREE.BoxGeometry(0.56, 0.32, 0.015), new THREE.MeshStandardMaterial({ color: 0xBFD9E0, transparent: true, opacity: 0.55, roughness: 0.1 })); back.position.set(0, 0.24, -0.11); g.add(back);
@@ -436,6 +446,7 @@ export class City {
     return this.item(g, this.cur.items.length * 0.12);
   }
   trafficLight(x, z) {
+    x *= K; z *= K;
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const pole = mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.6, 6), mat(P.steel)); pole.position.y = 0.3; g.add(pole);
     const box = mesh(rbox(0.09, 0.22, 0.07, 0.025, 2), mat(P.ink)); box.position.y = 0.66; g.add(box);
@@ -443,6 +454,7 @@ export class City {
     return this.item(g, this.cur.items.length * 0.1);
   }
   sirenTower(x, z) {
+    x *= K; z *= K;
     this.block(x, z, 0.3, 0.3);
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const legs = mesh(new THREE.CylinderGeometry(0.04, 0.09, 1.6, 6), mat(P.white)); legs.position.y = 0.8; g.add(legs);
@@ -451,6 +463,7 @@ export class City {
     return this.item(g, this.cur.items.length * 0.12, [x, z, 0.5, 0.5]);
   }
   garage(x, z) {
+    x *= K; z *= K;
     this.block(x, z, 0.7, 0.55);
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const b = mesh(rbox(1.1, 0.55, 0.8, 0.07), mat(P.slate)); b.position.y = 0.28; g.add(b);
@@ -459,6 +472,7 @@ export class City {
     return this.item(g, this.cur.items.length * 0.12, [x, z, 1.1, 0.8]);
   }
   gpsMast(x, z) {
+    x *= K; z *= K;
     this.block(x, z, 0.25, 0.25);
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const m = mesh(new THREE.CylinderGeometry(0.025, 0.06, 1.5, 8), mat(P.white)); m.position.y = 0.75; g.add(m);
@@ -467,6 +481,7 @@ export class City {
     return this.item(g, this.cur.items.length * 0.12, [x, z, 0.4, 0.4]);
   }
   khanShatyr(x, z) {
+    x *= K; z *= K;
     this.block(x, z, 1.25, 1.1);
     const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = 0.5;
     const plaza = mesh(new THREE.CylinderGeometry(1.45, 1.5, 0.1, 48), mat(P.cream)); plaza.scale.z = 0.85; plaza.position.y = 0.05; g.add(plaza);
@@ -478,6 +493,7 @@ export class City {
     return this.item(g, 0, [x, z, 2.4, 2.1]);
   }
   akimat(x, z) {
+    x *= K; z *= K;
     this.block(x, z, 0.8, 0.65);
     const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = -0.5;
     const pl = mesh(rbox(1.5, 0.1, 1.2, 0.04, 2), mat(P.cream)); pl.position.y = 0.05; g.add(pl);
@@ -490,6 +506,7 @@ export class City {
     return this.item(g, 0, [x, z, 1.6, 1.3]);
   }
   nurAlem(x, z) {
+    x *= K; z *= K;
     this.block(x, z, 1.05, 1.05);
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const pod = mesh(new THREE.CylinderGeometry(1.0, 1.08, 0.24, 48), mat(P.cream)); pod.position.y = 0.12; g.add(pod);
@@ -499,6 +516,7 @@ export class City {
     return this.item(g, 0, [x, z, 2.0, 2.0]);
   }
   pylons(pts) {
+    pts = pts.map(p => [p[0] * K, p[1] * K]);
     const g = new THREE.Group();
     const tops = pts.map(([x, z]) => { const p = mesh(new THREE.CylinderGeometry(0.02, 0.05, 1.1, 4), mat(P.steel)); p.position.set(x, 0.55, z); g.add(p); const arm = mesh(new THREE.BoxGeometry(0.34, 0.025, 0.025), mat(P.steel)); arm.position.set(x, 1.02, z); g.add(arm); this.block(x, z, 0.15, 0.15); return V3(x, 1.02, z); });
     for (let i = 0; i < tops.length - 1; i++) for (const o of [-0.15, 0.15]) {
@@ -508,6 +526,7 @@ export class City {
     return this.item(g, this.cur.items.length * 0.12);
   }
   bayterek(x, z) {
+    x *= K; z *= K;
     this.block(x, z, 0.85, 0.85);
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const wm = glowMat(P.white, 0, 0.22, { roughness: 0.42, color: P.white });
@@ -535,10 +554,10 @@ export class City {
   }
   // ---------- trees ----------
   trees() {
-    const groves = [[-8.0, 2.0], [-3.8, 4.4], [0.4, 3.9], [6.8, 2.4], [-2.8, -8.0], [2.6, -8.2], [7.6, -5.2], [-8.3, -5.6], [-7.6, 6.8], [1.6, 8.6], [6.0, 7.2]];
+    const groves = [[-8.0, 2.0], [-3.8, 4.4], [0.4, 3.9], [6.8, 2.4], [-2.8, -8.0], [2.6, -8.2], [7.6, -5.2], [-8.3, -5.6], [-7.6, 6.8], [1.6, 8.6], [6.0, 7.2], [-5.5, -8.6], [8.6, -1.6], [-9.2, -1.8], [4.4, 9.4]].map(g => [g[0] * K, g[1] * K]);
     const pts = []; let tries = 0;
-    while (pts.length < 64 && tries++ < 6000) {
-      const gv = groves[Math.floor(rnd() * groves.length)], a = rnd() * 6.283, r = Math.sqrt(rnd()) * 1.6, x = gv[0] + Math.cos(a) * r, z = gv[1] + Math.sin(a) * r;
+    while (pts.length < 96 && tries++ < 9000) {
+      const gv = groves[Math.floor(rnd() * groves.length)], a = rnd() * 6.283, r = Math.sqrt(rnd()) * 2.0, x = gv[0] + Math.cos(a) * r, z = gv[1] + Math.sin(a) * r;
       if (this.free(x, z, 0.24)) { pts.push([x, z, 0.7 + rnd() * 0.5, rnd() * 6.28]); this.block(x, z, 0.16, 0.16); }
     }
     const gs = [
@@ -714,7 +733,7 @@ export class City {
     if (this.sirenMat) this.sirenMat.emissiveIntensity = 0.3 + (Math.sin(t * 5) > 0.6 ? 1.8 : 0) * (0.3 + U.uNight.value);
     // river floes
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion();
-    this.floeT.forEach((f, i) => { f[0] += dt * 0.25 * f[2]; if (f[0] > 10) f[0] = -10; const x = f[0], z = riverZ(x) + f[1]; const vis = Math.hypot(x, z) < R0 - 0.3 ? f[2] : 0.0001; q.setFromAxisAngle(Y, x * 0.8); m4.compose(V3(x, 0.06, z), q, V3(vis, 1, vis)); this.floes.setMatrixAt(i, m4); });
+    this.floeT.forEach((f, i) => { f[0] += dt * 0.25 * f[2]; if (f[0] > R) f[0] = -R; const x = f[0], z = riverZ(x) + f[1]; const vis = Math.hypot(x, z) < R0 - 0.3 ? f[2] : 0.0001; q.setFromAxisAngle(Y, x * 0.8); m4.compose(V3(x, 0.06, z), q, V3(vis, 1, vis)); this.floes.setMatrixAt(i, m4); });
     this.floes.instanceMatrix.needsUpdate = true;
     // cars
     const n = this.carBody.count;

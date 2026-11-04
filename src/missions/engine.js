@@ -2,6 +2,7 @@ import { t, tr } from '../i18n.js';
 import { icon } from '../ui/icons.js';
 import { store } from '../store.js';
 import { W, FIG } from './widgets.js';
+import { K } from '../world/city.js';
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function perm(n, seed) { const a = [...Array(n).keys()]; let s = seed * 9301 + 49297; for (let i = n - 1; i > 0; i--) { s = (s * 9301 + 49297) % 233280; const j = Math.floor(s / 233280 * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
@@ -20,8 +21,8 @@ export class Mission {
   reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; this.running = false; this.dv = undefined; }
   defaultStart() {
     const c = this.city.districts[this.i], portrait = innerWidth < innerHeight;
-    this.app.rig.flyTo({ target: [c.center[0], 0.7, c.center[1]], zoom: c.cam.zoom * (portrait ? 0.78 : 0.85), az: c.cam.az, pol: c.cam.pol }, 1.5);
-    const q = this.app.qadam; q.goTo(c.center[0] + 1.3, c.center[1] + 1.1);
+    this.app.rig.flyTo({ target: [c.center[0], 0.7, c.center[1]], zoom: c.cam.zoom * (portrait ? 1.06 : 1.12), az: c.cam.az, pol: c.cam.pol }, 1.5);
+    const q = this.app.qadam; q.goTo(c.center[0] / K + 1.0, c.center[1] / K + 0.8);
   }
   get S() { return this.spec.steps[this.step]; }
   stars() { return this.hints === 0 && this.mistakes <= 1 ? 3 : this.mistakes <= 3 && this.hints <= 1 ? 2 : 1; }

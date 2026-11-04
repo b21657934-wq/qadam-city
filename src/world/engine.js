@@ -52,7 +52,7 @@ export class Engine {
     this.hemi = new THREE.HemisphereLight(); s.add(this.hemi);
     const sun = this.sun = new THREE.DirectionalLight();
     sun.castShadow = true;
-    Object.assign(sun.shadow.camera, { left: -13, right: 13, top: 13, bottom: -13, near: 1, far: 70 });
+    Object.assign(sun.shadow.camera, { left: -17.5, right: 17.5, top: 17.5, bottom: -17.5, near: 1, far: 80 });
     sun.shadow.radius = 4; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
     s.add(sun, sun.target);
 

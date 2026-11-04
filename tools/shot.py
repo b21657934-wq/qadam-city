@@ -5,7 +5,7 @@ def run(jobs):
     with sync_playwright() as p:
         b=p.chromium.launch(args=["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader","--ignore-gpu-blocklist"])
         for name,q,dev,js,wait in jobs:
-            vp={'phone':dict(viewport={'width':390,'height':844},device_scale_factor=2,is_mobile=True,has_touch=True),'desk':dict(viewport={'width':1440,'height':900},device_scale_factor=1)}[dev]
+            vp={'phone':dict(viewport={'width':390,'height':844},device_scale_factor=2,is_mobile=True,has_touch=True),'desk':dict(viewport={'width':1440,'height':900},device_scale_factor=1),'lap':dict(viewport={'width':1366,'height':768},device_scale_factor=1)}[dev]
             ctx=b.new_context(**vp); pg=ctx.new_page()
             errs=[]; pg.on('console',lambda m: errs.append(m.type+': '+m.text) if m.type in('error','warning') else None); pg.on('pageerror',lambda e: errs.append('PAGEERR '+str(e)))
             pg.goto('http://localhost:8801/index.html'+q); pg.wait_for_function("window.__ready===true",timeout=120000)

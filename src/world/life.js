@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { U, REDUCED } from './engine.js';
-import { mat, P } from './city.js';
+import { mat, P, K } from './city.js';
 
 // Qadam — the builder robot
 export class Qadam {
   constructor(engine, x, z) {
-    const g = this.g = new THREE.Group(); g.position.set(x, 0, z); engine.scene.add(g);
+    const g = this.g = new THREE.Group(); g.position.set(x * K, 0, z * K); engine.scene.add(g);
     const shell = mat(0xF7F5F0, { roughness: 0.35 }), dark = mat(0x2A3148, { roughness: 0.3, metalness: 0.2 });
     const M = (geo, m, p) => { const o = new THREE.Mesh(geo, m); o.castShadow = true; if (p) o.position.set(...p); return o; };
     this.body = new THREE.Group(); g.add(this.body);
@@ -30,7 +30,7 @@ export class Qadam {
     this.target = null; this.blink = 2; this.wave = 0; this.look = 0;
     engine.on(this);
   }
-  goTo(x, z) { this.target = new THREE.Vector3(x, 0, z); }
+  goTo(x, z) { this.target = new THREE.Vector3(x * K, 0, z * K); }
   cheer() { this.wave = 1.6; }
   bump() { this.bumpT = 0.6; }
   update(dt, t) {
@@ -56,8 +56,8 @@ export class Qadam {
 // Falling snow
 export class Snow {
   constructor(engine) {
-    const N = 700, pos = new Float32Array(N * 3); this.v = new Float32Array(N);
-    for (let i = 0; i < N; i++) { const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * 12.5; pos.set([Math.cos(a) * r, Math.random() * 9, Math.sin(a) * r], i * 3); this.v[i] = 0.35 + Math.random() * 0.4; }
+    const N = 1000, pos = new Float32Array(N * 3); this.v = new Float32Array(N);
+    for (let i = 0; i < N; i++) { const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * 12.5 * K; pos.set([Math.cos(a) * r, Math.random() * 9, Math.sin(a) * r], i * 3); this.v[i] = 0.35 + Math.random() * 0.4; }
     const g = this.geo = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d'); const gr = x.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 32, 32);
     this.m = new THREE.PointsMaterial({ size: 0.09, map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, opacity: 0.9 });
@@ -73,7 +73,7 @@ export class Snow {
     for (let i = 0; i < this.v.length; i++) {
       p[i * 3 + 1] -= this.v[i] * dt * g;
       p[i * 3] += (Math.sin(t * 0.5 + i) * 0.12 + 0.18 * (g - 1)) * dt;
-      if (p[i * 3 + 1] < 0) { p[i * 3 + 1] = 9; const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * 12.5; p[i * 3] = Math.cos(a) * r; p[i * 3 + 2] = Math.sin(a) * r; }
+      if (p[i * 3 + 1] < 0) { p[i * 3 + 1] = 9; const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * 12.5 * K; p[i * 3] = Math.cos(a) * r; p[i * 3 + 2] = Math.sin(a) * r; }
     }
     this.geo.attributes.position.needsUpdate = true;
   }

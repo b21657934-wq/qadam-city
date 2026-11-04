@@ -124,6 +124,8 @@ export const S = {
   bkAi2: { en: 'In version 2, Claude also helped design the 3D city, the district missions and the interface. The Python labs were re-checked: the live output matches Python line by line for 83 parameter sets.', ru: 'Во второй версии Claude также помог спроектировать 3D-город, миссии районов и интерфейс. Python-лаборатории перепроверены: живой вывод совпадает с Python построчно на 83 наборах параметров.', kk: 'Екінші нұсқада Claude 3D қаланы, аудан миссияларын және интерфейсті жобалауға да көмектесті. Python зертханалары қайта тексерілді: тірі шығыс 83 параметр жиынында Python-мен жол бойынша бірдей.' },
   bkRefThree: { en: 'three.js documentation, threejs.org (3D engine of the city).', ru: 'Документация three.js, threejs.org (3D-движок города).', kk: 'three.js құжаттамасы, threejs.org (қаланың 3D қозғалтқышы).' },
   readChapter: { en: 'Read chapter {n}', ru: 'Читать главу {n}', kk: '{n}-тарауды оқу' },
+  gestureHint: { en: 'Drag with one finger to move the map, use two to zoom and turn', ru: 'Двигай карту одним пальцем, двумя — приближай и вращай', kk: 'Картаны бір саусақпен жылжыт, екеуімен — жақындат және бұр' },
+  gestureHintDesk: { en: 'Drag to turn · two fingers or right button to move · scroll or +/− to zoom', ru: 'Тяни — вращай · двумя пальцами или правой кнопкой — двигай · колесо или +/− — приближай', kk: 'Тарт — бұр · екі саусақ не оң батырма — жылжыт · дөңгелек не +/− — жақындат' },
   aboutBuild: { en: 'Stage 2 preview · one district playable', ru: 'Превью этапа 2 · играбелен один район', kk: '2-кезең алдын ала көрінісі · бір аудан ойналады' },
 };
 

@@ -3,7 +3,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { M1, S, tr } from '../i18n.js';
 import { U } from '../world/engine.js';
 import { store } from '../store.js';
-import { mat } from '../world/city.js';
+import { mat, K as KK } from '../world/city.js';
 const L = (en, ru, kk) => ({ en, ru, kk });
 const YES = L('Yes', 'Да', 'Иә'), NO = L('No', 'Нет', 'Жоқ');
 
@@ -31,14 +31,14 @@ class Yard {
 const w1 = {
   start(m) {
     const st = m.city.station; st.group.visible = true; m.city.stationReset();
-    m.app.rig.flyTo({ target: [-5.1, 0.5, -0.9], zoom: innerWidth < innerHeight ? 0.34 : 0.42, az: -0.25, pol: 0.9 }, 1.5);
+    m.app.rig.flyTo({ target: [-5.1 * KK, 0.5, -0.9 * KK], zoom: innerWidth < innerHeight ? 0.46 : 0.46, az: -0.25, pol: 0.9 }, 1.5);
   },
   sim: m => new Yard(m),
   onPick(m, o) {
     const c = m.city;
     if (o.id === 'camera') { m.sim.seeing = true; m.app.qadam.cone.visible = true; c.stationShow('mast'); c.stationShow('anemo'); c.stationShow('thermo'); c.stationShow('streets'); }
     if (o.id === 'lamps') { c.yardLampsOn(true); c.stationShow('siren'); c.stationShow('board'); c.stationShow('weather'); m.app.snow.blow(); }
-    if (o.id === 'score') { c.stationShow('gauge'); c.stationShow('early'); c.stationShow('brain'); [0, 1, 2].forEach(i => c.led(i)); c.wave(-5.6, -3.4); }
+    if (o.id === 'score') { c.stationShow('gauge'); c.stationShow('early'); c.stationShow('brain'); [0, 1, 2].forEach(i => c.led(i)); c.wave(-5.6 * KK, -3.4 * KK); }
   },
   onStep() {},
   close(m, built) { m.app.qadam.cone.visible = false; if (built) m.city.stationAll(true); else { m.city.station.group.visible = false; m.city.yard.visible = false; } },
@@ -79,7 +79,7 @@ const w1 = {
 const st = m => m.app.stage;
 const lbl = (m, text, x, y, z, o) => st(m).label(text, x, y, z, o);
 const TEAL = 0x4F98A3, GOLD = 0xF2B544, RED = 0xE8674A, INK = 0x1B2340, WHITE = 0xFFFFFF, GREY = 0xA9B6C6, GREEN = 0x5FBF8A;
-const fly = (m, target, zoom, az, pol = 0.9) => m.app.rig.flyTo({ target, zoom: zoom * (innerWidth < innerHeight ? 0.85 : 1), az, pol }, 1.4);
+const fly = (m, target, zoom, az, pol = 0.9) => m.app.rig.flyTo({ target: [target[0] * KK, target[1], target[2] * KK], zoom: zoom * (innerWidth < innerHeight ? 1.15 : 1.3), az, pol }, 1.4);
 
 // ---------- Week 2 — Deliver the parcel to the hospital (BFS / DFS / UCS / A*) ----------
 const G2 = {
@@ -117,7 +117,7 @@ async function runSearch(m, mode) {
   const s = st(m); drawGraph(m, m.step === 1); const r = search(mode);
   for (const n of r.order) { s.pulse(m.g2.disc[n], n === 'G' ? RED : TEAL); await s.wait(0.32); }
   const pts = r.path.map(k => G2.pos[k]); s.tube(pts, GOLD, 0.06); await s.wait(0.5);
-  const car = s.car(GOLD); car.position.set(pts[0][0], 0, pts[0][1]); await s.move(car, pts, r.cost * 0.3);
+  const car = s.car(GOLD); st(m).place(car, pts[0][0], pts[0][1], 0); await s.move(car, pts, r.cost * 0.3);
   m.last = r; m.live(); return r;
 }
 const algName = { bfs: 'BFS', dfs: 'DFS', ucs: 'UCS', astar: 'A*' };
@@ -157,7 +157,7 @@ function drawPlots(m) {
 }
 async function walk(m, from, to, stopAt) {
   const s = st(m), q = m.app.qadam, path = []; for (let i = from; i <= to; i++) path.push([PX(i), PZ + 0.55]);
-  q.target = null; q.g.position.set(path[0][0], 0, path[0][1]);
+  q.target = null; st(m).place(q.g, path[0][0], path[0][1], 0);
   if (path.length > 1) await s.move(q.g, path, (to - from) * 0.55);
   lbl(m, stopAt, PX(to), PLOTS[to] * 0.2 + 0.95, PZ, { size: 0.3, bg: 'rgba(242,181,68,0.96)' });
 }
@@ -181,7 +181,7 @@ const w3 = {
     { kind: 'pick', t: L('Help Qadam reach the 9', 'Помоги Qadam дойти до 9', 'Qadam-ға 9-ға жетуге көмектес'), i: L('How can he get out of the dip?', 'Как ему выбраться из ямы?', 'Ол шұңқырдан қалай шығады?'),
       opts: [
         { id: 'same', icon: 'reset', l: L('Start again from spot 1', 'Начать снова с участка 1', '1-учаскеден қайта бастау'), why: L('From the same start he gets stuck at the same 5.', 'С того же места он снова застрянет на 5.', 'Сол орыннан ол тағы 5-те тұрып қалады.') },
-        { id: 'anneal', icon: 'snow', ok: true, l: L('Sometimes step down', 'Иногда шагать вниз', 'Кейде төмен басу'), play: async m => { await walk(m, 1, 7, '9 ✓'.replace(' ✓', '')); m.app.city.wave(PX(7), PZ); } },
+        { id: 'anneal', icon: 'snow', ok: true, l: L('Sometimes step down', 'Иногда шагать вниз', 'Кейде төмен басу'), play: async m => { await walk(m, 1, 7, '9 ✓'.replace(' ✓', '')); m.app.city.wave(PX(7) * KK, PZ * KK); } },
         { id: 'look', icon: 'target', l: L('Only look at neighbours', 'Смотреть только на соседей', 'Тек көршілерге қарау'), why: L('That is exactly what hill climbing does — that’s why it got stuck.', 'Именно так и делает hill climbing — поэтому он и застрял.', 'Hill climbing дәл солай істейді — сондықтан тұрып қалды.') },
       ],
       learn: L('This is simulated annealing: accepting a worse step now and then helps escape a local maximum.', 'Это имитация отжига: иногда принять худший шаг, чтобы выбраться из локального максимума.', 'Бұл күйдіруді имитациялау: кейде нашар қадамды қабылдау жергілікті максимумнан шығуға көмектеседі.'),
@@ -250,7 +250,7 @@ const w4 = {
 const QCURVE = [12, 11, 11, 10, 9, 9, 8, 7, 7, 6, 6, 5, 5, 4, 4, 4, 3, 3, 3, 3];
 function queue(m, n) {
   const s = st(m); m.q5 = m.q5 || [];
-  while (m.q5.length < 12) { const c = s.car([0xC4846A, 0x8DA3B8, 0xEFE6D6, 0x4F98A3][m.q5.length % 4], 1.2); c.position.set(4.95, 0, -1.9 - m.q5.length * 0.5); c.rotation.y = Math.PI; m.q5.push(c); }
+  while (m.q5.length < 12) { const c = s.car([0xC4846A, 0x8DA3B8, 0xEFE6D6, 0x4F98A3][m.q5.length % 4], 1.2); st(m).place(c, 4.95, -1.9 - m.q5.length * 0.5, 0); c.rotation.y = Math.PI; m.q5.push(c); }
   m.q5.forEach((c, i) => { c.visible = i < n; });
   m.qn = n; m.live();
 }
@@ -310,7 +310,7 @@ const w6 = {
     { kind: 'run', t: L('The wind sensor went off too', 'Сработал и датчик ветра', 'Жел датчигі де іске қосылды'), i: L('Two independent signals: update the chance.', 'Два независимых сигнала — обнови вероятность.', 'Екі тәуелсіз сигнал — ықтималдықты жаңарт.'),
       btn: L('Add the second signal', 'Добавить второй сигнал', 'Екінші сигналды қосу'), icon: 'sensor', live: live6,
       enter: m => lbl(m, tr(L('Sensor 2', 'Датчик 2', '2-датчик')), 7.9, 2.2, -1.6, { size: 0.28, bg: 'rgba(232,103,74,0.95)', fg: '#fff' }),
-      go: async m => { const s = st(m); prob(m, 0.692); await s.wait(0.8); [[-8, -1.05], [8, -1.05]].forEach((p0, k) => { const c = s.car(0xF29B3A, 1.8); c.position.set(p0[0], 0, p0[1] - k * 0.26); s.move(c, k ? [[8, -1.35], [-8, -1.35]] : [[-8, -1.05], [8, -1.05]], 6); }); m.app.snow.blow(); await s.wait(1.2); },
+      go: async m => { const s = st(m); prob(m, 0.692); await s.wait(0.8); [[-8, -1.05], [8, -1.05]].forEach((p0, k) => { const c = s.car(0xF29B3A, 1.8); st(m).place(c, p0[0], p0[1] - k * 0.26, 0); s.move(c, k ? [[8, -1.35], [-8, -1.35]] : [[-8, -1.05], [8, -1.05]], 6); }); m.app.snow.blow(); await s.wait(1.2); },
       learn: L('Now ≈\u00A069%: the city closes the schools and sends out the snowploughs.', 'Теперь ≈\u00A069\u00A0%: город закрывает школы и выводит снегоуборщики.', 'Енді ≈\u00A069\u00A0%: қала мектептерді жауып, қар тазалағыштарды шығарады.'),
       h: [L('Press the button.', 'Нажми кнопку.', 'Батырманы бас.'), L('Each independent signal multiplies the odds by 4.5.', 'Каждый независимый сигнал умножает шансы в 4.5 раза.', 'Әр тәуелсіз сигнал мүмкіндікті 4.5 есе көбейтеді.')] },
   ],
@@ -330,7 +330,7 @@ const w7 = {
       h: [L('Press the button and watch the clouds.', 'Нажми кнопку и смотри на облака.', 'Батырманы басып, бұлттарға қара.'), L('A big cloud means a likely stop.', 'Большое облако — вероятная остановка.', 'Үлкен бұлт — ықтимал аялдама.')] },
     { kind: 'pick', t: L('Send the passenger to the right stop', 'Отправь пассажира на нужную остановку', 'Жолаушыны дұрыс аялдамаға жібер'), i: L('Pick the most likely stop.', 'Выбери самую вероятную остановку.', 'Ең ықтимал аялдаманы таңда.'),
       opts: [0, 1, 2].map(k => ({ id: 's' + k, icon: 'bus', ok: k === 1, l: L(`Stop ${k + 1}`, `Остановка ${k + 1}`, `${k + 1}-аялдама`), why: L(`Only ${[10, 70, 20][k]}% for this stop.`, `У этой остановки только ${[10, 70, 20][k]} %.`, `Бұл аялдамада тек ${[10, 70, 20][k]} %.`),
-        play: k === 1 ? async m => { const s = st(m), bus = s.car(GOLD, 2); bus.position.set(-2.2, 0, 6.2); await s.move(bus, [[-2.2, 6.2], [-0.9, 7.2], STOPS[1]], 1.6); } : undefined })),
+        play: k === 1 ? async m => { const s = st(m), bus = s.car(GOLD, 2); st(m).place(bus, -2.2, 6.2, 0); await s.move(bus, [[-2.2, 6.2], [-0.9, 7.2], STOPS[1]], 1.6); } : undefined })),
       learn: L('Stop 2 has 70% — the bus is there.', 'У остановки 2 — 70\u00A0%, автобус там.', '2-аялдамада 70\u00A0% — автобус сонда.'),
       h: [L('Look at the biggest cloud.', 'Смотри на самое большое облако.', 'Ең үлкен бұлтқа қара.'), L('Compare 10%, 70% and 20%.', 'Сравни 10\u00A0%, 70\u00A0% и 20\u00A0%.', '10\u00A0%, 70\u00A0% және 20\u00A0%-ды салыстыр.')] },
     { kind: 'pick', t: L('Now the whole route of the day', 'Теперь весь маршрут за день', 'Енді күндік толық маршрут'), i: L('Which algorithm gives the most likely sequence of stops?', 'Какой алгоритм даёт самую вероятную последовательность остановок?', 'Қай алгоритм аялдамалардың ең ықтимал тізбегін береді?'),
@@ -349,10 +349,10 @@ const w7 = {
 const MAIL = [[0.97, 1], [0.91, 1], [0.84, 1], [0.72, 1], [0.66, 0], [0.4, 0], [0.3, 0], [0.22, 0], [0.1, 0], [0.05, 0]];
 const INBOX = [5.3, 4.95], SPAMB = [7.3, 5.6], POST = [6.3, 5.6];
 function sortMail(m, t) {
-  const s = st(m); m.env = m.env || MAIL.map(() => { const e = new THREE.Mesh(new RoundedBoxGeometry(0.34, 0.06, 0.24, 2, 0.02), mat(0xFFFFFF, { roughness: 0.5 })); e.castShadow = true; e.position.set(POST[0], 0.3, POST[1]); s.g.add(e); return e; });
+  const s = st(m); m.env = m.env || MAIL.map(() => { const e = new THREE.Mesh(new RoundedBoxGeometry(0.34, 0.06, 0.24, 2, 0.02), mat(0xFFFFFF, { roughness: 0.5 })); e.castShadow = true; st(m).place(e, POST[0], POST[1], 0.3); s.g.add(e); return e; });
   let fp = 0, fn = 0;
   MAIL.forEach(([p, spam], i) => { const toSpam = p >= t; if (toSpam && !spam) fp++; if (!toSpam && spam) fn++; const B = toSpam ? SPAMB : INBOX, k = i % 5, j = Math.floor(i / 5);
-    const e = m.env[i]; e.material = mat(spam ? 0xE8674A : 0xF7F5F0, { roughness: 0.5 }); s.move(e, [[e.position.x, e.position.z], [B[0] - 0.5 + k * 0.25, B[1] + j * 0.3]], 0.7); e.position.y = 0.14; });
+    const e = m.env[i]; e.material = mat(spam ? 0xE8674A : 0xF7F5F0, { roughness: 0.5 }); s.move(e, [[e.position.x / KK, e.position.z / KK], [B[0] - 0.5 + k * 0.25, B[1] + j * 0.3]], 0.7); e.position.y = 0.14; });
   m.err = [fp, fn]; m.live && m.live();
 }
 const w8 = {
@@ -368,7 +368,7 @@ const w8 = {
     { kind: 'pick', t: L('Send out the snowplough?', 'Выводить снегоуборщик?', 'Қар тазалағышты шығару керек пе?'), i: L('Snow is 40% likely. A trip costs 10; without it, snow costs 50.', 'Снег с вероятностью 40\u00A0%. Выезд стоит 10, без него снег обойдётся в 50.', 'Қар 40\u00A0% ықтимал. Шығу 10 тұрады, онсыз қар 50-ге түседі.'),
       enter: m => st(m).clear(),
       opts: [
-        { id: 'go', icon: 'arrow', ok: true, l: L('Send it (−10)', 'Выводить (−10)', 'Шығару (−10)'), play: async m => { const s = st(m), c = s.car(0xF29B3A, 1.8); c.position.set(4.8, 0, -6); await s.move(c, [[4.8, -6], [4.8, -1.3], [4.85, 4.1], [4.2, 7.2]], 3); } },
+        { id: 'go', icon: 'arrow', ok: true, l: L('Send it (−10)', 'Выводить (−10)', 'Шығару (−10)'), play: async m => { const s = st(m), c = s.car(0xF29B3A, 1.8); st(m).place(c, 4.8, -6, 0); await s.move(c, [[4.8, -6], [4.8, -1.3], [4.85, 4.1], [4.2, 7.2]], 3); } },
         { id: 'stay', icon: 'lock', l: L('Keep it (−20 on average)', 'Не выводить (в среднем −20)', 'Шығармау (орташа −20)'), why: L('0.4 · (−50) = −20, which is worse than −10.', '0.4 · (−50) = −20 — это хуже, чем −10.', '0.4 · (−50) = −20 — бұл −10-нан нашар.') },
       ],
       learn: L('This is expected utility: pick the action with the best average outcome.', 'Это ожидаемая полезность: выбираем действие с лучшим средним исходом.', 'Бұл күтілетін пайдалылық: орташа нәтижесі ең жақсы әрекетті таңдаймыз.'),
@@ -409,7 +409,7 @@ const w9 = {
 };
 
 // ---------- Week 10 — City assistant on Bayterek (LLMs, safety) ----------
-const say = (m, text, ok = true) => { const s = st(m); if (m.bub) s.g.remove(m.bub); m.bub = lbl(m, text, 0, 5.2, -2.7, { size: 0.42, bg: ok ? 'rgba(255,255,255,0.96)' : 'rgba(232,103,74,0.95)', fg: ok ? '#1B2340' : '#fff' }); m.city.wave(0, -2.7); };
+const say = (m, text, ok = true) => { const s = st(m); if (m.bub) s.g.remove(m.bub); m.bub = lbl(m, text, 0, 5.2, -2.7, { size: 0.42, bg: ok ? 'rgba(255,255,255,0.96)' : 'rgba(232,103,74,0.95)', fg: ok ? '#1B2340' : '#fff' }); m.city.wave(0, -2.7 * KK); };
 const w10 = {
   start(m) { fly(m, [0, 3.0, -2.7], 0.6, -0.15, 0.98); },
   steps: [

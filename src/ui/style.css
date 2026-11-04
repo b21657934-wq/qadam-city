@@ -271,7 +271,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webki
 @media (min-width:760px){
   .hud{left:24px;right:auto;top:24px;width:420px}
   .sheet{left:24px;right:auto;bottom:24px;width:420px;max-height:calc(100vh - 128px)}
-  .toast{top:100px}
+  .toast{top:100px;left:calc(50% + 222px)}
 }
 @media (prefers-reduced-motion:reduce){*{animation-duration:1ms!important;transition-duration:1ms!important}}
 

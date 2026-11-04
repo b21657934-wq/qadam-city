@@ -6,6 +6,7 @@ import { Mission } from './missions/engine.js';
 import { SPECS } from './missions/specs.js';
 import logoSvg from './ui/logo.svg';
 import { Book } from './book/book.js';
+import { K } from './world/city.js';
 
 const logoURL = 'data:image/svg+xml,' + encodeURIComponent(logoSvg);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -32,7 +33,7 @@ export class App {
     const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = night ? '#0E1430' : '#F1F4F7';
   }
   toast(msg) { const e = this.toastEl; e.textContent = msg; e.classList.add('on'); clearTimeout(this.tt); this.tt = setTimeout(() => e.classList.remove('on'), 2200); }
-  syncInset() { const h = this.sheet.classList.contains('hide') ? 0 : this.sheet.offsetHeight + 16; this.rig.setUiBottom(innerWidth >= 760 ? 0 : h); }
+  syncInset() { const hidden = this.sheet.classList.contains('hide'), desk = innerWidth >= 760, h = hidden ? 0 : this.sheet.offsetHeight + 16; this.rig.setUiBottom(desk ? 0 : h); this.rig.setUiLeft(desk && !hidden ? 444 : 0); }
   setSheet(html, bind, opts = {}) {
     const s = this.sheet;
     s.classList.remove('hide');
@@ -70,8 +71,8 @@ export class App {
     const [tt, tx, ic] = steps[i];
     this.city.setBeacon(i === 1 ? 0 : -1);
     if (i === 0) this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, az: -0.62, pol: 0.98 }, 1.6);
-    if (i === 1) this.rig.flyTo({ target: [-5.6, 0.6, -3.0], zoom: 0.62, az: -0.9, pol: 0.92 }, 1.6);
-    if (i === 2) this.rig.flyTo({ target: [0.2, 0.6, 0.6], zoom: 0.5, az: -0.2, pol: 0.9 }, 1.6);
+    if (i === 1) this.rig.flyTo({ target: [-5.6 * K, 0.6, -3.0 * K], zoom: 0.62, az: -0.9, pol: 0.92 }, 1.6);
+    if (i === 2) this.rig.flyTo({ target: [0.2 * K, 0.6, 0.6 * K], zoom: 0.5, az: -0.2, pol: 0.9 }, 1.6);
     this.setSheet(`
       <div class="row"><span class="tag">${esc(t('stepOf', { n: i + 1, m: 3 }))}</span><div class="grow"></div>${i < 2 ? `<button class="btn btn-ghost" data-act="obDone" style="height:36px">${esc(t('skip'))}</button>` : ''}</div>
       <div class="row mt3"><div class="tile">${icon(ic)}</div><div class="h3 grow">${esc(t(tt))}</div></div>
@@ -87,6 +88,7 @@ export class App {
       <p class="sub mt3">${esc(t('finale'))}</p>
       <button class="btn btn-primary btn-block mt4" data-act="tour">${icon('orbit')}${esc(t('tour'))}</button>`);
     const d = D[b];
+    if (!store.get().gest) { store.set({ gest: true }); setTimeout(() => this.toast(t(matchMedia('(pointer: coarse)').matches ? 'gestureHint' : 'gestureHintDesk')), 900); }
     this.setSheet(`
       <div class="row"><div class="tile">${icon(d.icon)}</div><div class="grow"><div class="label">${esc(t('nextGoal'))}</div><div class="h3">${esc(tr(d.title))}</div></div><span class="tag gold">${esc(t('week', { n: b + 1 }))}</span></div>
       <p class="sub mt3">${esc(tr(d.task))}</p>
@@ -122,7 +124,7 @@ export class App {
       <div class="cap mt3">${esc(t('team'))}<br>${esc(t('course'))}</div>`);
   }
   vLibrary() {
-    this.rig.flyTo({ target: [0.2, 0.6, 0.6], zoom: 0.45, az: -0.25, pol: 0.88 }, 1.3);
+    this.rig.flyTo({ target: [0.2 * K, 0.6, 0.6 * K], zoom: 0.45, az: -0.25, pol: 0.88 }, 1.3);
     this.city.setBeacon(-1);
     this.setSheet(`
       <div class="row"><div class="tile">${icon('book')}</div><div class="grow"><div class="h3">${esc(t('library'))}</div><div class="cap">${esc(t('librarySub'))}</div></div><button class="icon-btn" data-act="home" aria-label="${esc(t('close'))}">${icon('close')}</button></div>
@@ -183,7 +185,7 @@ export class App {
     this.busy = true; this.hideSheet(); this.rig.autoOrbit = false;
     if (!store.get().night) { this.setTheme(true); this.renderHud(); }
     await this.rig.flyTo({ target: [0, 1.2, 0], zoom: 0.62, pol: 0.78, az: this.rig.az + 0.6 }, 2.2, true);
-    await this.rig.flyTo({ target: [0, 2.4, -2.7], zoom: 0.42, pol: 1.05, az: this.rig.az + 1.8 }, 4.5, true);
+    await this.rig.flyTo({ target: [0, 2.4, -2.7 * K], zoom: 0.42, pol: 1.05, az: this.rig.az + 1.8 }, 4.5, true);
     await this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, pol: 0.9, az: this.rig.az + 1.4 }, 3.5, true);
     this.rig.autoOrbit = true; this.busy = false; this.show('home');
   }
