@@ -312,6 +312,7 @@ export class City {
     const bm = glowMat(P.gold, 0.15, 1.6);
     [-1, 1].forEach(sd => { const p = mesh(new THREE.BoxGeometry(0.15, 0.015, 0.2), bm, false); p.position.set(sd * 0.075, 0.94, 0.36); p.rotation.z = sd * 0.3; p.rotation.x = Math.PI / 2 - 0.25; g.add(p); });
     this.library = g;
+    this.libBake = () => { if (this.libBaked) return; this.libBaked = true; this.bakeObjects([g]); g.visible = false; };
   }
   stationBuild(x, z) {
     const d = this.cur; this.block(x, z, 1.1, 1.1);
@@ -596,11 +597,12 @@ export class City {
       const on = d.i < n;
       if (d.plot) d.plot.visible = !on;
       if (d.i === 0 && this.yard) { this.yard.visible = on; if (on) this.yardLampsOn(false); else this.yardLamps.forEach(l => l.scale.setScalar(0.001)); }
-      if (!on) { d.items.forEach(o => { o.visible = false; }); d.roads.forEach(r => { r.live = false; }); d.built = false; return; }
+      if (!on) { this.unbake(d); d.items.forEach(o => { o.visible = false; }); d.roads.forEach(r => { r.live = false; }); d.built = false; return; }
       if (d.built) return;
       d.built = true;
       const anim = d.i === animate && !REDUCED;
       d.items.forEach(o => {
+        if (o.userData.baked) return;
         const was = o.visible; o.visible = true;
         if (o.userData.station) { this.stationAll(true); if (was) return; }
         if (o.userData.road) {
@@ -611,6 +613,7 @@ export class City {
         else if (anim) { o.scale.setScalar(0.001); this.anims.push({ kind: 'grow', o, t0: now + o.userData.delay + 0.2 }); }
         else o.scale.setScalar(o.userData.baseScale || 1);
       });
+      if (anim) setTimeout(() => this.bake(d), (d.items.reduce((a, o) => Math.max(a, o.userData.delay || 0), 0) + 2.4) * 1000); else this.bake(d);
       for (let k = 0; k < this.wins.length; k++) if (this.wins[k].d === d.i) this.winBorn.array[k] = anim ? now + this.wins[k].born : -10;
       this.winBorn.needsUpdate = true;
     });
@@ -636,6 +639,34 @@ export class City {
     this.anims = this.anims.filter(a => !d.items.includes(a.o) && !(a.r && a.r.district === i));
     d.items.forEach(o => { o.visible = false; });
   }
+  // merge a finished district's static meshes: one draw call per material
+  bake(d) {
+    if (d.baked || !d.built) return;
+    d.bakeGroup = this.bakeObjects(d.items.filter(o => !o.userData.station && !o.userData.road && o.visible));
+    d.items.forEach(o => { if (!o.userData.station && !o.userData.road && o.visible) { o.visible = false; o.userData.baked = true; } });
+    d.baked = true;
+  }
+  bakeObjects(objs) {
+    const by = new Map(), vc = [], glowSet = new Set(glow.map(g => g[0]));
+    objs.forEach(o => {
+      o.updateMatrixWorld(true);
+      o.traverse(m => {
+        if (!m.isMesh || m.isInstancedMesh || m.material.map || !m.visible) return;
+        const src = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry;
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', src.attributes.position.clone()); g.setAttribute('normal', src.attributes.normal.clone());
+        g.applyMatrix4(m.matrixWorld);
+        const mt = m.material;
+        if (glowSet.has(mt) || mt.transparent || mt.metalness > 0.1 || mt.side === THREE.DoubleSide) { if (!by.has(mt)) by.set(mt, []); by.get(mt).push(g); }
+        else { const n = g.attributes.position.count, c = new Float32Array(n * 3), col = mt.color; for (let k = 0; k < n; k++) c.set([col.r, col.g, col.b], k * 3); g.setAttribute('color', new THREE.BufferAttribute(c, 3)); vc.push(g); }
+      });
+    });
+    const grp = new THREE.Group();
+    if (vc.length) { grp.add(mesh(mergeGeometries(vc), this.vcMat || (this.vcMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78 })))); vc.forEach(g => g.dispose()); }
+    by.forEach((gs, m) => { grp.add(mesh(mergeGeometries(gs), m)); gs.forEach(g => g.dispose()); });
+    this.root.add(grp); return grp;
+  }
+  unbake(d) { if (!d.baked) return; this.root.remove(d.bakeGroup); d.bakeGroup.traverse(m => m.geometry && m.geometry.dispose()); d.items.forEach(o => { o.userData.baked = false; }); d.baked = false; }
   roadK(r, k) {
     r.mesh.geometry.setDrawRange(0, Math.floor(r.n * k) * 6);
     r.parts.forEach(([m, c]) => { m.count = Math.floor(c * k); });

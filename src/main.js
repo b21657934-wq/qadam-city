@@ -30,9 +30,10 @@ requestAnimationFrame(() => {
   const snow = new Snow(engine);
   if (Q.has('demo')) { const n = +Q.get('demo'); for (let i = 0; i < 10; i++) if (i < n) store.get().stars[i] = store.get().stars[i] || 3; else delete store.get().stars[i]; store.set({ onboarded: true }); }
   city.setBuilt(store.builtCount());
+  city.libBake();
   const stage = new Stage(engine);
   const app = window.__app = new App({ engine, rig, city, qadam, snow });
-  app.stage = stage;
+  app.stage = stage; window.__engine = engine;
   app.setTheme(night, true);
   engine.resize();
   if (!store.get().onboarded && !Q.has('view')) app.show('onboard', 0); else app.show(Q.get('view') || 'home', Q.has('arg') ? +Q.get('arg') : undefined);

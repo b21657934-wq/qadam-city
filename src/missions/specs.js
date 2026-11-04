@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { M1, S, tr } from '../i18n.js';
 import { U } from '../world/engine.js';
+import { store } from '../store.js';
 import { mat } from '../world/city.js';
 const L = (en, ru, kk) => ({ en, ru, kk });
 const YES = L('Yes', 'Да', 'Иә'), NO = L('No', 'Нет', 'Жоқ');
@@ -160,6 +161,13 @@ async function walk(m, from, to, stopAt) {
   if (path.length > 1) await s.move(q.g, path, (to - from) * 0.55);
   lbl(m, stopAt, PX(to), PLOTS[to] * 0.2 + 0.95, PZ, { size: 0.3, bg: 'rgba(242,181,68,0.96)' });
 }
+const ZW = { 1: [-4.6, -7.2], 2: [-4.6, -5.6], 3: [-2.9, -6.4], 4: [-1.2, -5.6], 5: [-1.2, -7.2] }, ZE = [[1, 2], [1, 3], [2, 3], [2, 4], [3, 4], [4, 5], [3, 5]], ZC = [0xFFFFFF, GOLD, TEAL, 0xC4846A];
+function zones(m, c) {
+  const s = st(m); (m.zz || []).forEach(o => s.g.remove(o)); m.zz = [];
+  if (!m.zplate) { m.zplate = s.disc(-2.9, -6.4, 2.6, 0xFFFFFF, { opacity: 0.55, ring: false, y: 1.22 }); m.zplate.scale.set(1, 1, 0.55); }
+  ZE.forEach(([a, b]) => m.zz.push(s.line(ZW[a], ZW[b], c[a] && c[a] === c[b] ? RED : INK, { opacity: c[a] && c[a] === c[b] ? 0.9 : 0.4, w: c[a] && c[a] === c[b] ? 0.12 : 0.07, y: 1.24 })));
+  for (const k in ZW) { const d = s.disc(ZW[k][0], ZW[k][1], 0.42, ZC[c[k] || 0], { y: 1.25 }); m.zz.push(d, d.userData.ring, lbl(m, String(k), ZW[k][0], 1.75, ZW[k][1], { size: 0.3 })); }
+}
 const w3 = {
   start(m) { fly(m, [-0.6, 0.6, -4.6], 0.82, -0.05, 0.84); },
   cleanup(m) { m.app.qadam.goTo(1.8, 1.5); },
@@ -180,7 +188,8 @@ const w3 = {
       h: [L('Staying “greedy” keeps him stuck.', 'Если всегда жадничать, он так и застрянет.', 'Әрқашан ашкөз болса, ол тұрып қалады.'), L('To climb a higher hill you may need to go down first.', 'Чтобы подняться выше, иногда надо сначала спуститься.', 'Биікке шығу үшін кейде алдымен түсу керек.')] },
     { kind: 'widget', w: 'color', t: L('Bus lines without conflicts', 'Автобусы без конфликтов', 'Қайшылықсыз автобустар'),
       i: L('Tap a zone to give it a line. Neighbours need different lines.', 'Нажми на зону, чтобы дать ей линию. У соседей — разные линии.', 'Аймаққа желі беру үшін бас. Көршілерде әртүрлі желі болсын.'),
-      enter: m => { st(m).clear(); m.app.qadam.goTo(-3.4, -4.2); },
+      enter: m => { st(m).clear(); m.zplate = null; m.app.qadam.goTo(-3.4, -4.2); zones(m, {}); fly(m, [-2.9, 1.2, -5.9], 0.42, -0.1, 0.78); },
+      onWidget: (m, ws) => zones(m, ws.c || {}),
       data: { nodes: { 1: [60, 50], 2: [60, 150], 3: [160, 100], 4: [260, 150], 5: [260, 50] }, edges: [[1, 2], [1, 3], [2, 3], [2, 4], [3, 4], [4, 5], [3, 5]] },
       learn: L('This is a CSP: every constraint holds, so the buses run without clashes.', 'Это CSP: все ограничения выполнены, автобусы едут без конфликтов.', 'Бұл CSP: барлық шектеу орындалды, автобустар қайшылықсыз жүреді.'),
       h: [L('Start with the zone that has the most neighbours.', 'Начни с зоны, у которой больше всего соседей.', 'Көршісі ең көп аймақтан баста.'), L('Zone 3 touches four zones — colour it first.', 'Зона 3 касается четырёх зон — раскрась её первой.', '3-аймақ төрт аймаққа тиеді — алдымен соны боя.')] },
@@ -371,8 +380,8 @@ const w8 = {
 // ---------- Week 9 — Light up the city (neural networks) ----------
 const LOSS = [1, 0.86, 0.74, 0.63, 0.54, 0.46, 0.39, 0.33, 0.28, 0.23, 0.19, 0.16, 0.13, 0.11, 0.09, 0.07, 0.06, 0.05];
 const w9 = {
-  start(m) { fly(m, [1.0, 0.8, 1.5], 0.95, 2.4, 0.8); },
-  cleanup() { U.uForce.value = 0; },
+  start(m) { fly(m, [1.0, 0.8, 1.5], 0.95, 2.4, 0.8); if (!m.app.engine.nightTo) m.app.engine.toward(0.55); },
+  cleanup(m) { U.uForce.value = 0; m.app.engine.toward(store.get().night ? 1 : 0); },
   steps: [
     { kind: 'run', t: L('Light up the city', 'Включи свет в городе', 'Қалаға жарық жақ'), i: L('Train the grid’s network: the lower the error, the more windows glow.', 'Обучи сеть энергосистемы: чем меньше ошибка, тем больше горит окон.', 'Энергожүйе желісін үйрет: қате азайған сайын терезе көбірек жанады.'),
       enter: m => { st(m).clear(); m.loss = 1; U.uForce.value = 0; }, btn: L('Train the network', 'Обучить сеть', 'Желіні үйрету'), icon: 'bolt',

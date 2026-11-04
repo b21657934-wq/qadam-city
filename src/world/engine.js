@@ -95,9 +95,10 @@ export class Engine {
     this.hooks.forEach(f => f.resize && f.resize(w, h));
   }
   setNight(on, instant) {
-    this.nightFrom = this.night; this.nightTo = on ? 1 : 0; this.nightT = instant || REDUCED ? 1 : 0;
+    this.nightFrom = this.night; this.nightTo = on ? 1 : 0; this.nightT = instant || REDUCED ? 1 : 0; this.nightStart = performance.now();
     if (instant || REDUCED) this.applyLook(this.nightTo);
   }
+  toward(v) { this.nightFrom = this.night; this.nightTo = v; this.nightT = REDUCED ? 1 : 0; this.nightStart = performance.now(); if (REDUCED) this.applyLook(v); }
   applyLook(n) {
     this.night = n; U.uNight.value = n;
     const D = LOOK.day, N = LOOK.night, c = new THREE.Color(), mix = (a, b) => c.set(a).lerp(new THREE.Color(b), n).clone();
@@ -118,7 +119,7 @@ export class Engine {
     if (document.hidden || this.paused) { this.clock.getDelta(); return; }
     const dt = Math.min(this.clock.getDelta(), 0.05);
     U.uTime.value = performance.now() / 1000 - this.t0;
-    if (this.nightT < 1) { this.nightT = Math.min(1, this.nightT + dt / 1.6); this.applyLook(lerp(this.nightFrom, this.nightTo, ease(this.nightT))); }
+    if (this.nightT < 1) { this.nightT = Math.min(1, (performance.now() - this.nightStart) / 1600); this.applyLook(lerp(this.nightFrom, this.nightTo, ease(this.nightT))); }
     for (const h of this.hooks) h.update && h.update(dt, U.uTime.value);
     const useBloom = this.quality > 0 && this.night > 0.03;
     if (useBloom) this.composer.render(); else this.renderer.render(this.scene, this.camera);

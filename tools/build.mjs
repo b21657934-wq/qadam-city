@@ -40,4 +40,5 @@ const html = `<!DOCTYPE html>
 <script>${js.replace(/<\/script/g, '<\\/script')}</script>
 </body></html>`;
 fs.writeFileSync(path.join(out, 'index.html'), html);
+if (!process.env.DEV && !process.env.TEST) { fs.writeFileSync(path.join(root, 'index.html'), html); fs.writeFileSync(path.join(root, '.nojekyll'), ''); }
 console.log('built', (html.length / 1024).toFixed(0) + ' KB');

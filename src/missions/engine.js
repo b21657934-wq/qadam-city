@@ -114,7 +114,7 @@ export class Mission {
         ok: () => { if (this.lock) return; this.lock = true; setTimeout(() => this.stepDone(), 450); },
         bad: msg => { this.mistakes++; this.fb(msg); },
         fb: msg => this.fb(msg),
-        redraw: () => { const w = root.querySelector('.fig-wrap'); w.innerHTML = W[s.w].render(this.ws, s); W[s.w].bind(w, this.ws, api, s); },
+        redraw: () => { const w = root.querySelector('.fig-wrap'); w.innerHTML = W[s.w].render(this.ws, s); W[s.w].bind(w, this.ws, api, s); s.onWidget && s.onWidget(this, this.ws); },
       };
       W[s.w].bind(root.querySelector('.fig-wrap'), this.ws, api, s);
     }
