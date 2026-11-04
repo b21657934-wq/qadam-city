@@ -104,6 +104,28 @@ export const W = {
       });
     },
   },
+  // CSP, one variable at a time: give the highlighted zone a line that no neighbour uses
+  csp: {
+    render(st, step) {
+      const { nodes, edges, order } = step.data; st.c = st.c || {}; st.k = st.k || 0;
+      const cur = order[st.k];
+      let s = '<svg class="fig graph" viewBox="0 0 320 200" role="img">';
+      for (const [a, b] of edges) { const on = cur != null && (a === cur || b === cur); s += `<line class="g-edge ${on ? 'near' : ''}" x1="${nodes[a][0]}" y1="${nodes[a][1]}" x2="${nodes[b][0]}" y2="${nodes[b][1]}"/>`; }
+      for (const k in nodes) { const [x, y] = nodes[k]; s += `<g class="g-node col${st.c[k] || 0} ${+k === cur ? 'cur pulse' : ''}"><circle cx="${x}" cy="${y}" r="22"/><text x="${x}" y="${y + 5}">${k}</text></g>`; }
+      s += '</svg>';
+      if (cur == null) return s;
+      return s + `<p class="q center">${esc(t('cspGive', { n: cur }))}</p><div class="lines">${[1, 2, 3].map(v => `<button class="line-btn col${v}" data-line="${v}"><i></i>${esc(t('line', { n: v }))}</button>`).join('')}</div>`;
+    },
+    bind(root, st, api, step) {
+      root.querySelectorAll('[data-line]').forEach(b => b.addEventListener('click', () => {
+        const { edges, order } = step.data, z = order[st.k], v = +b.dataset.line;
+        const nb = edges.filter(e => e[0] === z || e[1] === z).map(e => e[0] === z ? e[1] : e[0]).find(n => st.c[n] === v);
+        if (nb != null) { shakeEl(b); return api.bad(t('cspConflict', { n: nb, v })); }
+        st.c[z] = v; st.k++; api.fb(''); api.redraw();
+        if (st.k >= order.length) api.ok();
+      }));
+    },
+  },
   // game tree: minimax (tap the value each node takes) or alpha-beta (tap pruned leaves)
   tree: {
     render(st, step) {

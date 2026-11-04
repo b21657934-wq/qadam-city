@@ -17,6 +17,7 @@ window.__solve = async function (upto) {
       else if (s.w === 'bfs') { for (const k of s.data.order) { click(node(k)); await sleep(40); } await sleep(1800); }
       else if (s.w === 'path') { for (const k of ['C', 'E', 'B', 'G']) { click(node(k)); await sleep(40); } await sleep(1800); }
       else if (s.w === 'bars') { click(Q(`[data-bar="${s.data.stop}"]`)); await sleep(1800); }
+      else if (s.w === 'csp') { const want = { 1: 3, 2: 2, 3: 1, 4: 3, 5: 2 }; for (const z of s.data.order) { click(Q(`[data-line="${want[z]}"]`)); await sleep(60); } await sleep(1200); }
       else if (s.w === 'color') { const want = { 1: 1, 2: 2, 3: 3, 4: 1, 5: 2 }; for (const k in want) for (let n = 0; n < want[k]; n++) { click(node(k)); await sleep(20); } await sleep(1800); }
       else if (s.w === 'tree' && s.data.mode === 'minimax') { for (const l of [0, 3, 8]) { click(Q(`[data-leaf="${l}"]`)); await sleep(40); } click(Q('[data-min="0"]')); await sleep(1800); }
       else if (s.w === 'tree') { click(Q('[data-leaf="4"]')); await sleep(20); click(Q('[data-leaf="5"]')); await sleep(20); click(Q('[data-check]')); await sleep(1800); }

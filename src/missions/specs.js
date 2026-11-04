@@ -50,6 +50,7 @@ const w1 = {
         { id: 'wheels', icon: 'wheel', l: L('Wheels', 'Колёса', 'Дөңгелектер'), why: L('Wheels move the robot — that’s an actuator, not a sensor.', 'Колёса двигают робота — это исполнитель, а не датчик.', 'Дөңгелектер роботты қозғайды — бұл орындаушы, сенсор емес.') },
         { id: 'camera', icon: 'camera', ok: true, l: L('Camera', 'Камера', 'Камера') },
         { id: 'siren', icon: 'siren', l: L('Siren', 'Сирена', 'Сирена'), why: L('A siren acts on the world — that’s an actuator.', 'Сирена действует на мир — это исполнитель.', 'Сирена әлемге әсер етеді — бұл орындаушы.') },
+        { id: 'board', icon: 'grid', l: L('Display board', 'Табло', 'Табло'), why: L('A board shows things to people — an actuator, it doesn’t look.', 'Табло показывает людям — это исполнитель, оно не смотрит.', 'Табло адамдарға көрсетеді — бұл орындаушы, ол қарамайды.') },
       ],
       learn: L('That’s a sensor (S in PEAS): how an agent perceives its environment.', 'Это датчик (S в PEAS): через него агент воспринимает среду.', 'Бұл сенсор (PEAS-тағы S): агент ортаны сол арқылы қабылдайды.'),
       h: [L('Which of these brings information in?', 'Что из этого приносит информацию внутрь?', 'Мыналардың қайсысы ақпаратты ішке әкеледі?'), L('Wheels and a siren do things. One option only looks.', 'Колёса и сирена что-то делают. Только одно — смотрит.', 'Дөңгелек пен сирена бір нәрсе істейді. Тек біреуі ғана қарайды.')] },
@@ -59,6 +60,7 @@ const w1 = {
         { id: 'thermo', icon: 'thermo', l: L('Thermometer', 'Термометр', 'Термометр'), why: L('A thermometer only measures — that’s a sensor.', 'Термометр только измеряет — это датчик.', 'Термометр тек өлшейді — бұл сенсор.') },
         { id: 'acc', icon: 'gauge', l: L('Forecast accuracy', 'Точность прогноза', 'Болжам дәлдігі'), why: L('That’s a score, not an action.', 'Это оценка работы, а не действие.', 'Бұл әрекет емес, жұмыс бағасы.') },
         { id: 'lamps', icon: 'lamp', ok: true, l: L('Lamps and siren', 'Фонари и сирена', 'Шамдар мен сирена') },
+        { id: 'wheels2', icon: 'wheel', l: L('Wheels', 'Колёса', 'Дөңгелектер'), why: L('Wheels are actuators too, but they move Qadam — they don’t warn anyone.', 'Колёса тоже исполнители, но они двигают Qadam, а не предупреждают людей.', 'Дөңгелектер де орындаушы, бірақ олар Qadam-ды қозғайды, адамдарды ескертпейді.') },
       ],
       learn: L('Those are actuators (A): how an agent changes the world.', 'Это исполнители (A): через них агент меняет мир.', 'Бұлар орындаушылар (A): агент әлемді солар арқылы өзгертеді.'),
       h: [L('Signalling means changing something people can see or hear.', 'Подать сигнал — значит изменить что-то, что люди видят или слышат.', 'Белгі беру — адамдар көретін не еститін нәрсені өзгерту.'), L('Measuring and scoring don’t change the street.', 'Измерение и оценка улицу не меняют.', 'Өлшеу мен бағалау көшені өзгертпейді.')] },
@@ -68,6 +70,7 @@ const w1 = {
         { id: 'streets', icon: 'city', l: L('Streets of Astana', 'Улицы Астаны', 'Астана көшелері'), why: L('Streets are the environment (E) the agent works in.', 'Улицы — это среда (E), где работает агент.', 'Көшелер — агент жұмыс істейтін орта (E).') },
         { id: 'score', icon: 'target', ok: true, l: L('No crashes, everyone warned', 'Нет аварий, все предупреждены', 'Соғылыс жоқ, бәрі ескертілді') },
         { id: 'cam2', icon: 'camera', l: L('A brighter camera', 'Камера ярче', 'Жарқынырақ камера'), why: L('A camera is a sensor. We score results, not parts.', 'Камера — это датчик. Оценивают результат, а не детали.', 'Камера — сенсор. Бөлшекті емес, нәтижені бағалаймыз.') },
+        { id: 'speed', icon: 'gauge', l: L('Top speed', 'Высокая скорость', 'Жоғары жылдамдық'), why: L('Speed alone is not the goal: a fast robot that crashes scores badly.', 'Скорость сама по себе — не цель: быстрый, но врезающийся робот работает плохо.', 'Жылдамдық өзі мақсат емес: жылдам, бірақ соғылатын робот нашар жұмыс істейді.') },
       ],
       learn: L('That’s the performance measure (P). With E, A and S it makes PEAS — the agent’s task.', 'Это мера качества (P). Вместе с E, A и S это PEAS — описание задачи агента.', 'Бұл өнімділік өлшемі (P). E, A, S-пен бірге бұл PEAS — агенттің міндеті.'),
       h: [L('We judge an agent by what happens in the world.', 'Агента оценивают по тому, что получилось в мире.', 'Агентті әлемде не болғанына қарап бағалайды.'), L('Streets are E, the camera is S. What is left?', 'Улицы — это E, камера — S. Что осталось?', 'Көшелер — E, камера — S. Не қалды?')] },
@@ -98,12 +101,13 @@ export function search(mode) {
       const nb = nbrs(n).filter(([k]) => !seen.has(k)); (mode === 'dfs' ? nb.reverse() : nb).forEach(([k]) => { seen.add(k); front.push([k, [...path, k]]); });
     }
   }
-  const front = [[mode === 'astar' ? G2.h.S : 0, 0, 'S', ['S']]], closed = new Set(), order = [];
+  const pr = (g, k) => mode === 'astar' ? g + G2.h[k] : mode === 'greedy' ? G2.h[k] : g;
+  const front = [[pr(0, 'S'), 0, 'S', ['S']]], closed = new Set(), order = [];
   while (front.length) {
     front.sort((a, b) => a[0] - b[0] || (a[2] < b[2] ? -1 : 1));
     const [, g, n, path] = front.shift(); if (closed.has(n)) continue; closed.add(n); order.push(n);
     if (n === 'G') return { order, path, cost: g };
-    nbrs(n).forEach(([k, c]) => { if (!closed.has(k)) front.push([g + c + (mode === 'astar' ? G2.h[k] : 0), g + c, k, [...path, k]]); });
+    nbrs(n).forEach(([k, c]) => { if (!closed.has(k)) front.push([pr(g + c, k), g + c, k, [...path, k]]); });
   }
 }
 function cost(p) { let c = 0; for (let i = 0; i < p.length - 1; i++) c += G2.edges.find(e => (e[0] === p[i] && e[1] === p[i + 1]) || (e[1] === p[i] && e[0] === p[i + 1]))[2]; return c; }
@@ -113,14 +117,26 @@ function drawGraph(m, withH) {
   G2.edges.forEach(([a, b, c]) => { const A = G2.pos[a], B = G2.pos[b]; s.line(A, B, INK, { opacity: 0.35, w: 0.07 }); lbl(m, String(c), (A[0] + B[0]) / 2, 0.35, (A[1] + B[1]) / 2, { size: 0.26 }); });
   for (const k in G2.pos) { const [x, z] = G2.pos[k]; m.g2.disc[k] = s.disc(x, z, 0.3, k === 'G' ? RED : k === 'S' ? GOLD : WHITE); lbl(m, NAME[k] ? tr(NAME[k]) : k + (withH ? ` · h ${G2.h[k]}` : ''), x, 0.75, z, { size: 0.3, bg: k === 'G' ? 'rgba(232,103,74,0.95)' : undefined, fg: k === 'G' ? '#fff' : undefined }); }
 }
+const nm = k => NAME[k] ? tr(NAME[k]) : k;
 async function runSearch(m, mode) {
-  const s = st(m); drawGraph(m, m.step === 1); const r = search(mode);
-  for (const n of r.order) { s.pulse(m.g2.disc[n], n === 'G' ? RED : TEAL); await s.wait(0.32); }
-  const pts = r.path.map(k => G2.pos[k]); s.tube(pts, GOLD, 0.06); await s.wait(0.5);
-  const car = s.car(GOLD); st(m).place(car, pts[0][0], pts[0][1], 0); await s.move(car, pts, r.cost * 0.3);
+  const s = st(m), app = m.app; drawGraph(m, m.step === 1); const r = search(mode);
+  const title = algName[mode], chk = tr(L('Checked crossings', 'Проверено перекрёстков', 'Тексерілген қиылыс'));
+  let n = 0;
+  for (const k of r.order) { n++; s.pulse(m.g2.disc[k], k === 'G' ? RED : TEAL); app.calc(title, [[chk, String(n)], [tr(L('Now checking', 'Сейчас проверяет', 'Қазір тексеруде')), nm(k)]]); await s.wait(0.32); }
+  const pts = r.path.map(k => G2.pos[k]); s.tube(pts, GOLD, 0.06); await s.wait(0.4);
+  const car = s.car(GOLD); st(m).place(car, pts[0][0], pts[0][1], 0); car.rotation.y = Math.atan2(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1]);
+  app.rig.fpStart(car, { eye: 0.55, ahead: 2.4 });
+  const rows = [[chk, String(r.order.length)]]; let g = 0;
+  for (let i = 0; i < r.path.length - 1; i++) {
+    const a = r.path[i], b = r.path[i + 1], c = cost([a, b]); g += c;
+    rows.push(mode === 'astar' ? [`${nm(a)} → ${nm(b)}`, `g ${g} + h ${G2.h[b]} = f ${g + G2.h[b]}`] : [`${nm(a)} → ${nm(b)}`, `+${c} = ${g} ${tr(L('min', 'мин', 'мин'))}`]);
+    app.calc(title, rows.slice(-6)); await s.move(car, [G2.pos[a], G2.pos[b]], c * 0.42);
+  }
+  rows.push([tr(L('Total', 'Итого', 'Барлығы')), `${g} ${tr(L('min', 'мин', 'мин'))}`, g === 9 ? 'ok' : 'no']); app.calc(title, rows.slice(-6));
+  await app.rig.fpEnd();
   m.last = r; m.live(); return r;
 }
-const algName = { bfs: 'BFS', dfs: 'DFS', ucs: 'UCS', astar: 'A*' };
+const algName = { bfs: 'BFS', dfs: 'DFS', ucs: 'UCS', astar: 'A*', greedy: 'Greedy' };
 const res2 = m => m.last ? tr(L('{a}: {c} min · checked {n} crossings', '{a}: {c} мин · проверено перекрёстков: {n}', '{a}: {c} мин · тексерілген қиылыс: {n}')).replace('{a}', algName[m.lastMode]).replace('{c}', m.last.cost).replace('{n}', m.last.order.length) : tr(L('Tap an algorithm to watch it search.', 'Нажми на алгоритм — увидишь, как он ищет.', 'Алгоритмді бас — оның қалай іздейтінін көресің.'));
 const play2 = mode => async m => { m.lastMode = mode; await runSearch(m, mode); };
 const w2 = {
@@ -128,10 +144,11 @@ const w2 = {
   steps: [
     { kind: 'pick', t: L('Deliver the parcel to the hospital fastest', 'Доставь посылку в больницу быстрее всех', 'Сәлемдемені ауруханаға ең жылдам жеткіз'),
       i: L('Numbers are minutes. Pick how to search for the road.', 'Числа — минуты. Выбери, как искать дорогу.', 'Сандар — минуттар. Жолды қалай іздейтінін таңда.'),
-      enter: m => drawGraph(m), live: res2,
+      enter: m => drawGraph(m, true), live: res2,
       opts: [
         { id: 'bfs', icon: 'grid', l: L('BFS', 'BFS', 'BFS'), play: play2('bfs'), why: L('BFS found the route with fewest turns, but it takes 10 min.', 'BFS нашёл путь с меньшим числом поворотов, но он занимает 10 мин.', 'BFS бұрылысы аз жолды тапты, бірақ ол 10 минут алады.') },
         { id: 'dfs', icon: 'route', l: L('DFS', 'DFS', 'DFS'), play: play2('dfs'), why: L('DFS dived deep and took the first route it hit: 10 min.', 'DFS ушёл вглубь и взял первый попавшийся путь: 10 мин.', 'DFS тереңге кетіп, алғашқы кездескен жолды алды: 10 мин.') },
+        { id: 'greedy', icon: 'pin', l: L('Greedy', 'Жадный', 'Ашкөз'), play: play2('greedy'), why: L('Greedy search trusts only the guess h and took a 10-min route.', 'Жадный поиск верит только догадке h и выбрал путь за 10 мин.', 'Ашкөз іздеу тек h болжамына сенеді, 10 минуттық жолды таңдады.') },
         { id: 'ucs', icon: 'target', ok: true, l: L('UCS', 'UCS', 'UCS'), play: play2('ucs') },
       ],
       learn: L('This is UCS: it always extends the cheapest route so far — 9 minutes.', 'Это UCS: он всегда продолжает самый дешёвый путь — 9 минут.', 'Бұл UCS: ол әрқашан ең арзан жолды жалғастырады — 9 минут.'),
@@ -142,6 +159,7 @@ const w2 = {
       opts: [
         { id: 'ucs', icon: 'target', l: L('UCS', 'UCS', 'UCS'), play: play2('ucs'), why: m => L(`UCS is 9 min again, but checked ${m.last.order.length} crossings.`, `UCS снова 9 мин, но проверил ${m.last.order.length} перекрёстков.`, `UCS тағы 9 мин, бірақ ${m.last.order.length} қиылысты тексерді.`) },
         { id: 'astar', icon: 'pin', ok: true, l: L('A*', 'A*', 'A*'), play: play2('astar') },
+        { id: 'greedy', icon: 'route', l: L('Greedy', 'Жадный', 'Ашкөз'), play: play2('greedy'), why: m => L(`Only ${m.last.order.length} checks, but the route takes 10 min — not the fastest.`, `Всего ${m.last.order.length} проверки, но путь 10 мин — не самый быстрый.`, `Тек ${m.last.order.length} тексеру, бірақ жол 10 мин — ең жылдамы емес.`) },
         { id: 'bfs', icon: 'grid', l: L('BFS', 'BFS', 'BFS'), play: play2('bfs'), why: L('BFS ignores minutes — the route is slower again.', 'BFS не смотрит на минуты — путь снова медленнее.', 'BFS минутқа қарамайды — жол тағы баяу.') },
       ],
       learn: m => L(`This is A*: it adds the guess h and finds the 9-minute route after checking only ${m.last.order.length} crossings.`, `Это A*: он добавляет догадку h и находит путь за 9 минут, проверив всего ${m.last.order.length} перекрёстков.`, `Бұл A*: ол h болжамын қосып, тек ${m.last.order.length} қиылысты тексеріп, 9 минуттық жолды табады.`),
@@ -155,18 +173,31 @@ const PLOTS = [3, 5, 4, 6, 8, 7, 5, 9], PX = i => -6.0 + i * 1.55, PZ = -4.9;
 function drawPlots(m) {
   const s = st(m); s.clear(); m.bars = PLOTS.map((v, i) => { const b = s.bar(PX(i), PZ, TEAL); s.setBar(b, v * 0.2); lbl(m, String(v), PX(i), v * 0.2 + 0.45, PZ, { size: 0.26 }); return b; });
 }
-async function walk(m, from, to, stopAt) {
-  const s = st(m), q = m.app.qadam, path = []; for (let i = from; i <= to; i++) path.push([PX(i), PZ + 0.55]);
-  q.target = null; st(m).place(q.g, path[0][0], path[0][1], 0);
-  if (path.length > 1) await s.move(q.g, path, (to - from) * 0.55);
+async function walk(m, from, to, stopAt, anneal) {
+  const s = st(m), q = m.app.qadam, app = m.app;
+  q.target = null; st(m).place(q.g, PX(from), PZ + 1.0, 0); q.g.rotation.y = Math.PI / 2;
+  const title = anneal ? tr(L('Simulated annealing', 'Имитация отжига', 'Күйдіруді имитациялау')) : 'Hill climbing', plot = tr(L('Spot', 'Участок', 'Учаске'));
+  app.rig.fpStart(q.g, { eye: 0.78, hide: true, look: (p, fw) => new THREE.Vector3(p.x + fw.x * 3.2, 0.7, (PZ + 0.45) * KK) });
+  const rows = [[`${plot} ${from + 1}`, String(PLOTS[from])]];
+  app.calc(title, rows); await s.wait(0.9);
+  for (let i = from; i < to; i++) {
+    const a = PLOTS[i], b = PLOTS[i + 1], up = b > a;
+    rows.push([`${i + 1} → ${i + 2}`, `${a} → ${b} ${up ? '↑' : '↓'}`, up ? 'ok' : 'no']);
+    if (!up) rows.push([tr(L('Worse, but T is high', 'Хуже, но T высокая', 'Нашар, бірақ T жоғары')), tr(L('accept', 'принимаю', 'қабылдаймын'))]);
+    app.calc(title, rows.slice(-6)); await s.move(q.g, [[PX(i), PZ + 1.0], [PX(i + 1), PZ + 1.0]], 0.7);
+  }
+  if (!anneal) { rows.push([tr(L('Neighbours', 'Соседи', 'Көршілер')), `${PLOTS[to - 1] ?? '—'}, ${PLOTS[to + 1] ?? '—'} < ${PLOTS[to]}`, 'no']); rows.push([tr(L('Stop', 'Стоп', 'Тоқта')), tr(L('local maximum', 'локальный максимум', 'жергілікті максимум')), 'sum']); }
+  else rows.push([tr(L('Best found', 'Лучшее', 'Ең жақсысы')), String(PLOTS[to]), 'sum']);
+  app.calc(title, rows.slice(-6)); await s.wait(0.9);
+  await app.rig.fpEnd();
   lbl(m, stopAt, PX(to), PLOTS[to] * 0.2 + 0.95, PZ, { size: 0.3, bg: 'rgba(242,181,68,0.96)' });
 }
 const ZW = { 1: [-4.6, -7.2], 2: [-4.6, -5.6], 3: [-2.9, -6.4], 4: [-1.2, -5.6], 5: [-1.2, -7.2] }, ZE = [[1, 2], [1, 3], [2, 3], [2, 4], [3, 4], [4, 5], [3, 5]], ZC = [0xFFFFFF, GOLD, TEAL, 0xC4846A];
-function zones(m, c) {
+function zones(m, c, cur) {
   const s = st(m); (m.zz || []).forEach(o => s.g.remove(o)); m.zz = [];
-  if (!m.zplate) { m.zplate = s.disc(-2.9, -6.4, 2.6, 0xFFFFFF, { opacity: 0.55, ring: false, y: 1.22 }); m.zplate.scale.set(1, 1, 0.55); }
+  if (!m.zplate) { m.zplate = s.disc(-2.9, -6.4, 2.6, 0xFFFFFF, { opacity: m.app.engine.night > 0.5 ? 0.22 : 0.5, ring: false, y: 1.22 }); m.zplate.scale.set(1, 1, 0.55); }
   ZE.forEach(([a, b]) => m.zz.push(s.line(ZW[a], ZW[b], c[a] && c[a] === c[b] ? RED : INK, { opacity: c[a] && c[a] === c[b] ? 0.9 : 0.4, w: c[a] && c[a] === c[b] ? 0.12 : 0.07, y: 1.24 })));
-  for (const k in ZW) { const d = s.disc(ZW[k][0], ZW[k][1], 0.42, ZC[c[k] || 0], { y: 1.25 }); m.zz.push(d, d.userData.ring, lbl(m, String(k), ZW[k][0], 1.75, ZW[k][1], { size: 0.3 })); }
+  for (const k in ZW) { const d = s.disc(ZW[k][0], ZW[k][1], +k === cur ? 0.55 : 0.45, ZC[c[k] || 0], { y: 1.25, ringColor: +k === cur ? GOLD : INK }); if (+k === cur) { d.userData.ring.material.opacity = 1; s.pulse(d); } m.zz.push(d, d.userData.ring, lbl(m, String(k), ZW[k][0], 1.85, ZW[k][1], { size: 0.36 })); }
 }
 const w3 = {
   start(m) { fly(m, [-0.6, 0.6, -4.6], 0.82, -0.05, 0.84); },
@@ -181,18 +212,19 @@ const w3 = {
     { kind: 'pick', t: L('Help Qadam reach the 9', 'Помоги Qadam дойти до 9', 'Qadam-ға 9-ға жетуге көмектес'), i: L('How can he get out of the dip?', 'Как ему выбраться из ямы?', 'Ол шұңқырдан қалай шығады?'),
       opts: [
         { id: 'same', icon: 'reset', l: L('Start again from spot 1', 'Начать снова с участка 1', '1-учаскеден қайта бастау'), why: L('From the same start he gets stuck at the same 5.', 'С того же места он снова застрянет на 5.', 'Сол орыннан ол тағы 5-те тұрып қалады.') },
-        { id: 'anneal', icon: 'snow', ok: true, l: L('Sometimes step down', 'Иногда шагать вниз', 'Кейде төмен басу'), play: async m => { await walk(m, 1, 7, '9 ✓'.replace(' ✓', '')); m.app.city.wave(PX(7) * KK, PZ * KK); } },
+        { id: 'anneal', icon: 'snow', ok: true, l: L('Sometimes step down', 'Иногда шагать вниз', 'Кейде төмен басу'), play: async m => { await walk(m, 1, 7, '9', true); m.app.city.wave(PX(7) * KK, PZ * KK); } },
         { id: 'look', icon: 'target', l: L('Only look at neighbours', 'Смотреть только на соседей', 'Тек көршілерге қарау'), why: L('That is exactly what hill climbing does — that’s why it got stuck.', 'Именно так и делает hill climbing — поэтому он и застрял.', 'Hill climbing дәл солай істейді — сондықтан тұрып қалды.') },
+        { id: 'faster', icon: 'arrow', l: L('Climb faster', 'Подниматься быстрее', 'Тезірек көтерілу'), why: L('Speed doesn’t help: from 5 every step is downhill, so a greedy climber never moves.', 'Скорость не поможет: от 5 любой шаг ведёт вниз, жадный подъём не сдвинется.', 'Жылдамдық көмектеспейді: 5-тен әр қадам төмен, ашкөз өрмелеу қозғалмайды.') },
       ],
       learn: L('This is simulated annealing: accepting a worse step now and then helps escape a local maximum.', 'Это имитация отжига: иногда принять худший шаг, чтобы выбраться из локального максимума.', 'Бұл күйдіруді имитациялау: кейде нашар қадамды қабылдау жергілікті максимумнан шығуға көмектеседі.'),
       h: [L('Staying “greedy” keeps him stuck.', 'Если всегда жадничать, он так и застрянет.', 'Әрқашан ашкөз болса, ол тұрып қалады.'), L('To climb a higher hill you may need to go down first.', 'Чтобы подняться выше, иногда надо сначала спуститься.', 'Биікке шығу үшін кейде алдымен түсу керек.')] },
-    { kind: 'widget', w: 'color', t: L('Bus lines without conflicts', 'Автобусы без конфликтов', 'Қайшылықсыз автобустар'),
-      i: L('Tap a zone to give it a line. Neighbours need different lines.', 'Нажми на зону, чтобы дать ей линию. У соседей — разные линии.', 'Аймаққа желі беру үшін бас. Көршілерде әртүрлі желі болсын.'),
-      enter: m => { st(m).clear(); m.zplate = null; m.app.qadam.goTo(-3.4, -4.2); zones(m, {}); fly(m, [-2.9, 1.2, -5.9], 0.42, -0.1, 0.78); },
-      onWidget: (m, ws) => zones(m, ws.c || {}),
-      data: { nodes: { 1: [60, 50], 2: [60, 150], 3: [160, 100], 4: [260, 150], 5: [260, 50] }, edges: [[1, 2], [1, 3], [2, 3], [2, 4], [3, 4], [4, 5], [3, 5]] },
-      learn: L('This is a CSP: every constraint holds, so the buses run without clashes.', 'Это CSP: все ограничения выполнены, автобусы едут без конфликтов.', 'Бұл CSP: барлық шектеу орындалды, автобустар қайшылықсыз жүреді.'),
-      h: [L('Start with the zone that has the most neighbours.', 'Начни с зоны, у которой больше всего соседей.', 'Көршісі ең көп аймақтан баста.'), L('Zone 3 touches four zones — colour it first.', 'Зона 3 касается четырёх зон — раскрась её первой.', '3-аймақ төрт аймаққа тиеді — алдымен соны боя.')] },
+    { kind: 'widget', w: 'csp', t: L('Bus lines without conflicts', 'Автобусы без конфликтов', 'Қайшылықсыз автобустар'),
+      i: L('Connected zones share stops, so they need different lines.', 'Соединённые зоны делят остановки — им нужны разные линии.', 'Жалғанған аймақтар аялдамаларды бөліседі — оларға әртүрлі желі керек.'),
+      enter: m => { st(m).clear(); m.zplate = null; m.app.qadam.goTo(-3.4, -4.2); zones(m, {}, 3); fly(m, [-2.9, 1.2, -6.2], 0.3, -0.05, 0.72); },
+      onWidget: (m, ws) => zones(m, ws.c || {}, [3, 2, 4, 1, 5][ws.k]),
+      data: { nodes: { 1: [60, 50], 2: [60, 150], 3: [160, 100], 4: [260, 150], 5: [260, 50] }, edges: [[1, 2], [1, 3], [2, 3], [2, 4], [3, 4], [4, 5], [3, 5]], order: [3, 2, 4, 1, 5] },
+      learn: L('This is a CSP solved one variable at a time — most-connected zone first (MRV) — and every constraint holds.', 'Это CSP: переменные по одной, начиная с самой связанной зоны (MRV), — и все ограничения выполнены.', 'Бұл CSP: айнымалылар бір-бірден, ең көп байланысты аймақтан (MRV) басталды — барлық шектеу орындалды.'),
+      h: [L('Look which zones the glowing one is connected to.', 'Посмотри, с какими зонами соединена подсвеченная.', 'Жарқыраған аймақ қай аймақтармен жалғанғанына қара.'), L('Pick a line that none of those neighbours has yet.', 'Возьми линию, которой ещё нет ни у одного из этих соседей.', 'Сол көршілердің ешқайсысында жоқ желіні ал.')] },
   ],
   onStep(m, step) { m.city.preview(m.i, (step + 1) / 3); if (step === 2) { const s = st(m); [GOLD, TEAL, RED].forEach((c, k) => { const car = s.car(c, 1.6); s.move(car, [[-7.0, -4.75 + k * 0.0], [-2.2, -4.75], [4.8, -4.75], [7.0, -4.75]].map(p => [p[0] + k * 1.2, p[1]]), 4 + k); }); } },
   done: L('The block is built and three bus lines run on a clash-free schedule.', 'Квартал застроен, три автобусные линии ходят без конфликтов.', 'Квартал салынды, үш автобус желісі қайшылықсыз жүреді.'),
@@ -229,6 +261,7 @@ const w4 = {
       opts: [
         { id: 'p', icon: 'close', ok: true, l: L('Leaves 4 and 6', 'Листья 4 и 6', '4 және 6 жапырақтары'), play: async m => { const s = st(m); [4, 5].forEach(i => { m.tr.leaf[i].material.color.set(GREY); m.tr.leaf[i].material.opacity = 0.35; m.tr.lines[i].material.opacity = 0.08; }); await s.wait(0.5); } },
         { id: 'q', icon: 'close', l: L('Leaves 14 and 5', 'Листья 14 и 5', '14 және 5 жапырақтары'), why: L('In the right branch no leaf drops below 3 until the last one, so all are needed.', 'В правой ветке до последнего листа нет числа меньше 3 — нужны все.', 'Оң тармақта соңғысына дейін 3-тен кіші сан жоқ — бәрі керек.') },
+        { id: 'lft', icon: 'close', l: L('Leaves 12 and 8', 'Листья 12 и 8', '12 және 8 жапырақтары'), why: L('In the first branch nothing is known yet — every leaf is needed to get the 3.', 'В первой ветке ещё ничего не известно — чтобы получить 3, нужен каждый лист.', 'Бірінші тармақта әлі ештеңе белгісіз — 3-ті алу үшін әр жапырақ керек.') },
         { id: 'n', icon: 'check', l: L('Nothing', 'Ничего', 'Ештеңе'), why: L('After the middle branch shows 2, its other leaves can’t help MAX.', 'Когда средняя ветка показала 2, остальные её листья MAX уже не помогут.', 'Ортаңғы тармақ 2-ні көрсеткенде, оның қалған жапырақтары MAX-қа көмектеспейді.') },
       ],
       learn: L('This is alpha-beta pruning: seeing 2 < 3, the robot skipped the rest of that branch.', 'Это альфа-бета отсечение: увидев 2 < 3, робот отбросил остаток ветки.', 'Бұл альфа-бета кесу: 2 < 3 екенін көріп, робот тармақтың қалғанын тастады.'),
@@ -239,6 +272,7 @@ const w4 = {
       opts: [
         { id: 'risk', icon: 'game', ok: true, l: L('Gamble (5 on average)', 'Рискнуть (в среднем 5)', 'Тәуекел (орташа 5)') },
         { id: 'safe', icon: 'lock', l: L('Play safe (4)', 'Наверняка (4)', 'Сенімді (4)'), why: L('On average the gamble gives 5, more than 4.', 'В среднем риск даёт 5 — больше, чем 4.', 'Орташа есеппен тәуекел 5 береді — 4-тен көп.') },
+        { id: 'same', icon: 'game', l: L('It doesn’t matter', 'Без разницы', 'Айырмашылық жоқ'), why: L('It does: 5 on average versus a sure 4.', 'Разница есть: в среднем 5 против гарантированных 4.', 'Айырмашылық бар: орташа 5 және кепілді 4.') },
       ],
       learn: L('This is expectimax: with chance involved, compare averages instead of worst cases.', 'Это expectimax: когда есть случайность, сравнивают средние, а не худшие исходы.', 'Бұл expectimax: кездейсоқтық болса, ең нашарды емес, орташаны салыстырады.'),
       h: [L('Average = 0.5 × 8 + 0.5 × 2.', 'Среднее = 0.5 × 8 + 0.5 × 2.', 'Орташа = 0.5 × 8 + 0.5 × 2.'), L('Compare that average with 4.', 'Сравни это среднее с 4.', 'Осы орташаны 4-пен салыстыр.')] },
@@ -263,6 +297,7 @@ const w5 = {
         { id: 'plus', icon: 'star', l: L('+1 per waiting car', '+1 за каждую ждущую машину', 'Күтіп тұрған әр көлікке +1'), why: L('Then it would learn to make the jam even longer!', 'Тогда он научится делать пробку ещё длиннее!', 'Онда ол кептелісті ұзартуды үйренеді!') },
         { id: 'minus', icon: 'traffic', ok: true, l: L('−1 per waiting car', '−1 за каждую ждущую машину', 'Күтіп тұрған әр көлікке −1') },
         { id: 'zero', icon: 'close', l: L('No reward', 'Без награды', 'Сыйақысыз'), why: L('Without a reward there is nothing to learn from.', 'Без награды учиться не на чем.', 'Сыйақысыз үйренетін ештеңе жоқ.') },
+        { id: 'switch', icon: 'reset', l: L('−10 per light switch', '−10 за каждое переключение', 'Әр ауыстыруға −10'), why: L('Then it learns to never switch, and the jam stays.', 'Тогда он научится вообще не переключать — пробка останется.', 'Онда ол мүлде ауыстырмауды үйренеді — кептеліс қалады.') },
       ],
       learn: L('The reward R is part of the MDP: states, actions, rewards, transitions.', 'Награда R — часть MDP: состояния, действия, награды, переходы.', 'Сыйақы R — MDP бөлігі: күйлер, әрекеттер, сыйақылар, ауысулар.'),
       h: [L('Waiting cars are bad — the reward should say so.', 'Ждущие машины — это плохо, награда должна это сказать.', 'Күтіп тұрған көліктер — жаман, сыйақы соны айтуы керек.'), L('A negative number is a penalty.', 'Отрицательное число — это штраф.', 'Теріс сан — бұл айып.')] },
@@ -290,12 +325,13 @@ const live6 = m => tr(L('Chance of a blizzard: {p}%', 'Вероятность б
 const w6 = {
   start(m) { fly(m, [6.6, 0.8, -1.6], 0.55, 0.7, 0.86); },
   steps: [
-    { kind: 'pick', t: L('The pressure sensor went off', 'Сработал датчик давления', 'Қысым датчигі іске қосылды'), i: L('Blizzards happen on 10% of days. What happens to the chance now?', 'Буран бывает в 10\u00A0% дней. Что теперь с вероятностью?', 'Боран күндердің 10\u00A0%-ында болады. Енді ықтималдық не болады?'),
+    { kind: 'pick', t: L('The pressure sensor went off', 'Сработал датчик давления', 'Қысым датчигі іске қосылды'), i: L('Blizzard on 10% of days; the sensor fires on 90% of blizzard days and 20% of calm ones. Chance of a blizzard now?', 'Буран в 10\u00A0% дней; датчик срабатывает в 90\u00A0% буранных и 20\u00A0% спокойных дней. Шанс бурана сейчас?', 'Боран күндердің 10\u00A0%-ында; датчик боранды күндердің 90\u00A0%-ында, тыныштардың 20\u00A0%-ында қосылады. Қазір боран мүмкіндігі?'),
       enter: m => { st(m).clear(); m.bar6 = null; m.bar6L = null; prob(m, 0.1); lbl(m, tr(L('Sensor 1', 'Датчик 1', '1-датчик')), 6.2, 2.3, 0.4, { size: 0.28, bg: 'rgba(232,103,74,0.95)', fg: '#fff' }); }, live: live6,
       opts: [
-        { id: 'up', icon: 'arrow', ok: true, l: L('Rises to about 33%', 'Растёт до ≈\u00A033\u00A0%', '≈\u00A033\u00A0%-ға өседі'), play: async m => { prob(m, 1 / 3); await st(m).wait(0.6); } },
-        { id: 'ninety', icon: 'gauge', l: L('Jumps to 90%', 'Сразу 90\u00A0%', 'Бірден 90\u00A0%'), why: L('90% is how often the sensor catches a blizzard, not the chance of one.', '90\u00A0% — это как часто датчик ловит буран, а не шанс бурана.', '90\u00A0% — датчиктің боранды қаншалықты жиі ұстайтыны, боран ықтималдығы емес.') },
-        { id: 'same', icon: 'close', l: L('Stays 10%', 'Остаётся 10\u00A0%', '10\u00A0% қалады'), why: L('A signal is new evidence, so the chance must move.', 'Сигнал — это новые данные, вероятность должна сдвинуться.', 'Сигнал — жаңа дерек, ықтималдық өзгеруі керек.') },
+        { id: 'p27', icon: 'gauge', l: L('27%', '27\u00A0%', '27\u00A0%'), why: L('27% is the share of all days with an alarm, not of blizzards among them.', '27\u00A0% — доля всех дней с тревогой, а не буранов среди них.', '27\u00A0% — дабылды барлық күндердің үлесі, олардың ішіндегі боран емес.') },
+        { id: 'up', icon: 'gauge', ok: true, l: L('≈ 33%', '≈\u00A033\u00A0%', '≈\u00A033\u00A0%'), play: async m => { prob(m, 1 / 3); await st(m).wait(0.6); } },
+        { id: 'p50', icon: 'gauge', l: L('50%', '50\u00A0%', '50\u00A0%'), why: L('Half is just a guess — count 9 real out of 27 alarms.', 'Половина — просто догадка: посчитай 9 настоящих из 27 тревог.', 'Жарты — жай болжам: 27 дабылдың 9 нағызын сана.') },
+        { id: 'ninety', icon: 'gauge', l: L('90%', '90\u00A0%', '90\u00A0%'), why: L('90% is how often the sensor catches a blizzard, not the chance of one.', '90\u00A0% — это как часто датчик ловит буран, а не шанс бурана.', '90\u00A0% — датчиктің боранды қаншалықты жиі ұстайтыны, боран ықтималдығы емес.') },
       ],
       learn: L('This is Bayes’ rule: 0.1 · 0.9 / 0.27 ≈\u00A033%. The sensor also rings on 20% of calm days.', 'Это правило Байеса: 0.1 · 0.9 / 0.27 ≈\u00A033\u00A0%. Датчик срабатывает и в 20\u00A0% спокойных дней.', 'Бұл Байес ережесі: 0.1 · 0.9 / 0.27 ≈\u00A033\u00A0%. Датчик тыныш күндердің 20\u00A0%-ында да қосылады.'),
       h: [L('False alarms happen too.', 'Ложные тревоги тоже бывают.', 'Жалған дабылдар да болады.'), L('Of 100 days: 9 real alarms and 18 false ones.', 'Из 100 дней: 9 настоящих тревог и 18 ложных.', '100 күннің: 9 нағыз дабыл және 18 жалған.')] },
@@ -330,7 +366,9 @@ const w7 = {
       h: [L('Press the button and watch the clouds.', 'Нажми кнопку и смотри на облака.', 'Батырманы басып, бұлттарға қара.'), L('A big cloud means a likely stop.', 'Большое облако — вероятная остановка.', 'Үлкен бұлт — ықтимал аялдама.')] },
     { kind: 'pick', t: L('Send the passenger to the right stop', 'Отправь пассажира на нужную остановку', 'Жолаушыны дұрыс аялдамаға жібер'), i: L('Pick the most likely stop.', 'Выбери самую вероятную остановку.', 'Ең ықтимал аялдаманы таңда.'),
       opts: [0, 1, 2].map(k => ({ id: 's' + k, icon: 'bus', ok: k === 1, l: L(`Stop ${k + 1}`, `Остановка ${k + 1}`, `${k + 1}-аялдама`), why: L(`Only ${[10, 70, 20][k]}% for this stop.`, `У этой остановки только ${[10, 70, 20][k]} %.`, `Бұл аялдамада тек ${[10, 70, 20][k]} %.`),
-        play: k === 1 ? async m => { const s = st(m), bus = s.car(GOLD, 2); st(m).place(bus, -2.2, 6.2, 0); await s.move(bus, [[-2.2, 6.2], [-0.9, 7.2], STOPS[1]], 1.6); } : undefined })),
+        play: k === 1 ? async m => { const s = st(m), bus = s.car(GOLD, 2); st(m).place(bus, -2.2, 6.2, 0); bus.rotation.y = 0.9;
+          m.app.calc(tr(L('Filtering', 'Фильтрация', 'Сүзгілеу')), [0, 1, 2].map(j => [tr(L(`Stop ${j + 1}`, `Остановка ${j + 1}`, `${j + 1}-аялдама`)), `P = ${[0.1, 0.7, 0.2][j]}`, j === 1 ? 'ok' : '']).concat([[tr(L('Go to', 'Едем на', 'Барамыз')), tr(L('Stop 2', 'Остановку 2', '2-аялдамаға')), 'sum']]));
+          m.app.rig.fpStart(bus, { eye: 0.7, ahead: 2.6 }); await s.move(bus, [[-2.2, 6.2], [-0.9, 7.2], STOPS[1]], 2.4); await m.app.rig.fpEnd(); } : undefined })),
       learn: L('Stop 2 has 70% — the bus is there.', 'У остановки 2 — 70\u00A0%, автобус там.', '2-аялдамада 70\u00A0% — автобус сонда.'),
       h: [L('Look at the biggest cloud.', 'Смотри на самое большое облако.', 'Ең үлкен бұлтқа қара.'), L('Compare 10%, 70% and 20%.', 'Сравни 10\u00A0%, 70\u00A0% и 20\u00A0%.', '10\u00A0%, 70\u00A0% және 20\u00A0%-ды салыстыр.')] },
     { kind: 'pick', t: L('Now the whole route of the day', 'Теперь весь маршрут за день', 'Енді күндік толық маршрут'), i: L('Which algorithm gives the most likely sequence of stops?', 'Какой алгоритм даёт самую вероятную последовательность остановок?', 'Қай алгоритм аялдамалардың ең ықтимал тізбегін береді?'),
@@ -338,6 +376,7 @@ const w7 = {
         { id: 'filt', icon: 'target', l: L('Filtering', 'Фильтрация', 'Сүзгілеу'), why: L('Filtering answers “where now”, not the whole path.', 'Фильтрация отвечает «где сейчас», а не про весь путь.', 'Сүзгілеу «қазір қайда» деп жауап береді, толық жол туралы емес.') },
         { id: 'vit', icon: 'route', ok: true, l: L('Viterbi', 'Витерби', 'Витерби'), play: async m => { st(m).tube(STOPS, GOLD, 0.05); await st(m).wait(0.9); } },
         { id: 'mm', icon: 'game', l: L('Minimax', 'Minimax', 'Minimax'), why: L('Minimax is for games against an opponent.', 'Minimax — для игр против соперника.', 'Minimax — қарсыласпен ойынға арналған.') },
+        { id: 'smooth', icon: 'snow', l: L('Smoothing', 'Сглаживание', 'Тегістеу'), why: L('Smoothing improves each past stop on its own, but not the single best chain.', 'Сглаживание уточняет каждую прошлую остановку отдельно, а не лучшую цепочку целиком.', 'Тегістеу әр өткен аялдаманы бөлек нақтылайды, ең жақсы тізбекті емес.') },
       ],
       learn: L('This is the Viterbi algorithm: the single most likely sequence of hidden states.', 'Это алгоритм Витерби: самая вероятная последовательность скрытых состояний.', 'Бұл Витерби алгоритмі: жасырын күйлердің ең ықтимал тізбегі.'),
       h: [L('We want a sequence, not one moment.', 'Нужна последовательность, а не один момент.', 'Бір сәт емес, тізбек керек.'), L('Its name is a person’s surname.', 'Его название — фамилия учёного.', 'Оның аты — ғалымның тегі.')] },
@@ -368,8 +407,11 @@ const w8 = {
     { kind: 'pick', t: L('Send out the snowplough?', 'Выводить снегоуборщик?', 'Қар тазалағышты шығару керек пе?'), i: L('Snow is 40% likely. A trip costs 10; without it, snow costs 50.', 'Снег с вероятностью 40\u00A0%. Выезд стоит 10, без него снег обойдётся в 50.', 'Қар 40\u00A0% ықтимал. Шығу 10 тұрады, онсыз қар 50-ге түседі.'),
       enter: m => st(m).clear(),
       opts: [
-        { id: 'go', icon: 'arrow', ok: true, l: L('Send it (−10)', 'Выводить (−10)', 'Шығару (−10)'), play: async m => { const s = st(m), c = s.car(0xF29B3A, 1.8); st(m).place(c, 4.8, -6, 0); await s.move(c, [[4.8, -6], [4.8, -1.3], [4.85, 4.1], [4.2, 7.2]], 3); } },
-        { id: 'stay', icon: 'lock', l: L('Keep it (−20 on average)', 'Не выводить (в среднем −20)', 'Шығармау (орташа −20)'), why: L('0.4 · (−50) = −20, which is worse than −10.', '0.4 · (−50) = −20 — это хуже, чем −10.', '0.4 · (−50) = −20 — бұл −10-нан нашар.') },
+        { id: 'go', icon: 'arrow', ok: true, l: L('Send one', 'Вывести один', 'Біреуін шығару'), play: async m => { const s = st(m), c = s.car(0xF29B3A, 1.8); st(m).place(c, 4.8, -6, 0); c.rotation.y = 0;
+          m.app.calc(tr(L('Expected utility', 'Ожидаемая полезность', 'Күтілетін пайдалылық')), [[tr(L('Send', 'Выводить', 'Шығару')), '−10'], [tr(L('Keep', 'Не выводить', 'Шығармау')), '0.4 · (−50) + 0.6 · 0 = −20', 'no'], [tr(L('Best', 'Лучше', 'Жақсысы')), '−10 > −20', 'sum']]);
+          m.app.rig.fpStart(c, { eye: 0.7, ahead: 2.8 }); await s.move(c, [[4.8, -6], [4.8, -1.3], [4.85, 4.1], [4.2, 7.2]], 4.5); await m.app.rig.fpEnd(); } },
+        { id: 'stay', icon: 'lock', l: L('Keep it', 'Не выводить', 'Шығармау'), why: L('0.4 · (−50) = −20, which is worse than −10.', '0.4 · (−50) = −20 — это хуже, чем −10.', '0.4 · (−50) = −20 — бұл −10-нан нашар.') },
+        { id: 'two', icon: 'bus', l: L('Send two', 'Вывести два', 'Екеуін шығару'), why: L('Two trips cost 20 — worse than one trip for 10.', 'Два выезда стоят 20 — хуже, чем один за 10.', 'Екі шығу 20 тұрады — бір шығудан (10) нашар.') },
       ],
       learn: L('This is expected utility: pick the action with the best average outcome.', 'Это ожидаемая полезность: выбираем действие с лучшим средним исходом.', 'Бұл күтілетін пайдалылық: орташа нәтижесі ең жақсы әрекетті таңдаймыз.'),
       h: [L('Average loss without the plough = 0.4 × 50.', 'Средняя потеря без снегоуборщика = 0.4 × 50.', 'Тазалағышсыз орташа шығын = 0.4 × 50.'), L('Compare 20 with 10.', 'Сравни 20 и 10.', '20 мен 10-ды салыстыр.')] },
@@ -393,6 +435,7 @@ const w9 = {
       opts: [
         { id: 'bp', icon: 'back', ok: true, l: L('Backpropagation', 'Обратное распространение', 'Кері таралу') },
         { id: 'rand', icon: 'game', l: L('Change one at random', 'Менять случайный', 'Кездейсоқ өзгерту'), why: L('Random changes rarely reduce the error.', 'Случайные изменения редко уменьшают ошибку.', 'Кездейсоқ өзгеріс қатені сирек азайтады.') },
+        { id: 'all', icon: 'grid', l: L('Try every weight', 'Перебрать все веса', 'Барлық салмақты сынау'), why: L('There are millions of weights — the gradient shows the direction instead.', 'Весов миллионы — вместо перебора градиент показывает направление.', 'Салмақтар миллиондаған — сынаудың орнына градиент бағытты көрсетеді.') },
         { id: 'none', icon: 'lock', l: L('It can’t know', 'Никак', 'Ешқалай'), why: L('It can: the gradient shows each weight’s share of the error.', 'Может: градиент показывает вклад каждого веса в ошибку.', 'Біледі: градиент әр салмақтың қатедегі үлесін көрсетеді.') },
       ],
       learn: L('Backpropagation sends the error backwards and gives every weight its gradient.', 'Обратное распространение передаёт ошибку назад и даёт каждому весу его градиент.', 'Кері таралу қатені кері жібереді және әр салмаққа өз градиентін береді.'),
@@ -400,7 +443,8 @@ const w9 = {
     { kind: 'pick', t: L('One neuron for one window?', 'Хватит ли одного нейрона на окно?', 'Бір терезеге бір нейрон жете ме?'), i: L('Light it only when it’s dark AND someone is home.', 'Свет — только когда темно И кто-то дома.', 'Жарық — тек қараңғы ЖӘНЕ үйде біреу болғанда.'),
       opts: [
         { id: 'yes', icon: 'check', ok: true, l: L('Yes — that’s AND', 'Да — это И (AND)', 'Иә — бұл ЖӘНЕ (AND)') },
-        { id: 'no', icon: 'grid', l: L('No, it needs 100 layers', 'Нет, нужно 100 слоёв', 'Жоқ, 100 қабат керек'), why: L('AND can be split by one straight line — one perceptron is enough.', 'AND делится одной прямой — хватит одного перцептрона.', 'AND бір түзумен бөлінеді — бір перцептрон жеткілікті.') },
+        { id: 'no', icon: 'grid', l: L('No, it needs a hidden layer', 'Нет, нужен скрытый слой', 'Жоқ, жасырын қабат керек'), why: L('A hidden layer is needed for XOR; AND is split by one straight line.', 'Скрытый слой нужен для XOR, а AND делится одной прямой.', 'Жасырын қабат XOR үшін керек, ал AND бір түзумен бөлінеді.') },
+        { id: 'or', icon: 'bolt', l: L('Yes — that’s OR', 'Да — это ИЛИ (OR)', 'Иә — бұл НЕМЕСЕ (OR)'), why: L('OR would light the window when just one is true. Here both must be true.', 'ИЛИ зажжёт окно, если верно хотя бы одно. Здесь нужны оба.', 'НЕМЕСЕ біреуі ғана рас болса да жағады. Мұнда екеуі де керек.') },
       ],
       learn: L('A single perceptron can do AND, but not XOR — that needs a hidden layer.', 'Один перцептрон умеет AND, но не XOR — для него нужен скрытый слой.', 'Бір перцептрон AND істей алады, бірақ XOR-ды емес — оған жасырын қабат керек.'),
       h: [L('Draw the four cases on a square.', 'Нарисуй четыре случая на квадрате.', 'Төрт жағдайды шаршыға сал.'), L('Only one corner is “on”.', 'Горит только один угол.', 'Тек бір бұрыш жанады.')] },
@@ -417,6 +461,7 @@ const w10 = {
       enter: m => { st(m).clear(); m.bub = null; },
       opts: [
         { id: 't0', icon: 'thermo', ok: true, l: L('Temperature 0', 'Температура 0', 'Температура 0'), play: async m => { say(m, tr(L('Bus 10 to EXPO, every 8 min', 'Автобус 10 до EXPO, каждые 8 мин', 'EXPO-ға 10-автобус, әр 8 мин'))); await st(m).wait(0.6); } },
+        { id: 't07', icon: 'thermo', l: L('Temperature 0.7', 'Температура 0.7', 'Температура 0.7'), why: L('0.7 adds variety — for an exact route you want 0.', '0.7 добавляет разнообразия — для точного маршрута нужна 0.', '0.7 әртүрлілік қосады — нақты жол үшін 0 керек.') },
         { id: 't15', icon: 'thermo', l: L('Temperature 1.5', 'Температура 1.5', 'Температура 1.5'), play: async m => { say(m, tr(L('Take a camel, maybe a bus…', 'Езжайте на верблюде, а может, автобусом…', 'Түйемен барыңыз, мүмкін автобуспен…')), false); await st(m).wait(0.6); }, why: L('High temperature makes word choice random — bad for facts.', 'Высокая температура делает выбор слов случайным — плохо для фактов.', 'Жоғары температура сөз таңдауын кездейсоқ етеді — фактілерге жаман.') },
       ],
       learn: L('The model picks the next word by probability; temperature 0 always takes the most likely one.', 'Модель выбирает следующее слово по вероятности; при температуре 0 — всегда самое вероятное.', 'Модель келесі сөзді ықтималдық бойынша таңдайды; 0 температурада — әрқашан ең ықтималын.'),
@@ -433,6 +478,7 @@ const w10 = {
       opts: [
         { id: 'tell', icon: 'pin', l: L('Find it and tell', 'Найти и сказать', 'Тауып айту'), why: L('That is private data — it must not be shared.', 'Это личные данные — их нельзя раскрывать.', 'Бұл жеке деректер — оларды ашуға болмайды.') },
         { id: 'refuse', icon: 'lock', ok: true, l: L('Politely decline', 'Вежливо отказать', 'Сыпайы бас тарту'), play: async m => { say(m, tr(L('Sorry, I can’t share private data', 'Извините, личные данные я не сообщаю', 'Кешіріңіз, жеке деректерді айтпаймын'))); await st(m).wait(0.5); } },
+        { id: 'nodata', icon: 'info', l: L('Say there is no such data', 'Сказать, что данных нет', 'Дерек жоқ деу'), why: L('That’s untrue — it’s more honest to decline openly because of privacy.', 'Это неправда — честнее прямо отказать из-за приватности.', 'Бұл өтірік — жекелікке байланысты ашық бас тарту адалырақ.') },
         { id: 'fake', icon: 'chat', l: L('Make one up', 'Выдумать адрес', 'Мекенжай ойдан шығару'), why: L('That is both harmful and a hallucination.', 'Это и вред, и галлюцинация.', 'Бұл әрі зиян, әрі галлюцинация.') },
       ],
       learn: L('A safe assistant is helpful but protects people and their privacy.', 'Безопасный ассистент помогает, но защищает людей и их личные данные.', 'Қауіпсіз көмекші көмектеседі, бірақ адамдар мен олардың жеке деректерін қорғайды.'),

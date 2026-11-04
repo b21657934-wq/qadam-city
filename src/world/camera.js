@@ -83,6 +83,9 @@ export class CameraRig {
       this.onTap(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1));
     }
   }
+  // first-person ride: camera blends from the orbit view into the eyes of a moving object
+  fpStart(obj, o = {}) { if (REDUCED) return; this.fp = { obj, eye: o.eye ?? 0.7, ahead: o.ahead ?? 3, look: o.look, hide: o.hide, dir: 1, t0: performance.now(), k: 0 }; if (this.onFp) this.onFp(true); this.cam.near = 0.05; this.cam.updateProjectionMatrix(); }
+  fpEnd() { if (this.fp && this.fp.dir > 0) { this.fp.dir = -1; this.fp.t0 = performance.now(); this.fp.k0 = this.fp.k; } return new Promise(r => setTimeout(r, REDUCED ? 0 : 850)); }
   cancelFly() { if (this.fly && !this.fly.locked) this.fly = null; }
   // fly to a view: {target:[x,y,z], zoom, az, pol}
   flyTo(v, dur = 1.4, locked = false) {
@@ -109,7 +112,18 @@ export class CameraRig {
     const d = this.baseDist() * this.zoom;
     const c = this.cam;
     c.position.set(this.target.x + Math.sin(this.az) * Math.sin(this.pol) * d, this.target.y + Math.cos(this.pol) * d, this.target.z + Math.cos(this.az) * Math.sin(this.pol) * d);
-    c.lookAt(this.target);
     const fog = this.e.scene.fog; fog.near = d * 0.95; fog.far = d * 2.4;
+    const f = this.fp;
+    if (f) {
+      const x = Math.min(1, (performance.now() - f.t0) / 800), k = f.dir > 0 ? x : (f.k0 ?? 1) * (1 - x), e = k * k * (3 - 2 * k); f.k = k;
+      const o = f.obj, h = o.rotation.y, fw = new THREE.Vector3(Math.sin(h), 0, Math.cos(h));
+      const eye = o.position.clone().add(new THREE.Vector3(0, f.eye, 0)).addScaledVector(fw, 0.12);
+      const look = f.look ? f.look(o.position, fw) : o.position.clone().addScaledVector(fw, f.ahead).setY(f.eye * 0.6);
+      c.position.lerp(eye, e);
+      c.lookAt(this.target.clone().lerp(look, e));
+      fog.near = fog.near + (5 - fog.near) * e; fog.far = fog.far + (30 - fog.far) * e;
+      if (f.hide) f.obj.visible = e < 0.55;
+      if (f.dir < 0 && k <= 0) { if (f.hide) f.obj.visible = true; this.fp = null; c.near = 0.5; c.updateProjectionMatrix(); if (this.onFp) this.onFp(false); }
+    } else c.lookAt(this.target);
   }
 }

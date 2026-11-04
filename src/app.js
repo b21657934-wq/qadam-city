@@ -16,7 +16,8 @@ export class App {
   constructor({ engine, rig, city, qadam, snow }) {
     Object.assign(this, { engine, rig, city, qadam, snow });
     const ui = this.ui = document.createElement('div'); ui.className = 'ui'; document.getElementById('app').appendChild(ui);
-    ui.innerHTML = `<header class="hud glass" role="banner"></header><section class="sheet glass" role="dialog" aria-live="polite"></section><div class="toast glass" role="status"></div>`;
+    ui.innerHTML = `<aside class="calc glass" aria-live="polite" hidden></aside><header class="hud glass" role="banner"></header><section class="sheet glass" role="dialog" aria-live="polite"></section><div class="toast glass" role="status"></div>`;
+    this.calcEl = ui.querySelector('.calc');
     this.hud = ui.querySelector('.hud'); this.sheet = ui.querySelector('.sheet'); this.toastEl = ui.querySelector('.toast');
     this.view = 'home'; this.sel = null;
     rig.onTap = ndc => this.tap(ndc);
@@ -32,6 +33,12 @@ export class App {
     this.engine.setNight(night, instant);
     const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = night ? '#0E1430' : '#F1F4F7';
   }
+  calc(title, rows) {
+    const e = this.calcEl; e.hidden = false;
+    e.innerHTML = `<div class="calc-t">${icon('gauge')}<span>${esc(title)}</span></div>${rows.map((r, i) => `<div class="calc-r ${r[2] || ''} ${i === rows.length - 1 ? 'new' : ''}"><span>${esc(r[0])}</span><b>${esc(r[1] ?? '')}</b></div>`).join('')}`;
+    requestAnimationFrame(() => e.classList.add('on'));
+  }
+  calcHide() { const e = this.calcEl; e.classList.remove('on'); setTimeout(() => { if (!e.classList.contains('on')) e.hidden = true; }, 250); }
   toast(msg) { const e = this.toastEl; e.textContent = msg; e.classList.add('on'); clearTimeout(this.tt); this.tt = setTimeout(() => e.classList.remove('on'), 2200); }
   syncInset() { const hidden = this.sheet.classList.contains('hide'), desk = innerWidth >= 760, h = hidden ? 0 : this.sheet.offsetHeight + 16; this.rig.setUiBottom(desk ? 0 : h); this.rig.setUiLeft(desk && !hidden ? 444 : 0); }
   setSheet(html, bind, opts = {}) {
@@ -49,6 +56,7 @@ export class App {
     this.hud.innerHTML = `<img class="logo" src="${logoURL}" alt="Qadam City">
       <div class="prog"><div class="lbl">${esc(t('cityBuilt', { p: this.pct() }))}</div><div class="bar" role="progressbar" aria-label="${esc(t('progressLabel'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${this.pct()}"><i style="width:${this.pct()}%"></i></div></div>
       <div class="chip-stars" aria-label="${store.totalStars()} / 30 ${esc(t('stars'))}">${icon('starf')}${store.totalStars()}/30</div>
+      <button class="icon-btn hud-reset" data-act="resetAsk" aria-label="${esc(t('restartTitle'))}" title="${esc(t('restartTitle'))}">${icon('reset')}</button>
       <button class="icon-btn" data-act="theme" aria-label="${esc(t(night ? 'day' : 'night'))}">${icon(night ? 'sun' : 'moon')}</button>
       <button class="icon-btn" data-act="menu" aria-label="${esc(t('menu'))}">${icon('menu')}</button>`;
     this.hud.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => this.act(b.dataset.act, b.dataset)));
@@ -65,6 +73,7 @@ export class App {
     if (view === 'menu') return this.vMenu();
     if (view === 'onboard') return this.vOnboard(arg || 0);
     if (view === 'library') return this.vLibrary();
+    if (view === 'resetAsk') return this.vResetAsk();
   }
   vOnboard(i) {
     const steps = [['ob1t', 'ob1', 'city'], ['ob2t', 'ob2', 'star'], ['ob3t', 'ob3', 'book']];
@@ -120,8 +129,15 @@ export class App {
       <div class="label mt4">${esc(t('timeOfDay'))}</div>
       <div class="seg mt2" role="group"><button data-act="setDay" class="${night ? '' : 'on'}" aria-pressed="${!night}">${icon('sun')}${esc(t('day'))}</button><button data-act="setNight" class="${night ? 'on' : ''}" aria-pressed="${!!night}">${icon('moon')}${esc(t('night'))}</button></div>
       <button class="list-btn mt4" data-act="library"><div class="tile">${icon('book')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('library'))}</div><div class="cap mt1">${esc(t('librarySub'))}</div></div>${icon('arrow')}</button>
-      <button class="btn btn-ghost mt3 danger" data-act="reset" style="padding:0 4px">${icon('reset')}<span>${esc(t('reset'))}</span></button>
+      <button class="btn btn-ghost mt3 danger" data-act="resetAsk" style="padding:0 4px">${icon('reset')}<span>${esc(t('restartTitle'))}</span></button>
       <div class="cap mt3">${esc(t('team'))}<br>${esc(t('course'))}</div>`);
+  }
+  vResetAsk() {
+    this.setSheet(`
+      <div class="row"><div class="tile" style="background:var(--bad-soft);color:var(--bad)">${icon('reset')}</div><div class="h3 grow">${esc(t('restartTitle'))}</div></div>
+      <p class="sub mt3">${esc(t('restartText'))}</p>
+      <button class="btn btn-primary btn-block mt4" data-act="reset">${icon('reset')}${esc(t('restartYes'))}</button>
+      <button class="btn btn-secondary btn-block mt2" data-act="home">${esc(t('cancel'))}</button>`);
   }
   vLibrary() {
     this.rig.flyTo({ target: [0.2 * K, 0.6, 0.6 * K], zoom: 0.45, az: -0.25, pol: 0.88 }, 1.3);
@@ -145,9 +161,13 @@ export class App {
     if (a === 'obDone') { store.set({ onboarded: true }); this.view = 'home'; return this.show('district', 0); }
     if (a === 'mission') return this.startMission(+ds.i);
     if (a === 'tour') return this.tour();
+    if (a === 'resetAsk') { if (this.mission) { this.mission.close(); } return this.show('resetAsk'); }
     if (a === 'reset') {
-      if (!this.resetArm) { this.resetArm = true; const s = this.sheet.querySelector('[data-act=reset] span'); if (s) s.textContent = t('resetConfirm'); setTimeout(() => this.resetArm = false, 3000); return; }
-      this.resetArm = false; store.reset(); this.city.setBuilt(0); this.city.stationReset(); this.toast(t('resetDone')); return this.show('home');
+      store.reset(); store.set({ onboarded: false, coach: {} }); this.book.quiz = {};
+      this.city.setBuilt(0); this.city.stationReset(); this.city.station.group.visible = false;
+      this.qadam.cone.visible = false; this.qadam.goTo(1.8, 1.5);
+      this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, az: -0.62, pol: 0.98 }, 1.2);
+      this.toast(t('resetDone')); return this.show('onboard', 0);
     }
   }
   tap(ndc) {

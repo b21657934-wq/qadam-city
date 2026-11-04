@@ -126,6 +126,12 @@ export const S = {
   readChapter: { en: 'Read chapter {n}', ru: 'Читать главу {n}', kk: '{n}-тарауды оқу' },
   gestureHint: { en: 'Drag with one finger to move the map, use two to zoom and turn', ru: 'Двигай карту одним пальцем, двумя — приближай и вращай', kk: 'Картаны бір саусақпен жылжыт, екеуімен — жақындат және бұр' },
   gestureHintDesk: { en: 'Drag to turn · two fingers or right button to move · scroll or +/− to zoom', ru: 'Тяни — вращай · двумя пальцами или правой кнопкой — двигай · колесо или +/− — приближай', kk: 'Тарт — бұр · екі саусақ не оң батырма — жылжыт · дөңгелек не +/− — жақындат' },
+  cspGive: { en: 'Give zone {n} a bus line', ru: 'Дай зоне {n} автобусную линию', kk: '{n}-аймаққа автобус желісін бер' },
+  cspConflict: { en: 'Neighbour zone {n} already uses line {v} — pick another.', ru: 'Соседняя зона {n} уже на линии {v} — выбери другую.', kk: 'Көрші {n}-аймақ {v}-желіде — басқасын таңда.' },
+  restartTitle: { en: 'Start over', ru: 'Начать заново', kk: 'Қайта бастау' },
+  restartText: { en: 'The city turns back into an empty steppe and all stars are cleared.', ru: 'Город снова станет пустой степью, все звёзды обнулятся.', kk: 'Қала қайта бос далаға айналады, барлық жұлдыз нөлденеді.' },
+  restartYes: { en: 'Yes, start over', ru: 'Да, начать заново', kk: 'Иә, қайта бастау' },
+  cancel: { en: 'Cancel', ru: 'Отмена', kk: 'Болдырмау' },
   aboutBuild: { en: 'Stage 2 preview · one district playable', ru: 'Превью этапа 2 · играбелен один район', kk: '2-кезең алдын ала көрінісі · бір аудан ойналады' },
 };
 

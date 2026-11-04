@@ -47,7 +47,7 @@ export class Mission {
       const v = s.values[this.dv ?? s.start];
       body = `<div class="stepper mt3"><button class="icon-btn" data-dv="-1" aria-label="−" ${this.solved ? 'disabled' : ''}><span class="pm">−</span></button><div class="grow center"><div class="cap">${esc(tr(s.label))}</div><div class="pc-b">${esc(s.fmt ? s.fmt(v) : v)}</div></div><button class="icon-btn" data-dv="1" aria-label="+" ${this.solved ? 'disabled' : ''}><span class="pm">+</span></button></div><div class="live cap mt2" data-live>${esc(s.live ? s.live(this, v) : '')}</div>`;
     } else if (s.kind === 'pick') {
-      body = `<div class="picks ${s.opts.length === 2 ? 'two' : ''}">${s.opts.map(o => `<button class="pick ${this.picked === o.id ? 'ok' : ''} ${this.wrongPick[o.id] ? 'no' : ''}" data-pick="${o.id}" ${this.solved ? 'disabled' : ''}><span class="tile">${icon(o.icon)}</span><span class="pick-l">${esc(tr(o.l))}</span></button>`).join('')}</div>${s.live ? `<div class="live cap mt2" data-live>${esc(s.live(this))}</div>` : ''}`;
+      body = `<div class="picks ${s.opts.length === 2 ? 'two' : s.opts.length === 4 ? 'four' : ''}">${s.opts.map(o => `<button class="pick ${this.picked === o.id ? 'ok' : ''} ${this.wrongPick[o.id] ? 'no' : ''}" data-pick="${o.id}" ${this.solved ? 'disabled' : ''}><span class="tile">${icon(o.icon)}</span><span class="pick-l">${esc(tr(o.l))}</span></button>`).join('')}</div>${s.live ? `<div class="live cap mt2" data-live>${esc(s.live(this))}</div>` : ''}`;
     } else if (s.kind === 'sort') {
       const keys = Object.keys(s.slots), left = s.cards.filter(c => !this.placed[c.id]);
       body = `<div class="slots ${keys.length === 2 ? 'two' : ''}">${keys.map(k => `<button class="slot ${this.sel ? 'ready' : ''}" data-slot="${k}" aria-label="${esc(tr(s.slots[k]))}"><span class="sl-h"><b>${k}</b>${esc(tr(s.slots[k]))}</span><span class="fill">${s.cards.filter(c => this.placed[c.id] === k).map(c => `<span class="placed">${icon('check')}${esc(tr(c.l))}</span>`).join('')}</span></button>`).join('')}</div>
@@ -164,10 +164,11 @@ export class Mission {
     this.solved = true; this.lock = false; this.render();
   }
   advance() {
+    this.app.calcHide();
     if (this.step >= this.spec.steps.length - 1) return this.finish();
     this.step++; this.hl = 0; this.reset(); this.render();
   }
-  cleanup() { this.app.stage && this.app.stage.clear(); if (this.spec.cleanup) this.spec.cleanup(this); }
+  cleanup() { this.app.calcHide(); if (this.app.rig.fp) this.app.rig.fpEnd(); this.app.stage && this.app.stage.clear(); if (this.spec.cleanup) this.spec.cleanup(this); }
   stopSim() { if (this.sim) { const h = this.app.engine.hooks; h.splice(h.indexOf(this.sim), 1); this.sim.stop && this.sim.stop(); this.sim = null; } }
   finish() {
     this.cleanup();

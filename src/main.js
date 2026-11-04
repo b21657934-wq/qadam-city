@@ -34,6 +34,7 @@ requestAnimationFrame(() => {
   const stage = new Stage(engine);
   const app = window.__app = new App({ engine, rig, city, qadam, snow });
   app.stage = stage; window.__engine = engine;
+  rig.onFp = on => stage.labels(!on);
   app.setTheme(night, true);
   engine.resize();
   if (!store.get().onboarded && !Q.has('view')) app.show('onboard', 0); else app.show(Q.get('view') || 'home', Q.has('arg') ? +Q.get('arg') : undefined);

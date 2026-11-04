@@ -153,6 +153,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webki
 .pick[disabled]:not(.ok){opacity:.5}
 .pick.busy{box-shadow:inset 0 0 0 2px var(--focus),var(--sh2)}
 .picks.two{grid-template-columns:1fr 1fr}
+.picks.four{grid-template-columns:1fr 1fr}
+.picks.four .pick{min-height:0;flex-direction:row;justify-content:flex-start;text-align:left;padding:10px 12px;gap:10px}
+.picks.four .pick .tile{width:40px;height:40px;border-radius:var(--r1)}
+.picks.four .pick .tile .ic{width:20px;height:20px}
 .live{font-weight:600;font-feature-settings:"tnum";min-height:16px}
 .learn{display:flex;gap:10px;margin-top:var(--s3);padding:12px 14px;border-radius:var(--r2);background:var(--ok-soft);color:var(--text);font-size:14px;line-height:20px;font-weight:500;animation:sheetIn var(--t2) var(--ease)}
 .learn .ic{width:18px;height:18px;color:var(--ok);margin-top:1px}
@@ -247,6 +251,16 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webki
 .tok-p{text-align:right;color:var(--text-2);font-feature-settings:"tnum"}
 .shake{animation:shake .32s;transform-box:fill-box}
 .opts.one{grid-template-columns:1fr}
+/* CSP line buttons */
+.g-edge.near{stroke:var(--text-3);stroke-width:3.5}
+.g-node.pulse circle{animation:nodePulse 1.2s ease-in-out infinite}
+@keyframes nodePulse{50%{stroke-width:6;stroke:var(--accent)}}
+.lines{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);margin-top:var(--s2)}
+.line-btn{height:52px;border-radius:var(--r1);display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-2),var(--sh1);transition:transform var(--t1),box-shadow var(--t1)}
+.line-btn:hover{box-shadow:inset 0 0 0 1px var(--text-3),var(--sh2)}
+.line-btn:active{transform:scale(.97)}
+.line-btn i{width:16px;height:16px;border-radius:5px}
+.line-btn.col1 i{background:var(--accent)}.line-btn.col2 i{background:#4F98A3}.line-btn.col3 i{background:#C4846A}
 /* result */
 .big-stars{display:flex;justify-content:center;gap:8px;color:var(--accent);margin:4px 0 8px}
 .big-stars .ic{width:44px;height:44px;filter:drop-shadow(0 4px 10px rgba(201,143,31,.35))}
@@ -256,6 +270,17 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webki
 @keyframes pop{0%{transform:scale(.2);opacity:0}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1)}}
 .center{text-align:center}
 
+/* live calculation panel (top-right) */
+.calc{position:fixed;top:calc(84px + var(--safe-t));right:12px;left:auto;width:min(300px,calc(100% - 24px));border-radius:var(--r3);padding:12px 14px;opacity:0;transform:translateY(-6px);transition:opacity var(--t2) var(--ease),transform var(--t2) var(--ease);pointer-events:none}
+.calc.on{opacity:1;transform:none}
+.calc[hidden]{display:none}
+.calc-t{display:flex;align-items:center;gap:8px;font-size:12px;line-height:16px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px}
+.calc-t .ic{width:16px;height:16px;color:var(--accent-text)}
+.calc-r{display:flex;justify-content:space-between;gap:12px;font-size:14px;line-height:20px;padding:4px 0;border-top:1px solid var(--line);font-feature-settings:"tnum"}
+.calc-r.new{animation:sheetIn var(--t2) var(--ease)}
+.calc-r b{font-weight:700;white-space:nowrap}
+.calc-r.ok b{color:var(--ok)}.calc-r.no b{color:var(--bad)}.calc-r.sum{font-weight:600}.calc-r.sum b{color:var(--accent-text)}
+@media (min-width:760px){.calc{top:24px;right:24px;width:320px}}
 /* toast */
 .toast{position:fixed;left:50%;top:calc(84px + var(--safe-t));transform:translate(-50%,-6px);max-width:calc(100% - 32px);padding:10px 16px;border-radius:999px;font-size:14px;line-height:20px;font-weight:500;opacity:0;pointer-events:none;transition:opacity var(--t2) var(--ease),transform var(--t2) var(--ease);text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
@@ -268,8 +293,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webki
 .loader.out{opacity:0;pointer-events:none}
 
 @media (max-width:419px){.hud [data-act=theme]{display:none}}
+@media (max-width:759px){.hud .hud-reset{display:none}}
 @media (min-width:760px){
-  .hud{left:24px;right:auto;top:24px;width:420px}
+  .hud{left:24px;right:auto;top:24px;width:460px}
   .sheet{left:24px;right:auto;bottom:24px;width:420px;max-height:calc(100vh - 128px)}
   .toast{top:100px;left:calc(50% + 222px)}
 }

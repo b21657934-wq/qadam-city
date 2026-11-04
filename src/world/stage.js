@@ -61,6 +61,7 @@ export class Stage {
   }
   setBar(b, h) { this.tw.push({ k: 'bar', b, from: b.userData.h, to: h, t0: U.uTime.value }); b.userData.h = h; }
   place(o, x, z, y) { o.position.set(x * K, y ?? o.position.y, z * K); return o; }
+  labels(v) { this.g.children.forEach(o => { if (o.isSprite) o.visible = v; }); }
   wait(s) { return new Promise(r => setTimeout(r, REDUCED ? 0 : s * 1000)); }
   update(dt, t) {
     for (let i = this.tw.length - 1; i >= 0; i--) {
