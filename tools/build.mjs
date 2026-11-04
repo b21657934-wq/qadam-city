@@ -9,7 +9,7 @@ fs.mkdirSync(out, { recursive: true });
 const res = await esbuild.build({
   entryPoints: [path.join(root, 'src/main.js')],
   bundle: true, minify: !process.env.DEV, format: 'iife', target: 'es2019',
-  write: false, legalComments: 'none',
+  write: false, legalComments: 'none', charset: 'utf8',
   loader: { '.css': 'text', '.svg': 'text' },
   define: { 'process.env.NODE_ENV': '"production"' },
 });

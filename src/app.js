@@ -5,6 +5,7 @@ import { store } from './store.js';
 import { Mission } from './missions/engine.js';
 import { SPECS } from './missions/specs.js';
 import logoSvg from './ui/logo.svg';
+import { Book } from './book/book.js';
 
 const logoURL = 'data:image/svg+xml,' + encodeURIComponent(logoSvg);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -20,6 +21,7 @@ export class App {
     rig.onTap = ndc => this.tap(ndc);
     this.ray = new THREE.Raycaster();
     new ResizeObserver(() => this.syncInset()).observe(this.sheet);
+    this.book = new Book(this);
   }
   // ----- helpers -----
   built() { return store.builtCount(); }
@@ -100,7 +102,7 @@ export class App {
     let body = '';
     if (st === 'locked') body = `<p class="sub mt3 row" style="gap:8px">${icon('lock')}<span>${esc(t('locked', { prev: tr(D[b].title) }))}</span></p>`;
     else if (!has) body = `<p class="sub mt3">${esc(tr(d.task))}</p><p class="cap mt2">${esc(t('soon'))}</p>`;
-    else body = `<p class="sub mt3">${esc(tr(d.task))}</p><button class="btn ${st === 'built' ? 'btn-secondary' : 'btn-primary'} btn-block mt4" data-act="mission" data-i="${i}" data-focus>${icon(st === 'built' ? 'reset' : 'play')}${esc(t(st === 'built' ? 'playAgain' : 'startMission'))}</button>`;
+    else body = `<p class="sub mt3">${esc(tr(d.task))}</p><button class="btn ${st === 'built' ? 'btn-secondary' : 'btn-primary'} btn-block mt4" data-act="mission" data-i="${i}" data-focus>${icon(st === 'built' ? 'reset' : 'play')}${esc(t(st === 'built' ? 'playAgain' : 'startMission'))}</button><button class="btn btn-ghost btn-block mt2" data-act="read" data-i="${i}">${icon('book')}${esc(t('readChapter', { n: i + 1 }))}</button>`;
     this.setSheet(`
       <div class="row"><div class="tile ${st === 'locked' ? 'muted' : ''}">${icon(d.icon)}</div>
         <div class="grow"><div class="row" style="gap:8px"><span class="tag ${st === 'next' ? 'gold' : ''}">${esc(t('week', { n: i + 1 }))}</span>${st === 'built' ? starRow : ''}</div><div class="h3 mt1">${esc(tr(d.title))}</div></div>
@@ -132,10 +134,11 @@ export class App {
     if (a === 'menu') return this.show(this.view === 'menu' ? 'home' : 'menu');
     if (a === 'theme') { this.setTheme(!store.get().night); return this.rerender(); }
     if (a === 'setDay' || a === 'setNight') { this.setTheme(a === 'setNight'); return this.rerender(); }
-    if (a === 'lang') { store.set({ lang: ds.l }); setLang(ds.l); return this.rerender(); }
+    if (a === 'lang') { store.set({ lang: ds.l }); setLang(ds.l); this.book && this.book.rerender(); return this.rerender(); }
     if (a === 'home') { this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1 }, 1.2); return this.show('home'); }
     if (a === 'open') return this.show('district', +ds.i);
-    if (a === 'library') return this.show('library');
+    if (a === 'library') return this.book.open('toc');
+    if (a === 'read') return this.book.open(+ds.i);
     if (a === 'obNext') return this.show('onboard', +ds.i);
     if (a === 'obDone') { store.set({ onboarded: true }); this.view = 'home'; return this.show('district', 0); }
     if (a === 'mission') return this.startMission(+ds.i);
@@ -150,7 +153,7 @@ export class App {
     this.ray.setFromCamera(ndc, this.engine.camera);
     const hit = this.ray.intersectObjects([...this.city.hits, this.city.libHit], false)[0];
     if (!hit) return;
-    if (hit.object.userData.library) return this.show('library');
+    if (hit.object.userData.library) return this.book.open('toc');
     this.show('district', hit.object.userData.district);
   }
   startMission(i) {

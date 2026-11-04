@@ -37,5 +37,6 @@ requestAnimationFrame(() => {
   engine.resize();
   if (!store.get().onboarded && !Q.has('view')) app.show('onboard', 0); else app.show(Q.get('view') || 'home', Q.has('arg') ? +Q.get('arg') : undefined);
   setTimeout(() => { loader.classList.add('out'); setTimeout(() => loader.remove(), 600); }, 300);
+  if (location.hash.startsWith('#book')) app.book.fromHash();
   window.__ready = true;
 });

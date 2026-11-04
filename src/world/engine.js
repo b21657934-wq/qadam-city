@@ -115,7 +115,7 @@ export class Engine {
   on(h) { this.hooks.push(h); }
   loop() {
     requestAnimationFrame(this.loop);
-    if (document.hidden) return;
+    if (document.hidden || this.paused) { this.clock.getDelta(); return; }
     const dt = Math.min(this.clock.getDelta(), 0.05);
     U.uTime.value = performance.now() / 1000 - this.t0;
     if (this.nightT < 1) { this.nightT = Math.min(1, this.nightT + dt / 1.6); this.applyLook(lerp(this.nightFrom, this.nightTo, ease(this.nightT))); }
