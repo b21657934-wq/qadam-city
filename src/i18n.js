@@ -92,6 +92,9 @@ export const S = {
   dt_known: { en: 'Known sender?', ru: 'Отправитель знаком?', kk: 'Жіберуші таныс па?' },
   ham: { en: 'Not spam', ru: 'Не спам', kk: 'Спам емес' },
   spam: { en: 'Spam', ru: 'Спам', kk: 'Спам' },
+  finish: { en: 'Finish', ru: 'Завершить', kk: 'Аяқтау' },
+  crashes: { en: 'Crashes: {n}', ru: 'Столкновений: {n}', kk: 'Соғылыс: {n}' },
+  noCrash: { en: 'Crashes: {n} · now he steers around', ru: 'Столкновений: {n} · теперь объезжает', kk: 'Соғылыс: {n} · енді айналып өтеді' },
   aboutBuild: { en: 'Stage 2 preview · one district playable', ru: 'Превью этапа 2 · играбелен один район', kk: '2-кезең алдын ала көрінісі · бір аудан ойналады' },
 };
 

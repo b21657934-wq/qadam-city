@@ -14,9 +14,10 @@ export class Mission {
     app.city.setBeacon(-1);
     app.rig.autoOrbit = false;
     if (spec.start) spec.start(this); else this.defaultStart();
+    if (spec.sim) { this.sim = spec.sim(this); app.engine.hooks.push(this.sim); }
     this.render();
   }
-  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; }
+  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; }
   defaultStart() {
     const c = this.city.districts[this.i], portrait = innerWidth < innerHeight;
     this.app.rig.flyTo({ target: [c.center[0], 0.7, c.center[1]], zoom: c.cam.zoom * (portrait ? 0.78 : 0.85), az: c.cam.az, pol: c.cam.pol }, 1.5);
@@ -32,10 +33,15 @@ export class Mission {
       <div class="h3">${esc(tr(s.t))}</div>${s.i ? `<p class="sub mt1">${esc(tr(s.i))}</p>` : ''}
       ${this.hl ? `<div class="hint">${icon('hint')}<span>${esc(tr(s.h[this.hl - 1]))}</span></div>` : ''}`;
   }
-  foot() { return `<div class="feedback" aria-live="polite"></div><div class="dots mt2">${this.spec.steps.map((_, k) => `<i class="${k === this.step ? 'on' : ''}"></i>`).join('')}</div>`; }
+  foot() {
+    const last = this.step >= this.spec.steps.length - 1, s = this.S;
+    if (this.solved) return `<div class="learn">${icon('check')}<span>${esc(tr(s.learn || s.okText || { en: '' }))}</span></div><button class="btn btn-primary btn-block mt3" data-next>${esc(t(last ? 'finish' : 'next'))}${icon('arrow')}</button><div class="dots mt3">${this.spec.steps.map((_, k) => `<i class="${k === this.step ? 'on' : ''}"></i>`).join('')}</div>`;
+    return `<div class="feedback" aria-live="polite"></div><div class="dots mt2">${this.spec.steps.map((_, k) => `<i class="${k === this.step ? 'on' : ''}"></i>`).join('')}</div>`; }
   render() {
     const s = this.S; let body = '';
-    if (s.kind === 'sort') {
+    if (s.kind === 'pick') {
+      body = `<div class="picks">${s.opts.map(o => `<button class="pick ${this.picked === o.id ? 'ok' : ''} ${this.wrongPick[o.id] ? 'no' : ''}" data-pick="${o.id}" ${this.solved ? 'disabled' : ''}><span class="tile">${icon(o.icon)}</span><span class="pick-l">${esc(tr(o.l))}</span></button>`).join('')}</div>${s.live ? `<div class="live cap mt2" data-live>${esc(s.live(this))}</div>` : ''}`;
+    } else if (s.kind === 'sort') {
       const keys = Object.keys(s.slots), left = s.cards.filter(c => !this.placed[c.id]);
       body = `<div class="slots ${keys.length === 2 ? 'two' : ''}">${keys.map(k => `<button class="slot ${this.sel ? 'ready' : ''}" data-slot="${k}" aria-label="${esc(tr(s.slots[k]))}"><span class="sl-h"><b>${k}</b>${esc(tr(s.slots[k]))}</span><span class="fill">${s.cards.filter(c => this.placed[c.id] === k).map(c => `<span class="placed">${icon('check')}${esc(tr(c.l))}</span>`).join('')}</span></button>`).join('')}</div>
         <div class="cards">${left.map(c => `<button class="card ${this.sel === c.id ? 'sel' : ''}" data-card="${c.id}" aria-pressed="${this.sel === c.id}">${esc(tr(c.l))}</button>`).join('')}</div>`;
@@ -49,20 +55,44 @@ export class Mission {
       body = `<div class="fig-wrap mt3 w-${s.w}">${W[s.w].render(this.ws, s)}</div>`;
     }
     this.app.setSheet(this.head() + body + this.foot(), root => this.bind(root), { grab: false });
+    this.coach();
   }
+  coach() {
+    document.querySelectorAll('.coach').forEach(e => e.remove());
+    const seen = store.get().coach || {};
+    if (this.solved || this.step > 0 || seen[this.i]) return;
+    const tg = this.app.sheet.querySelector('.picks, .cards, .fig-wrap');
+    if (!tg) return;
+    const c = document.createElement('div'); c.className = 'coach'; c.setAttribute('aria-hidden', 'true');
+    c.innerHTML = '<div class="coach-ring"></div>';
+    document.body.appendChild(c);
+    const place = () => { const r = tg.getBoundingClientRect(); Object.assign(c.style, { left: r.left - 6 + 'px', top: r.top - 6 + 'px', width: r.width + 12 + 'px', height: r.height + 12 + 'px' }); };
+    place(); setTimeout(place, 320);
+    const off = () => { c.remove(); store.set({ coach: Object.assign({}, store.get().coach, { [this.i]: true }) }); this.app.sheet.removeEventListener('pointerdown', off, true); };
+    this.app.sheet.addEventListener('pointerdown', off, true);
+  }
+  live() { const s = this.S, e = this.app.sheet.querySelector('[data-live]'); if (e && s.live) e.textContent = s.live(this); }
   fb(msg, ok) { const f = this.app.sheet.querySelector('.feedback'); if (f) { f.textContent = msg || ''; f.classList.toggle('ok', !!ok); } }
   bind(root) {
     root.querySelector('[data-x]').addEventListener('click', () => this.close());
     root.querySelector('[data-h]').addEventListener('click', () => { if (this.hl >= 2) return; this.hl++; this.hints++; this.render(); });
     const s = this.S;
-    if (s.kind === 'sort') {
+    const nx = root.querySelector('[data-next]'); if (nx) nx.addEventListener('click', () => this.advance());
+    if (this.solved) return;
+    if (s.kind === 'pick') {
+      root.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
+        const o = s.opts.find(x => x.id === b.dataset.pick);
+        if (!o.ok) { this.mistakes++; this.wrongPick[o.id] = true; b.classList.remove('no'); void b.offsetWidth; b.classList.add('no'); this.fb(tr(o.why)); return; }
+        this.picked = o.id; this.spec.onPick && this.spec.onPick(this, o); this.stepDone();
+      }));
+    } else if (s.kind === 'sort') {
       root.querySelectorAll('[data-card]').forEach(b => { b.addEventListener('click', () => { if (this.dragged) return; this.sel = this.sel === b.dataset.card ? null : b.dataset.card; this.render(); }); this.dragable(b); });
       root.querySelectorAll('[data-slot]').forEach(b => b.addEventListener('click', () => this.drop(b.dataset.slot)));
     } else if (s.kind === 'quiz') {
       root.querySelectorAll('[data-opt]').forEach(b => b.addEventListener('click', () => this.answer(+b.dataset.opt, b)));
     } else {
       const api = {
-        ok: msg => { if (this.lock) return; this.lock = true; this.fb(msg || tr(s.okText) || '', true); setTimeout(() => this.stepDone(), s.okText ? 1500 : 800); },
+        ok: () => { if (this.lock) return; this.lock = true; setTimeout(() => this.stepDone(), 450); },
         bad: msg => { this.mistakes++; this.fb(msg); },
         fb: msg => this.fb(msg),
         redraw: () => { const w = root.querySelector('.fig-wrap'); w.innerHTML = W[s.w].render(this.ws, s); W[s.w].bind(w, this.ws, api, s); },
@@ -97,7 +127,7 @@ export class Mission {
     this.placed[c.id] = slot; this.sel = null;
     this.spec.onCard && this.spec.onCard(this, c);
     this.render();
-    if (Object.keys(this.placed).length === s.cards.length) { this.lock = true; setTimeout(() => this.stepDone(), 700); }
+    if (Object.keys(this.placed).length === s.cards.length) { this.lock = true; setTimeout(() => this.stepDone(), 350); }
   }
   answer(k, btn) {
     if (this.lock) return;
@@ -107,20 +137,25 @@ export class Mission {
     this.lock = true;
     this.spec.onQ && this.spec.onQ(this, this.step, this.q);
     if (q.why) this.fb(tr(q.why), true); else this.fb('', true);
-    setTimeout(() => { this.lock = false; this.q++; if (this.q >= s.qs.length) this.stepDone(); else this.render(); }, q.why ? 1600 : 650);
+    setTimeout(() => { this.lock = false; if (this.q + 1 >= s.qs.length) this.stepDone(); else { this.q++; this.render(); } }, q.why ? 1600 : 650);
   }
   stepDone() {
-    const last = this.step >= this.spec.steps.length - 1;
     if (this.spec.onStep) this.spec.onStep(this, this.step); else this.city.preview(this.i, (this.step + 1) / (this.spec.steps.length + 1));
-    if (last) return this.finish();
+    this.solved = true; this.lock = false; this.render();
+  }
+  advance() {
+    if (this.step >= this.spec.steps.length - 1) return this.finish();
     this.step++; this.hl = 0; this.reset(); this.render();
   }
+  stopSim() { if (this.sim) { const h = this.app.engine.hooks; h.splice(h.indexOf(this.sim), 1); this.sim.stop && this.sim.stop(); this.sim = null; } }
   finish() {
+    this.stopSim(); document.querySelectorAll('.coach').forEach(e => e.remove());
     this.app.rig.autoOrbit = true;
     this.app.resultText = tr(this.spec.done);
     this.app.finishMission(this.i, this.stars());
   }
   close() {
+    this.stopSim(); document.querySelectorAll('.coach').forEach(e => e.remove());
     const built = store.builtCount() > this.i;
     if (this.spec.close) this.spec.close(this, built); else if (!built) this.city.unpreview(this.i);
     this.app.rig.autoOrbit = true; this.app.mission = null;

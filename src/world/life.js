@@ -22,12 +22,17 @@ export class Qadam {
     this.head.add(M(new THREE.CylinderGeometry(0.012, 0.012, 0.18, 6), dark, [0.12, 0.26, 0]));
     this.tip = M(new THREE.SphereGeometry(0.04, 16, 8), this.eyeMat, [0.12, 0.36, 0]); this.head.add(this.tip);
     this.arms = [-1, 1].map(sd => { const a = M(new RoundedBoxGeometry(0.09, 0.26, 0.1, 2, 0.04), shell, [sd * 0.29, 0.42, 0.02]); a.rotation.z = sd * 0.15; this.body.add(a); return a; });
+    this.cone = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.1, 32, 1, true).rotateX(-Math.PI / 2).translate(0, 0, 0.75), new THREE.MeshBasicMaterial({ color: 0xF2B544, transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide }));
+    this.cone.position.set(0, 0.02, 0.2); this.cone.visible = false; this.head.add(this.cone);
+    this.flash = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.45, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xE8674A, transparent: true, opacity: 0, depthWrite: false }));
+    this.flash.position.y = 0.05; g.add(this.flash);
     g.scale.setScalar(0.85);
     this.target = null; this.blink = 2; this.wave = 0; this.look = 0;
     engine.on(this);
   }
   goTo(x, z) { this.target = new THREE.Vector3(x, 0, z); }
   cheer() { this.wave = 1.6; }
+  bump() { this.bumpT = 0.6; }
   update(dt, t) {
     const g = this.g;
     if (this.target) {
@@ -40,7 +45,8 @@ export class Qadam {
       }
     }
     this.body.position.y = Math.abs(Math.sin(t * (this.target ? 9 : 2))) * (this.target ? 0.03 : 0.012);
-    this.head.rotation.y = Math.sin(t * 0.6) * 0.25;
+    this.head.rotation.y = this.cone.visible ? Math.sin(t * 1.4) * 0.35 : Math.sin(t * 0.6) * 0.25;
+    if (this.bumpT > 0) { this.bumpT -= dt; this.body.rotation.x = -Math.sin(this.bumpT * 30) * 0.12 * this.bumpT; this.flash.material.opacity = Math.max(0, this.bumpT) * 1.4; this.flash.scale.setScalar(1 + (0.6 - this.bumpT) * 2); } else { this.body.rotation.x = 0; this.flash.material.opacity = 0; }
     this.blink -= dt; const b = this.blink < 0.12 ? 0.15 : 1; this.eyes.forEach(e => e.scale.y = b); if (this.blink < 0) this.blink = 2 + Math.random() * 3;
     this.eyeMat.emissiveIntensity = 0.9 + U.uNight.value * 1.6;
     if (this.wave > 0) { this.wave -= dt; this.arms[1].rotation.z = -2.4 + Math.sin(t * 14) * 0.35; this.body.position.y += Math.abs(Math.sin(t * 10)) * 0.05; } else this.arms[1].rotation.z = 0.15;

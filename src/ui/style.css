@@ -139,6 +139,28 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webki
 .feedback.ok{color:var(--ok)}
 @keyframes shake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 
+/* pick 1 of 3 */
+.picks{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);margin-top:var(--s3)}
+.pick{display:flex;flex-direction:column;align-items:center;gap:8px;min-height:112px;padding:12px 8px;border-radius:var(--r2);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-2),var(--sh1);text-align:center;transition:transform var(--t1) var(--ease),box-shadow var(--t2),background-color var(--t2)}
+.pick:hover{box-shadow:inset 0 0 0 1px var(--text-3),var(--sh2)}
+.pick:active{transform:scale(.97)}
+.pick .tile{width:48px;height:48px}
+.pick-l{font-size:14px;line-height:18px;font-weight:600}
+.pick.ok{background:var(--ok-soft);box-shadow:inset 0 0 0 2px var(--ok)}
+.pick.ok .tile{background:var(--ok);color:#fff}
+.pick.no{background:var(--bad-soft);box-shadow:inset 0 0 0 1.5px var(--bad);animation:shake .32s}
+.pick.no .tile{background:var(--bad-soft);color:var(--bad)}
+.pick[disabled]:not(.ok){opacity:.5}
+.live{font-weight:600;font-feature-settings:"tnum";min-height:16px}
+.learn{display:flex;gap:10px;margin-top:var(--s3);padding:12px 14px;border-radius:var(--r2);background:var(--ok-soft);color:var(--text);font-size:14px;line-height:20px;font-weight:500;animation:sheetIn var(--t2) var(--ease)}
+.learn .ic{width:18px;height:18px;color:var(--ok);margin-top:1px}
+/* coach: first-time "tap here" */
+.coach{position:fixed;z-index:8;pointer-events:none}
+.coach-ring{position:absolute;inset:0;border-radius:20px;box-shadow:0 0 0 3px var(--accent),0 0 0 8px rgba(242,181,68,.25);animation:coachPulse 1.4s var(--ease) infinite}
+.coach-arrow{position:absolute;left:50%;top:-38px;width:32px;height:32px;margin-left:-16px;border-radius:16px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;box-shadow:var(--sh2);animation:coachBob 1s ease-in-out infinite}
+.coach-arrow .ic{width:18px;height:18px}
+@keyframes coachPulse{50%{box-shadow:0 0 0 3px var(--accent),0 0 0 14px rgba(242,181,68,0)}}
+@keyframes coachBob{50%{transform:translateY(6px)}}
 /* figures & widgets */
 .fig-wrap{position:relative}
 @media (max-height:900px){.fig-wrap .fig{max-height:30vh}}

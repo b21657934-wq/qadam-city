@@ -1,31 +1,73 @@
-import { M1 } from '../i18n.js';
+import { M1, S, tr } from '../i18n.js';
 const L = (en, ru, kk) => ({ en, ru, kk });
 const YES = L('Yes', 'Да', 'Иә'), NO = L('No', 'Нет', 'Жоқ');
 
-// ---------- Week 1 — Weather station ----------
-const PART = { thermo: 'thermo', anemo: 'anemo', siren: 'siren', board: 'board', acc: 'gauge', early: 'early', streets: 'streets', weather: 'weather' };
+// ---------- Week 1 — Teach Qadam to see (agents, PEAS) ----------
+class Yard {
+  constructor(m) {
+    this.m = m; this.city = m.city; this.q = m.app.qadam;
+    this.a = Math.PI * 1.08; this.wait = 0; this.passed = new Set(); this.crashes = 0; this.seeing = false;
+    this.city.yard.visible = true; this.q.target = null; this.q.cone.visible = false;
+  }
+  update(dt) {
+    const c = this.city, q = this.q;
+    if (this.wait > 0) { this.wait -= dt; return; }
+    this.a = (this.a + dt * 0.5) % (Math.PI * 2);
+    let near = 0, best = 9;
+    c.yardDrifts.forEach((da, k) => { let d = this.a - da; d = Math.atan2(Math.sin(d), Math.cos(d)); if (Math.abs(d) < Math.abs(best)) { best = d; near = k; } });
+    if (!this.seeing && Math.abs(best) < 0.16 && !this.passed.has(near)) { this.passed.add(near); q.bump(); this.crashes++; this.wait = 0.9; this.m.live(); c.shake(c.drifts[near]); }
+    if (Math.abs(best) > 0.7) this.passed.delete(near);
+    const off = this.seeing ? -0.55 * Math.exp(-Math.pow(best / 0.32, 2)) : 0;
+    const [x, z] = c.yardPoint(this.a, off), [x2, z2] = c.yardPoint(this.a + 0.03, this.seeing ? -0.55 * Math.exp(-Math.pow((best + 0.03) / 0.32, 2)) : 0);
+    q.g.position.set(x, 0, z); q.g.rotation.y = Math.atan2(x2 - x, z2 - z);
+  }
+  stop() { this.q.goTo(-4.2, -2.1); }
+}
 const w1 = {
   start(m) {
     const st = m.city.station; st.group.visible = true; m.city.stationReset();
-    m.app.rig.flyTo({ target: [-5.6, 0.8, -3.4], zoom: innerWidth < innerHeight ? 0.22 : 0.3, az: -0.75, pol: 0.95 }, 1.5);
-    m.app.qadam.goTo(-4.35, -2.35);
+    m.app.rig.flyTo({ target: [-5.1, 0.5, -0.9], zoom: innerWidth < innerHeight ? 0.34 : 0.42, az: -0.25, pol: 0.9 }, 1.5);
   },
-  onCard(m, c) {
-    const city = m.city;
-    if ((c.id === 'anemo' || c.id === 'siren') && city.station.parts.mast.scale.x < 0.5) city.stationShow('mast');
-    city.stationShow(PART[c.id]);
-    if (c.id === 'weather') m.app.snow.blow();
-    if (c.id === 'streets') city.wave(-5.6, -3.4, 0x4F98A3);
+  sim: m => new Yard(m),
+  onPick(m, o) {
+    const c = m.city;
+    if (o.id === 'camera') { m.sim.seeing = true; m.app.qadam.cone.visible = true; c.stationShow('mast'); c.stationShow('anemo'); c.stationShow('thermo'); c.stationShow('streets'); }
+    if (o.id === 'lamps') { c.yardLampsOn(true); c.stationShow('siren'); c.stationShow('board'); c.stationShow('weather'); m.app.snow.blow(); }
+    if (o.id === 'score') { c.stationShow('gauge'); c.stationShow('early'); c.stationShow('brain'); [0, 1, 2].forEach(i => c.led(i)); c.wave(-5.6, -3.4); }
   },
-  onQ(m, step, q) { if (step === 1) m.city.led(q); },
-  onStep(m, step) { if (step === 2) { m.city.stationShow('brain'); [0, 1, 2].forEach(i => m.city.led(i)); m.city.wave(-5.6, -3.4); } },
-  close(m, built) { if (built) m.city.stationAll(true); else m.city.station.group.visible = false; },
+  onStep() {},
+  close(m, built) { m.app.qadam.cone.visible = false; if (built) m.city.stationAll(true); else { m.city.station.group.visible = false; m.city.yard.visible = false; } },
   steps: [
-    { kind: 'sort', t: M1.s1t, i: M1.s1i, slots: M1.slots, cards: M1.cards, h: M1.s1h },
-    { kind: 'quiz', t: M1.s2t, qs: M1.qs, h: M1.s2h },
-    { kind: 'quiz', t: M1.s3t, qs: [{ q: M1.s3q, a: M1.s3a, ok: M1.s3ok }], h: M1.s3h },
+    { kind: 'pick', t: L('Qadam keeps bumping into snowdrifts', 'Qadam врезается в сугробы', 'Qadam қар үйінділеріне соғылып жатыр'),
+      i: L('He can’t see anything. Give him a sensor.', 'Он ничего не видит. Дай ему датчик.', 'Ол ештеңе көрмейді. Оған сенсор бер.'),
+      live: m => tr(m.sim && m.sim.seeing ? S.noCrash : S.crashes, { n: m.sim ? m.sim.crashes : 0 }),
+      opts: [
+        { id: 'wheels', icon: 'wheel', l: L('Wheels', 'Колёса', 'Дөңгелектер'), why: L('Wheels move the robot — that’s an actuator, not a sensor.', 'Колёса двигают робота — это исполнитель, а не датчик.', 'Дөңгелектер роботты қозғайды — бұл орындаушы, сенсор емес.') },
+        { id: 'camera', icon: 'camera', ok: true, l: L('Camera', 'Камера', 'Камера') },
+        { id: 'siren', icon: 'siren', l: L('Siren', 'Сирена', 'Сирена'), why: L('A siren acts on the world — that’s an actuator.', 'Сирена действует на мир — это исполнитель.', 'Сирена әлемге әсер етеді — бұл орындаушы.') },
+      ],
+      learn: L('That’s a sensor (S in PEAS): how an agent perceives its environment.', 'Это датчик (S в PEAS): через него агент воспринимает среду.', 'Бұл сенсор (PEAS-тағы S): агент ортаны сол арқылы қабылдайды.'),
+      h: [L('Which of these brings information in?', 'Что из этого приносит информацию внутрь?', 'Мыналардың қайсысы ақпаратты ішке әкеледі?'), L('Wheels and a siren do things. One option only looks.', 'Колёса и сирена что-то делают. Только одно — смотрит.', 'Дөңгелек пен сирена бір нәрсе істейді. Тек біреуі ғана қарайды.')] },
+    { kind: 'pick', t: L('A blizzard is coming — warn people', 'Буран близко — предупреди людей', 'Боран жақын — адамдарға ескерт'),
+      i: L('Qadam sees the snow now. How will he signal?', 'Теперь Qadam видит снег. Чем он подаст сигнал?', 'Енді Qadam қарды көреді. Ол қалай белгі береді?'),
+      opts: [
+        { id: 'thermo', icon: 'thermo', l: L('Thermometer', 'Термометр', 'Термометр'), why: L('A thermometer only measures — that’s a sensor.', 'Термометр только измеряет — это датчик.', 'Термометр тек өлшейді — бұл сенсор.') },
+        { id: 'acc', icon: 'gauge', l: L('Forecast accuracy', 'Точность прогноза', 'Болжам дәлдігі'), why: L('That’s a score, not an action.', 'Это оценка работы, а не действие.', 'Бұл әрекет емес, жұмыс бағасы.') },
+        { id: 'lamps', icon: 'lamp', ok: true, l: L('Lamps and siren', 'Фонари и сирена', 'Шамдар мен сирена') },
+      ],
+      learn: L('Those are actuators (A): how an agent changes the world.', 'Это исполнители (A): через них агент меняет мир.', 'Бұлар орындаушылар (A): агент әлемді солар арқылы өзгертеді.'),
+      h: [L('Signalling means changing something people can see or hear.', 'Подать сигнал — значит изменить что-то, что люди видят или слышат.', 'Белгі беру — адамдар көретін не еститін нәрсені өзгерту.'), L('Measuring and scoring don’t change the street.', 'Измерение и оценка улицу не меняют.', 'Өлшеу мен бағалау көшені өзгертпейді.')] },
+    { kind: 'pick', t: L('How do we know Qadam did well?', 'Как понять, что Qadam справился?', 'Qadam жақсы істегенін қалай білеміз?'),
+      i: L('Pick what we score the agent on.', 'Выбери, по чему оценивать агента.', 'Агентті неге қарап бағалайтынымызды таңда.'),
+      opts: [
+        { id: 'streets', icon: 'city', l: L('Streets of Astana', 'Улицы Астаны', 'Астана көшелері'), why: L('Streets are the environment (E) the agent works in.', 'Улицы — это среда (E), где работает агент.', 'Көшелер — агент жұмыс істейтін орта (E).') },
+        { id: 'score', icon: 'target', ok: true, l: L('No crashes, everyone warned', 'Нет аварий, все предупреждены', 'Соғылыс жоқ, бәрі ескертілді') },
+        { id: 'cam2', icon: 'camera', l: L('A brighter camera', 'Камера ярче', 'Жарқынырақ камера'), why: L('A camera is a sensor. We score results, not parts.', 'Камера — это датчик. Оценивают результат, а не детали.', 'Камера — сенсор. Бөлшекті емес, нәтижені бағалаймыз.') },
+      ],
+      learn: L('That’s the performance measure (P). With E, A and S it makes PEAS — the agent’s task.', 'Это мера качества (P). Вместе с E, A и S это PEAS — описание задачи агента.', 'Бұл өнімділік өлшемі (P). E, A, S-пен бірге бұл PEAS — агенттің міндеті.'),
+      h: [L('We judge an agent by what happens in the world.', 'Агента оценивают по тому, что получилось в мире.', 'Агентті әлемде не болғанына қарап бағалайды.'), L('Streets are E, the camera is S. What is left?', 'Улицы — это E, камера — S. Что осталось?', 'Көшелер — E, камера — S. Не қалды?')] },
   ],
-  done: M1.done,
+  done: L('Qadam can see the city now: sensors, actuators and a clear goal make an agent.', 'Теперь Qadam видит город: датчики, исполнители и ясная цель — это и есть агент.', 'Енді Qadam қаланы көреді: сенсорлар, орындаушылар және нақты мақсат — бұл агент.'),
 };
 
 // ---------- Week 2 — Roads: BFS, UCS, A* ----------

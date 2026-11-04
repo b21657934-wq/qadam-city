@@ -214,6 +214,7 @@ export class City {
     this.building(-7.5, -2.0, 1.0, 0.9, 1.0, P.cream, { roof: P.roofRed });
     this.building(-7.6, -3.9, 0.9, 0.9, 1.2, P.white, { roof: P.roofSlate });
     this.building(-4.0, -2.7, 0.9, 0.8, 1.4, P.sand);
+    this.yardBuild();
     // library (always there — book mode)
     this.libraryBuild(0.2, 0.55);
 
@@ -392,6 +393,24 @@ export class City {
     this.item(g, 0, [x, z, 2.05, 2.05]);
     g.userData.station = true;
   }
+  // practice yard for week 1: a loop with snowdrifts and lamps
+  yardBuild() {
+    const Y0 = this.yardC = { x: -5.0, z: 0.3, rx: 1.5, rz: 0.55 };
+    this.yardDrifts = [0.5, 1.25, 1.85].map(k => k * Math.PI);
+    const g = this.yard = new THREE.Group(); this.root.add(g); g.visible = false;
+    const track = mesh(new THREE.RingGeometry(0.97, 1.03, 96).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xB8C4D2, transparent: true, opacity: 0.6, depthWrite: false }), false, false);
+    track.scale.set(Y0.rx, 1, Y0.rz); track.position.set(Y0.x, 0.07, Y0.z); g.add(track);
+    this.drifts = this.yardDrifts.map(a => { const d = mesh(new THREE.SphereGeometry(0.3, 20, 12), mat(0xFAFCFE, { roughness: 0.95 })); d.scale.set(1.2, 0.5, 1); d.position.set(Y0.x + Math.cos(a) * Y0.rx, 0.02, Y0.z + Math.sin(a) * Y0.rz); g.add(d); return d; });
+    this.yardLamps = [0.15, 0.85, 1.15, 1.6].map(k => {
+      const a = k * Math.PI, l = new THREE.Group(); l.position.set(Y0.x + Math.cos(a) * Y0.rx * 0.62, 0, Y0.z + Math.sin(a) * Y0.rz * 0.4);
+      const p = mesh(new THREE.CylinderGeometry(0.018, 0.024, 0.62, 6), mat(P.steel)); p.position.y = 0.31; l.add(p);
+      const h = mesh(new THREE.SphereGeometry(0.055, 12, 8), this.lampMat || (this.lampMat = glowMat(0xFFD08A, 0, 2.4)), false); h.position.y = 0.66; l.add(h);
+      l.scale.setScalar(0.001); g.add(l); return l;
+    });
+    this.block(Y0.x, Y0.z, Y0.rx + 0.3, Y0.rz + 0.3);
+  }
+  yardPoint(a, off = 0) { const c = this.yardC; return [c.x + Math.cos(a) * (c.rx + off), c.z + Math.sin(a) * (c.rz + off * 0.6)]; }
+  yardLampsOn(anim) { this.yardLamps.forEach((l, k) => { if (anim && !REDUCED) { l.scale.setScalar(0.001); this.anims.push({ kind: 'grow', o: l, t0: U.uTime.value + k * 0.15, uniform: true }); } else l.scale.setScalar(1); }); }
   depotBuild(x, z) {
     this.block(x, z, 0.8, 0.6);
     const g = new THREE.Group(); g.position.set(x, 0, z);
@@ -569,6 +588,7 @@ export class City {
     this.districts.forEach(d => {
       const on = d.i < n;
       if (d.plot) d.plot.visible = !on;
+      if (d.i === 0 && this.yard) { this.yard.visible = on; if (on) this.yardLampsOn(false); else this.yardLamps.forEach(l => l.scale.setScalar(0.001)); }
       if (!on) { d.items.forEach(o => { o.visible = false; }); d.roads.forEach(r => { r.live = false; }); d.built = false; return; }
       if (d.built) return;
       d.built = true;
