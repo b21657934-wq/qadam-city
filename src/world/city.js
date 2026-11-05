@@ -714,7 +714,7 @@ export class City {
       const on = d.i < n;
       if (d.plot) d.plot.visible = !on;
       if (d.i === 0 && this.yard) { this.yard.visible = on; if (on) this.yardLampsOn(false); else this.yardLamps.forEach(l => l.scale.setScalar(0.001)); }
-      if (!on) { this.unbake(d); d.items.forEach(o => { o.visible = false; }); d.roads.forEach(r => { r.live = false; }); d.built = false; return; }
+      if (!on) { this.unbake(d); d.items.forEach(o => { o.visible = false; }); d.roads.forEach(r => { r.live = false; }); d.built = false; for (let k = 0; k < this.wins.length; k++) if (this.wins[k].d === d.i) this.winBorn.array[k] = 1e6; this.winBorn.needsUpdate = true; return; }
       if (d.built) return;
       d.built = true;
       const anim = d.i === animate && !REDUCED;
