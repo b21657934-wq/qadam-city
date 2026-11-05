@@ -1,5 +1,5 @@
 const KEY = 'qadam-city-v2';
-const def = () => ({ stars: {}, onboarded: false, lang: null, night: null });
+const def = () => ({ stars: {}, onboarded: false, lang: null, night: null, keys: 5, earnN: {} });
 let st = def();
 try { const raw = localStorage.getItem(KEY); if (raw) st = Object.assign(def(), JSON.parse(raw)); } catch (e) { /* storage unavailable */ }
 export const store = {

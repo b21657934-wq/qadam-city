@@ -8,6 +8,8 @@ import logoSvg from './ui/logo.svg';
 import { Book } from './book/book.js';
 import { K } from './world/city.js';
 import { STORY, portrait } from './story.js';
+import { SCENES, VIEWS } from './world/stormScenes.js';
+import { U } from './world/engine.js';
 const say = (i, txt) => `<div class="say mt3"><div class="say-face">${portrait(i)}</div><div class="say-b"><div class="say-n">${esc(tr(STORY[i].name))}<span> · ${esc(tr(STORY[i].role))}</span></div><p>${esc(typeof txt === 'string' ? txt : tr(txt))}</p></div></div>`;
 
 const logoURL = 'data:image/svg+xml,' + encodeURIComponent(logoSvg);
@@ -209,20 +211,74 @@ export class App {
       });
     void L;
   }
+  cineOpen() {
+    const c = this.cineEl = document.createElement('div'); c.className = 'cine';
+    c.innerHTML = `<canvas class="cine-fx" aria-hidden="true"></canvas><div class="cine-vig" aria-hidden="true"></div>
+      <div class="cine-top"><span class="tag gold" data-c-n></span><button class="btn btn-secondary" data-c-skip>${esc(t('skip'))}${icon('arrow')}</button></div>
+      <div class="cine-cap glass" aria-live="polite"><div class="cine-face"></div><div class="grow"><div class="say-n" data-c-t></div><p data-c-x></p></div></div>`;
+    document.body.appendChild(c);
+    this.stormSkip = false; this.skipP = new Promise(r => { this.skipR = r; });
+    c.querySelector('[data-c-skip]').addEventListener('click', () => { this.stormSkip = true; this.skipR(); });
+    const cv = c.querySelector('canvas'), x = cv.getContext('2d'), fl = [];
+    for (let i = 0; i < 170; i++) fl.push([Math.random(), Math.random(), 0.4 + Math.random() * 0.9, Math.random()]);
+    this.fx = { lv: 0, to: 0 };
+    let last = performance.now();
+    const draw = now => {
+      if (!this.cineEl) return; const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      const f = this.fx; f.lv += (f.to - f.lv) * Math.min(1, dt * 0.7);
+      const dpr = Math.min(2, devicePixelRatio || 1), W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr); if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+      x.clearRect(0, 0, W, H); c.style.setProperty('--fx', f.lv.toFixed(3));
+      if (f.lv > 0.01) {
+        const g = 0.7 + 0.3 * Math.sin(now / 900) * Math.sin(now / 370 + 1), vx = 1.25 * g, vy = 0.42;
+        x.lineCap = 'round';
+        for (const p of fl) {
+          p[0] += vx * p[2] * dt; p[1] += vy * p[2] * dt; if (p[0] > 1.1) { p[0] -= 1.2; p[1] = Math.random(); } if (p[1] > 1.1) { p[1] -= 1.2; }
+          const X = p[0] * W, Y = p[1] * H, len = (18 + 40 * p[2]) * g * (W / 1400);
+          x.strokeStyle = `rgba(240,244,255,${(0.08 + 0.32 * p[3]) * f.lv})`; x.lineWidth = (1 + 2.2 * p[3]) * (W / 1400);
+          x.beginPath(); x.moveTo(X, Y); x.lineTo(X - len * vx, Y - len * vy); x.stroke();
+        }
+      }
+      requestAnimationFrame(draw);
+    };
+    requestAnimationFrame(draw);
+  }
+  cine(i, title, text, n) {
+    const c = this.cineEl; if (!c) return;
+    c.querySelector('[data-c-n]').textContent = n || t('stormT');
+    c.querySelector('.cine-face').innerHTML = i == null ? icon('snow') : portrait(i, 48);
+    c.querySelector('[data-c-t]').textContent = title; c.querySelector('[data-c-x]').textContent = text;
+    const cap = c.querySelector('.cine-cap'); cap.classList.remove('in'); void cap.offsetWidth; cap.classList.add('in');
+  }
+  sceneTest(i) { const v = VIEWS[i]; this.stage.clear(); this.blizzard.clear(); this.blizzard.live = true; this.rig.flyTo({ target: [v.x * K, 0.45, v.z * K], zoom: v.zoom * 1.05, az: v.az, pol: v.pol }, 0.01); return SCENES[i](this.blizzard, this.stage, tr); }
+  cineClose() { if (this.cineEl) { this.cineEl.remove(); this.cineEl = null; } }
   async storm() {
-    this.busy = true; this.hideSheet(); this.rig.autoOrbit = false;
-    if (!store.get().night) { this.setTheme(true); this.renderHud(); }
-    this.snow.storm = true;
-    const wait = ms => new Promise(r => setTimeout(r, ms));
-    for (let i = 0; i < 10; i++) {
-      const c = this.city.districts[i];
-      this.rig.flyTo({ target: [c.center[0], 0.6, c.center[1]], zoom: 0.78, az: c.cam.az + 0.3, pol: 0.92 }, 1.4);
-      this.city.wave(c.center[0], c.center[1]);
-      this.toast(tr(STORY[i].storm)); await wait(2600);
+    const S = this.blizzard, st = this.stage, wait = ms => new Promise(r => setTimeout(r, ms));
+    this.busy = true; this.hideSheet(); this.rig.autoOrbit = false; this.hud.classList.add('hide');
+    if (!store.get().night) this.setTheme(true);
+    const f0 = U.uForce.value; S.live = true; st.clear();
+    const gst = { g: st.g, label: (...a) => S.live ? st.label(...a) : new THREE.Object3D() };
+    this.cineOpen();
+    const portraitMode = innerWidth < innerHeight, skip = () => this.stormSkip;
+    const fly = (v, d) => this.rig.flyTo({ target: [v.x * K, 0.45, v.z * K], zoom: v.zoom * (portraitMode ? 1.3 : 1.05), az: v.az, pol: v.pol }, d, true);
+    this.cine(null, t('stormNow'), t('stormArrives'));
+    this.rig.flyTo({ target: [0, 0.8, 0], zoom: 0.9, pol: 0.94, az: this.rig.az + 0.4 }, 3.2);
+    await Promise.race([wait(1800), this.skipP]);
+    S.begin(); this.snow.storm = true; this.fx.to = 1;
+    await Promise.race([wait(3200), this.skipP]);
+    for (let i = 0; i < 10 && !skip(); i++) {
+      this.cine(i, `${tr(STORY[i].name)} · ${tr(D[i].title)}`, tr(STORY[i].storm), `${t('stormT')} · ${i + 1}/10`);
+      await Promise.race([fly(VIEWS[i], 1.5), this.skipP]); if (skip()) break;
+      await Promise.race([SCENES[i](S, gst, tr), this.skipP]);
+      await Promise.race([wait(500), this.skipP]);
+      st.clear(); S.clear();
     }
-    this.snow.storm = false; store.set({ storm: true }); this.renderHud();
-    await this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, pol: 0.9, az: this.rig.az + 0.8 }, 2.2, true);
-    this.toast(t('stormDone'));
+    S.live = false; st.clear(); S.clear();
+    S.calm(); this.snow.storm = false; this.fx.to = 0; U.uForce.value = f0;
+    this.cine(0, t('stormDone'), t('stormMorning'), t('stormT'));
+    await this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, pol: 0.9, az: this.rig.az + 0.8 }, skip() ? 1.2 : 3.2, true);
+    await wait(skip() ? 300 : 1600);
+    S.end(); this.cineClose(); S.live = true;
+    store.set({ storm: true }); this.hud.classList.remove('hide'); this.renderHud();
     this.rig.autoOrbit = true; this.busy = false; this.show('home');
   }
   async tour() {

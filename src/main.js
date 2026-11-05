@@ -4,6 +4,7 @@ import { Engine } from './world/engine.js';
 import { CameraRig } from './world/camera.js';
 import { City } from './world/city.js';
 import { Qadam, Snow } from './world/life.js';
+import { Storm } from './world/storm.js';
 import { Stage } from './world/stage.js';
 import { App } from './app.js';
 import { store } from './store.js';
@@ -32,8 +33,9 @@ requestAnimationFrame(() => {
   city.setBuilt(store.builtCount());
   city.libBake();
   const stage = new Stage(engine);
+  const blizzard = new Storm(engine, rig);
   const app = window.__app = new App({ engine, rig, city, qadam, snow });
-  app.stage = stage; window.__engine = engine;
+  app.stage = stage; app.blizzard = blizzard; window.__engine = engine; window.__sc = i => app.sceneTest(i);
   rig.onFp = on => stage.labels(!on);
   app.setTheme(night, true);
   engine.resize();

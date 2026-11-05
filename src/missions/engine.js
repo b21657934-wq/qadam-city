@@ -3,7 +3,9 @@ import { icon } from '../ui/icons.js';
 import { store } from '../store.js';
 import { W, FIG } from './widgets.js';
 import { K } from '../world/city.js';
+import { KEYS } from './keys.js';
 
+const keys = () => store.get().keys ?? 5;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function perm(n, seed) { const a = [...Array(n).keys()]; let s = seed * 9301 + 49297; for (let i = n - 1; i > 0; i--) { s = (s * 9301 + 49297) % 233280; const j = Math.floor(s / 233280 * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
@@ -18,10 +20,10 @@ export class Mission {
     if (spec.sim) { this.sim = spec.sim(this); app.engine.hooks.push(this.sim); }
     this.render();
   }
-  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; this.running = false; this.dv = undefined; this.replaying = null; this.round = null; this.streak = 0; this.showSol = false; this.tries = 0; this.order = null; }
+  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; this.running = false; this.dv = undefined; this.replaying = null; this.round = null; this.streak = 0; this.showSol = false; this.tries = 0; this.order = null; this.keyAsk = false; this.keyShown = false; this.earn = null; }
   newRound() {
     const g = this.S.gens; let k; do { k = Math.floor(Math.random() * g.length); } while (g.length > 1 && k === this.lastGen);
-    this.lastGen = k; this.round = g[k](); this.ws = {}; this.tries = 0; this.showSol = false; this.hl = 0; this.lock = false; window.__dr = this.round;
+    this.lastGen = k; this.round = g[k](); this.ws = {}; this.tries = 0; this.showSol = false; this.keyAsk = false; this.keyShown = false; this.hl = this.S.exam ? 0 : 1; this.lock = false; window.__dr = this.round;
   }
   defaultStart() {
     const c = this.city.districts[this.i], portrait = innerWidth < innerHeight;
@@ -32,6 +34,7 @@ export class Mission {
   stars() { return this.hints === 0 && this.mistakes <= 1 ? 3 : this.mistakes <= 3 && this.hints <= 1 ? 2 : 1; }
   head() {
     const s = this.S, n = this.spec.steps.length, H = s.kind === 'drill' ? (this.round && this.round.hint) : s.h, exam = s.kind === 'drill' && s.exam;
+    if (this.earn) return `<div class="m-head"><span class="tag gold">${icon('key')}${esc(t('keyCount', { n: keys() }))}</span><div class="grow"></div><button class="icon-btn" data-x aria-label="${esc(t('close'))}">${icon('close')}</button></div><div class="h3">${esc(t('keyEarnT'))}</div><p class="sub mt1">${esc(t('keyEarnI'))}</p>`;
     return `<div class="m-head"><span class="tag gold">${esc(exam ? t('examTag') : t('stepOf', { n: this.step + 1, m: n }))}</span><div class="grow"></div>
       ${exam || !H ? '' : `<button class="hint-btn" data-h ${this.hl >= 2 ? 'disabled style="opacity:.45"' : ''}>${icon('hint')}${esc(t(this.hl ? 'hintMore' : 'hint'))}</button>`}
       <button class="icon-btn" data-x aria-label="${esc(t('close'))}">${icon('close')}</button></div>
@@ -63,18 +66,31 @@ export class Mission {
         ${s.qs.length > 1 ? `<div class="row mt3" style="gap:6px">${s.qs.map((_, k) => `<span class="tag ${k === this.q ? 'gold' : ''}" style="${k > this.q ? 'opacity:.5' : ''}">${k < this.q ? icon('check') : ''}${k + 1}/${s.qs.length}</span>`).join('')}</div>` : ''}
         <p class="q">${esc(tr(q.q))}</p>
         <div class="opts ${q.a.some(o => tr(o).length > 20) ? 'one' : ''}">${order.map(k => `<button class="opt" data-opt="${k}">${esc(tr(q.a[k]))}</button>`).join('')}</div>`;
+    } else if (s.kind === 'drill' && this.earn) {
+      const k = this.earn, card = KEYS[this.i][k.c];
+      body = `<div class="earn mt3"><div class="label row" style="gap:6px">${icon('book')}${esc(t('fromBook', { n: this.i + 1 }))}</div><p class="earn-p">${esc(tr(card.p))}</p>
+        ${card.qs.map((q, qi) => `<p class="q">${qi + 1}. ${esc(tr(q.q))}</p><div class="opts one">${k.ord[qi].map(ai => `<button class="opt ${k.sel[qi] === ai ? 'sel' : ''} ${k.checked && k.sel[qi] === ai ? (ai === 0 ? 'ok' : 'no') : ''}" data-eq="${qi}" data-ea="${ai}" ${k.won ? 'disabled' : ''}>${esc(tr(q.a[ai]))}</button>`).join('')}</div>`).join('')}
+        ${k.won ? `<div class="learn">${icon('key')}<span>${esc(t('keyWon', { n: keys() }))}</span></div><button class="btn btn-primary btn-block mt3" data-earn-back data-focus>${esc(t('keyBack'))}${icon('arrow')}</button>`
+          : `<button class="btn btn-primary btn-block mt3" data-earn-check ${k.sel.every(x => x != null) ? '' : 'disabled'}>${icon('check')}${esc(t('check'))}</button><button class="btn btn-ghost btn-block mt2" data-earn-back>${icon('back')}${esc(t('keyBackTask'))}</button>`}</div>`;
     } else if (s.kind === 'drill') {
       if (!this.round) this.newRound();
       const r = this.round, need = s.need || 1;
       body = s.exam ? `<div class="dr-prog mt3">${[...Array(need)].map((_, k) => `<i class="${k < this.streak ? 'on' : ''}"></i>`).join('')}<span class="cap">${esc(t('examRule', { n: need }))}</span></div>` : '';
-      if (r.w) body += `<p class="q">${esc(tr(r.t))}</p><div class="fig-wrap mt2 w-${r.w} ${this.showSol ? 'off' : ''}">${W[r.w].render(this.ws, r)}</div>`;
-      else body += `<p class="q">${esc(tr(r.q))}</p>${r.fig ? `<div class="dr-fig mt2">${typeof r.fig === 'function' ? r.fig(tr) : r.fig}</div>` : ''}${this.solved || this.showSol ? '' : `<div class="num-row mt3"><input class="num-in" data-num type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" placeholder="${esc(t('yourAnswer'))}" aria-label="${esc(t('yourAnswer'))}"><button class="btn btn-primary" data-check>${icon('check')}${esc(t('check'))}</button></div>`}`;
+      if (r.w) body += `<p class="q">${esc(tr(r.t))}</p><div class="fig-wrap mt2 w-${r.w} ${this.showSol || this.keyShown ? 'off' : ''}">${W[r.w].render(this.ws, r)}</div>`;
+      else body += `<p class="q">${esc(tr(r.q))}</p>${r.fig ? `<div class="dr-fig mt2">${typeof r.fig === 'function' ? r.fig(tr) : r.fig}</div>` : ''}${this.solved || this.showSol || this.keyShown ? '' : `<div class="num-row mt3"><input class="num-in" data-num type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" placeholder="${esc(t('yourAnswer'))}" aria-label="${esc(t('yourAnswer'))}"><button class="btn btn-primary" data-check>${icon('check')}${esc(t('check'))}</button></div>`}`;
+      if (this.keyShown && !this.solved) body += `<div class="sol key mt3"><div class="label row" style="gap:6px">${icon('key')}${esc(t('answer'))}${r.w ? '' : `: ${esc(String(r.ans).replace('.', ','))}${r.pct ? ' %' : ''}`}</div><p>${esc(tr(r.sol))}</p></div><button class="btn btn-primary btn-block mt3" data-keyok data-focus>${esc(t('keyGo'))}${icon('arrow')}</button>`;
+      else if (!this.solved && !this.showSol) body += this.keyArea();
       if (this.showSol) body += `<div class="sol mt3"><div class="label">${esc(t('solution'))}</div><p>${esc(tr(r.sol))}</p></div><button class="btn btn-primary btn-block mt3" data-newround data-focus>${icon('reset')}${esc(t('newTask'))}</button>`;
     } else {
       body = `<div class="fig-wrap mt3 w-${s.w}">${W[s.w].render(this.ws, s)}</div>`;
     }
     this.app.setSheet(this.head() + body + this.foot(), root => this.bind(root), { grab: false });
     this.coach();
+  }
+  keyArea() {
+    const n = keys();
+    if (this.keyAsk) return `<div class="key-ask mt3"><p>${esc(t('keyAsk', { n: n - 1 }))}</p><div class="row mt2" style="gap:8px"><button class="btn btn-primary grow" data-key-yes data-focus>${icon('key')}${esc(t('keyYes'))}</button><button class="btn btn-secondary" data-key-no>${esc(t('cancel'))}</button></div></div>`;
+    return `<div class="key-row mt3"><button class="key-btn" data-key ${n ? '' : 'disabled'}>${icon('key')}<span>${esc(t('keyUse'))}</span><b>${n}</b></button><button class="key-earn ${n ? '' : 'hot'}" data-earn>${icon('plus')}<span>${esc(t('keyEarn'))}</span></button></div>`;
   }
   coach() {
     document.querySelectorAll('.coach').forEach(e => e.remove());
@@ -124,16 +140,36 @@ export class Mission {
     } else if (s.kind === 'sort') {
       root.querySelectorAll('[data-card]').forEach(b => { b.addEventListener('click', () => { if (this.dragged) return; this.sel = this.sel === b.dataset.card ? null : b.dataset.card; this.render(); }); this.dragable(b); });
       root.querySelectorAll('[data-slot]').forEach(b => b.addEventListener('click', () => this.drop(b.dataset.slot)));
+    } else if (s.kind === 'drill' && this.earn) {
+      const k = this.earn, card = KEYS[this.i][k.c];
+      root.querySelectorAll('[data-eq]').forEach(b => b.addEventListener('click', () => { k.sel[+b.dataset.eq] = +b.dataset.ea; k.checked = false; this.render(); }));
+      const ck = root.querySelector('[data-earn-check]');
+      ck && ck.addEventListener('click', () => {
+        if (k.sel.every(x => x === 0)) { store.set({ keys: keys() + 1, earnN: Object.assign({}, store.get().earnN, { [this.i]: (store.get().earnN?.[this.i] || 0) + 1 }) }); k.won = true; this.render(); const lw = this.app.sheet.querySelector('.earn .learn'); lw && lw.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+        else { k.checked = true; this.render(); this.fb(t('earnWrong')); }
+      });
+      root.querySelectorAll('[data-earn-back]').forEach(b => b.addEventListener('click', () => { this.earn = null; this.render(); }));
+      void card;
     } else if (s.kind === 'drill') {
       const r = this.round;
+      const kb = root.querySelector('[data-key]'); kb && kb.addEventListener('click', () => { if (keys() > 0) { this.keyAsk = true; this.render(); } });
+      const ky = root.querySelector('[data-key-yes]'); ky && ky.addEventListener('click', () => { if (keys() <= 0) return; store.set({ keys: keys() - 1 }); this.hints++; this.keyAsk = false; this.keyShown = true; this.render(); });
+      const kn = root.querySelector('[data-key-no]'); kn && kn.addEventListener('click', () => { this.keyAsk = false; this.render(); });
+      const eb = root.querySelector('[data-earn]'); eb && eb.addEventListener('click', () => {
+        const cards = KEYS[this.i], c = (store.get().earnN?.[this.i] || 0) % cards.length;
+        const ord = cards[c].qs.map(q => { const a = q.a.map((_, j) => j); for (let j = a.length - 1; j > 0; j--) { const x = Math.floor(Math.random() * (j + 1)); [a[j], a[x]] = [a[x], a[j]]; } return a; });
+        this.earn = { c, ord, sel: cards[c].qs.map(() => null), checked: false, won: false }; this.keyAsk = false; this.render();
+      });
       const nr = root.querySelector('[data-newround]'); if (nr) nr.addEventListener('click', () => { this.newRound(); this.render(); });
       if (this.showSol) return;
+
       const win = () => {
         this.streak++;
         if (this.streak >= (s.need || 1)) { this.lastSol = r.sol; this.lock = false; return this.stepDone(); }
         this.fb(tr(r.sol), true); this.lock = true;
         setTimeout(() => { if (this.app.mission !== this || this.round !== r) return; this.newRound(); this.render(); }, 2600);
       };
+      const kok = root.querySelector('[data-keyok]'); if (kok) { kok.addEventListener('click', () => { if (this.lock) return; win(); }); return; }
       const lose = msg => {
         this.mistakes++; this.tries++;
         if (s.exam || this.tries >= 2) { this.streak = 0; this.showSol = true; this.render(); this.fb(msg || t(s.exam ? 'examFail' : 'wrongCalc')); }
@@ -150,8 +186,9 @@ export class Mission {
         const inp = root.querySelector('[data-num]'), cb = root.querySelector('[data-check]');
         const go = () => {
           if (this.lock) return;
-          const v = parseFloat(String(inp.value).trim().replace(',', '.').replace(/[−–]/g, '-'));
+          let v = parseFloat(String(inp.value).trim().replace(',', '.').replace(/[−–]/g, '-'));
           if (isNaN(v)) return this.fb(t('enterNumber'));
+          if (r.pct && v > 0 && v <= 1 && r.ans > 1) v = v * 100;
           if (Math.abs(v - r.ans) <= (r.tol || 0) + 1e-9) { inp.classList.add('ok'); inp.disabled = true; cb.disabled = true; win(); }
           else { inp.classList.remove('no'); void inp.offsetWidth; inp.classList.add('no'); lose(); }
         };

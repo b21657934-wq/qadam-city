@@ -12,6 +12,8 @@ const P = {
   grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><path d="M16.75 14v6M13.75 17h6"/>',
   game: '<rect x="3" y="7" width="18" height="10" rx="5"/><circle cx="8" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="16" cy="12" r="1.2"/>',
   traffic: '<rect x="8" y="2.5" width="8" height="15" rx="4"/><circle cx="12" cy="6.5" r="1.3"/><circle cx="12" cy="10" r="1.3"/><circle cx="12" cy="13.5" r="1.3"/><path d="M12 17.5v4"/>',
+  key: '<circle cx="8" cy="15" r="4.5"/><path d="M11.3 11.7 20 3M16.5 6.5l2.5 2.5M14 9l2 2"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
   flag: '<path d="M5.5 21V4M5.5 4h11l-2.5 4 2.5 4h-11"/>',
   snow: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 6l2.5-1.5M9.5 19.5 12 18l2.5 1.5"/>',
   bus: '<rect x="4.5" y="3.5" width="15" height="14" rx="3"/><path d="M4.5 11h15M7.5 20.5v-3M16.5 20.5v-3"/><path d="M8.5 14.3h.01M15.5 14.3h.01"/>',
