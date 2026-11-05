@@ -493,7 +493,7 @@ const w10 = {
 export const SPECS = [w1, w2, w3, w4, w5, w6, w7, w8, w9, w10];
 const PRAC = { t: L('Now do it yourself', 'Теперь сам', 'Енді өзің'), i: L('New numbers every time. Two wrong tries — I show the solution and give a new task.', 'Числа каждый раз новые. Две ошибки — покажу решение и дам новую задачу.', 'Сандар әр жолы жаңа. Екі қате — шешімін көрсетіп, жаңа есеп беремін.') };
 const EXAM = { t: L('District exam', 'Экзамен района', 'Аудан емтиханы'), i: L('Solve 2 new tasks in a row, no hints. A mistake shows the solution and starts over.', 'Реши 2 новые задачи подряд без подсказок. Ошибка — покажу решение, и счёт начнётся заново.', 'Қатарынан 2 жаңа есепті кеңессіз шеш. Қате болса — шешімі көрсетіліп, қайтадан басталады.') };
-SPECS.forEach((sp, i) => sp.steps.push(
+// two steps per district: the story step in the world, then one task of your own
+SPECS.forEach((sp, i) => { sp.steps = [sp.steps[0],
   { kind: 'drill', gens: DRILLS[i], need: 1, ...PRAC, learn: m => m.lastSol, enter: m => { m.app.calcHide(); if (m.app.rig.fp) m.app.rig.fpEnd(); m.app.stage.clear(); } },
-  { kind: 'drill', gens: DRILLS[i], need: 2, exam: true, ...EXAM, learn: m => m.lastSol },
-));
+]; });

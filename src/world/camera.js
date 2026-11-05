@@ -19,7 +19,7 @@ export class CameraRig {
       e.preventDefault(); this.cancelFly(); this.idle = 0;
       const trackpadPan = !e.ctrlKey && e.deltaMode === 0 && (Math.abs(e.deltaX) > 0.5 || (Math.abs(e.deltaY) < 40 && !Number.isInteger(e.deltaY)));
       if (trackpadPan) this.pan(-e.deltaX * 0.9, -e.deltaY * 0.9);
-      else this.zoom = THREE.MathUtils.clamp(this.zoom * Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0012)), 0.3, 1.3);
+      else this.zoom = THREE.MathUtils.clamp(this.zoom * Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0012)), 0.3, 1.75);
     }, { passive: false });
     addEventListener('keydown', e => {
       if (e.target.closest && e.target.closest('input,textarea,.book')) return;
@@ -28,7 +28,7 @@ export class CameraRig {
       const map = { arrowleft: [step, 0], a: [step, 0], arrowright: [-step, 0], d: [-step, 0], arrowup: [0, step], w: [0, step], arrowdown: [0, -step], s: [0, -step] };
       if (map[k]) { e.preventDefault(); this.cancelFly(); this.idle = 0; this.pan(...map[k]); }
       else if (k === '+' || k === '=') { this.cancelFly(); this.zoom = Math.max(0.3, this.zoom / 1.12); }
-      else if (k === '-' || k === '_') { this.cancelFly(); this.zoom = Math.min(1.3, this.zoom * 1.12); }
+      else if (k === '-' || k === '_') { this.cancelFly(); this.zoom = Math.min(1.75, this.zoom * 1.12); }
       else if (k === 'q') { this.cancelFly(); this.az += 0.15; } else if (k === 'e') { this.cancelFly(); this.az -= 0.15; }
     });
     dom.addEventListener('contextmenu', e => e.preventDefault());
@@ -69,7 +69,7 @@ export class CameraRig {
     } else if (this.ptrs.size === 2 && this.pinch) {
       const [a, b] = [...this.ptrs.values()];
       this.cancelFly(); this.idle = 0;
-      this.zoom = THREE.MathUtils.clamp(this.pinch.z * this.pinch.d / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), 0.3, 1.3);
+      this.zoom = THREE.MathUtils.clamp(this.pinch.z * this.pinch.d / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), 0.3, 1.75);
       this.az = this.pinch.az - (Math.atan2(b.y - a.y, b.x - a.x) - this.pinch.ang);
     }
   }

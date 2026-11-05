@@ -5,6 +5,7 @@ import { CameraRig } from './world/camera.js';
 import { City } from './world/city.js';
 import { Qadam, Snow } from './world/life.js';
 import { Storm } from './world/storm.js';
+import { buildIslands } from './world/islands.js';
 import { Stage } from './world/stage.js';
 import { App } from './app.js';
 import { store } from './store.js';
@@ -27,6 +28,7 @@ requestAnimationFrame(() => {
   const engine = new Engine(host);
   const rig = new CameraRig(engine, engine.renderer.domElement);
   const city = new City(engine);
+  buildIslands(city);
   const qadam = new Qadam(engine, 1.8, 1.5);
   const snow = new Snow(engine);
   if (!store.user() && Q.has('demo')) store.login('guest');

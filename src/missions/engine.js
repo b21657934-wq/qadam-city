@@ -4,6 +4,7 @@ import { store } from '../store.js';
 import { W, FIG } from './widgets.js';
 import { K } from '../world/city.js';
 import { KEYS } from './keys.js';
+import { sfx } from '../sfx.js';
 
 const keys = () => store.get().keys ?? 5;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -138,7 +139,7 @@ export class Mission {
       const pc = root.querySelector('[data-pcheck]');
       pc && pc.addEventListener('click', () => {
         if (this.lock || !this.sel) return; const o = s.opts.find(x => x.id === this.sel);
-        if (!o.ok) { this.mistakes++; this.wrongPick[o.id] = true; this.render(); this.fb(tr(typeof o.why === 'function' ? o.why(this) : o.why)); return; }
+        if (!o.ok) { sfx.play('bad'); this.mistakes++; this.wrongPick[o.id] = true; this.render(); this.fb(tr(typeof o.why === 'function' ? o.why(this) : o.why)); return; }
         this.picked = o.id; this.spec.onPick && this.spec.onPick(this, o); this.stepDone();
       });
     } else if (s.kind === 'pick') {
@@ -148,7 +149,7 @@ export class Mission {
         if (o.play) { this.lock = true; root.querySelectorAll('[data-pick]').forEach(x => x.classList.toggle('busy', x === b)); await o.play(this); this.lock = false; if (!this.app.mission) return; }
         const bb = this.app.sheet.querySelector(`[data-pick="${o.id}"]`) || b;
         this.app.sheet.querySelectorAll('[data-pick]').forEach(x => x.classList.remove('busy'));
-        if (!o.ok) { this.mistakes++; this.wrongPick[o.id] = true; bb.classList.remove('no'); void bb.offsetWidth; bb.classList.add('no'); this.fb(tr(typeof o.why === 'function' ? o.why(this) : o.why)); return; }
+        if (!o.ok) { sfx.play('bad'); this.mistakes++; this.wrongPick[o.id] = true; bb.classList.remove('no'); void bb.offsetWidth; bb.classList.add('no'); this.fb(tr(typeof o.why === 'function' ? o.why(this) : o.why)); return; }
         this.picked = o.id; this.spec.onPick && this.spec.onPick(this, o); this.stepDone();
       }));
     } else if (s.kind === 'sort') {
@@ -159,15 +160,15 @@ export class Mission {
       root.querySelectorAll('[data-eq]').forEach(b => b.addEventListener('click', () => { k.sel[+b.dataset.eq] = +b.dataset.ea; k.checked = false; this.render(); }));
       const ck = root.querySelector('[data-earn-check]');
       ck && ck.addEventListener('click', () => {
-        if (k.sel.every(x => x === 0)) { store.set({ keys: keys() + 1, earnN: Object.assign({}, store.get().earnN, { [this.i]: (store.get().earnN?.[this.i] || 0) + 1 }) }); k.won = true; this.render(); const lw = this.app.sheet.querySelector('.earn .learn'); lw && lw.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-        else { k.checked = true; this.render(); this.fb(t('earnWrong')); }
+        if (k.sel.every(x => x === 0)) { store.set({ keys: keys() + 1, earnN: Object.assign({}, store.get().earnN, { [this.i]: (store.get().earnN?.[this.i] || 0) + 1 }) }); k.won = true; sfx.play('reward'); this.render(); const lw = this.app.sheet.querySelector('.earn .learn'); lw && lw.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+        else { sfx.play('bad'); k.checked = true; this.render(); this.fb(t('earnWrong')); }
       });
       root.querySelectorAll('[data-earn-back]').forEach(b => b.addEventListener('click', () => { this.earn = null; this.render(); }));
       void card;
     } else if (s.kind === 'drill') {
       const r = this.round;
       const kb = root.querySelector('[data-key]'); kb && kb.addEventListener('click', () => { if (keys() > 0) { this.keyAsk = true; this.render(); } });
-      const ky = root.querySelector('[data-key-yes]'); ky && ky.addEventListener('click', () => { if (keys() <= 0) return; store.set({ keys: keys() - 1 }); this.hints++; this.keyAsk = false; this.keyShown = true; this.render(); });
+      const ky = root.querySelector('[data-key-yes]'); ky && ky.addEventListener('click', () => { if (keys() <= 0) return; store.set({ keys: keys() - 1 }); sfx.play('key'); this.hints++; this.keyAsk = false; this.keyShown = true; this.render(); });
       const kn = root.querySelector('[data-key-no]'); kn && kn.addEventListener('click', () => { this.keyAsk = false; this.render(); });
       const eb = root.querySelector('[data-earn]'); eb && eb.addEventListener('click', () => {
         const cards = KEYS[this.i], c = (store.get().earnN?.[this.i] || 0) % cards.length;
@@ -185,7 +186,7 @@ export class Mission {
       };
       const kok = root.querySelector('[data-keyok]'); if (kok) { kok.addEventListener('click', () => { if (this.lock) return; win(); }); return; }
       const lose = msg => {
-        this.mistakes++; this.tries++;
+        sfx.play('bad'); this.mistakes++; this.tries++;
         if (s.exam || this.tries >= 2) { this.streak = 0; this.showSol = true; this.render(); this.fb(msg || t(s.exam ? 'examFail' : 'wrongCalc')); }
         else this.fb(msg || t('tryAgainCalc'));
       };
@@ -213,7 +214,7 @@ export class Mission {
     } else {
       const api = {
         ok: () => { if (this.lock) return; this.lock = true; setTimeout(() => this.stepDone(), 450); },
-        bad: msg => { this.mistakes++; this.fb(msg); },
+        bad: msg => { sfx.play('bad'); this.mistakes++; this.fb(msg); },
         fb: msg => this.fb(msg),
         redraw: () => { const w = root.querySelector('.fig-wrap'); w.innerHTML = W[s.w].render(this.ws, s); W[s.w].bind(w, this.ws, api, s); s.onWidget && s.onWidget(this, this.ws); },
       };
@@ -243,7 +244,7 @@ export class Mission {
     const s = this.S;
     if (!this.sel) return this.fb(t('tapCard'));
     const c = s.cards.find(x => x.id === this.sel);
-    if (c.slot !== slot) { this.mistakes++; this.sel = null; this.render(); this.fb(t('wrongSlot')); const el = this.app.sheet.querySelector(`[data-slot="${slot}"]`); if (el) el.classList.add('bad'); return; }
+    if (c.slot !== slot) { sfx.play('bad'); this.mistakes++; this.sel = null; this.render(); this.fb(t('wrongSlot')); const el = this.app.sheet.querySelector(`[data-slot="${slot}"]`); if (el) el.classList.add('bad'); return; }
     this.placed[c.id] = slot; this.sel = null;
     this.spec.onCard && this.spec.onCard(this, c);
     this.render();
@@ -252,7 +253,7 @@ export class Mission {
   answer(k, btn) {
     if (this.lock) return;
     const s = this.S, q = s.qs[this.q];
-    if (k !== q.ok) { this.mistakes++; btn.classList.remove('no'); void btn.offsetWidth; btn.classList.add('no'); this.fb(t('wrong')); return; }
+    if (k !== q.ok) { sfx.play('bad'); this.mistakes++; btn.classList.remove('no'); void btn.offsetWidth; btn.classList.add('no'); this.fb(t('wrong')); return; }
     btn.classList.add('ok'); this.app.sheet.querySelectorAll('[data-opt]').forEach(b => b.disabled = true);
     this.lock = true;
     this.spec.onQ && this.spec.onQ(this, this.step, this.q);
@@ -260,6 +261,7 @@ export class Mission {
     setTimeout(() => { this.lock = false; if (this.q + 1 >= s.qs.length) this.stepDone(); else { this.q++; this.render(); } }, q.why ? 1600 : 650);
   }
   stepDone() {
+    sfx.play('ok');
     if (this.S.kind === 'drill') this.city.preview(this.i, (this.step + 1) / (this.spec.steps.length + 1));
     else if (this.spec.onStep) this.spec.onStep(this, this.step); else this.city.preview(this.i, (this.step + 1) / (this.spec.steps.length + 1));
     this.solved = true; this.lock = false; this.render();

@@ -10,6 +10,8 @@ import { K } from './world/city.js';
 import { STORY, portrait } from './story.js';
 import { SCENES, VIEWS } from './world/stormScenes.js';
 import { U } from './world/engine.js';
+import { islandLabels } from './world/islands.js';
+import { sfx } from './sfx.js';
 const say = (i, txt) => `<div class="say mt3"><div class="say-face">${portrait(i)}</div><div class="say-b"><div class="say-n">${esc(tr(STORY[i].name))}<span> · ${esc(tr(STORY[i].role))}</span></div><p>${esc(typeof txt === 'string' ? txt : tr(txt))}</p></div></div>`;
 
 const logoURL = 'data:image/svg+xml,' + encodeURIComponent(logoSvg);
@@ -23,7 +25,10 @@ export class App {
     ui.innerHTML = `<aside class="calc glass" aria-live="polite" hidden></aside><header class="hud glass" role="banner"></header><section class="sheet glass" role="dialog" aria-live="polite"></section><div class="toast glass" role="status"></div>`;
     this.calcEl = ui.querySelector('.calc');
     this.hud = ui.querySelector('.hud'); this.sheet = ui.querySelector('.sheet'); this.toastEl = ui.querySelector('.toast');
-    this.view = 'home'; this.sel = null;
+    this.view = 'home'; this.sel = null; islandLabels(this.city, n => t('levelN', { n }));
+    sfx.setEnabled(store.get().sound !== false);
+    addEventListener('pointerdown', () => sfx.unlock(), { capture: true });
+    ui.addEventListener('click', e => { if (e.target.closest('button')) sfx.play('tap'); }, true);
     rig.onTap = ndc => this.tap(ndc);
     this.ray = new THREE.Raycaster();
     new ResizeObserver(() => this.syncInset()).observe(this.sheet);
@@ -66,10 +71,11 @@ export class App {
     this.hud.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => this.act(b.dataset.act, b.dataset)));
     this.hud.classList.toggle('hide', this.view === 'onboard' || this.view === 'login');
   }
-  rerender() { this.renderHud(); const v = this.view; if (v === 'mission' && this.mission) this.mission.render(); else this.show(v, this.viewArg, true); }
+  rerender() { sfx.city(this.built() / 10); islandLabels(this.city, n => t('levelN', { n })); this.renderHud(); const v = this.view; if (v === 'mission' && this.mission) this.mission.render(); else this.show(v, this.viewArg, true); }
 
   // ----- views -----
   show(view, arg, quiet) {
+    sfx.city(this.built() / 10);
     this.view = view; this.viewArg = arg;
     this.renderHud();
     if (view === 'home') return this.vHome();
@@ -161,6 +167,8 @@ export class App {
       <div class="seg mt2" role="group" aria-label="${esc(t('language'))}">${LANGS.map(l => `<button data-act="lang" data-l="${l}" class="${l === L ? 'on' : ''}" aria-pressed="${l === L}">${LANG_LABEL[l]}</button>`).join('')}</div>
       <div class="label mt4">${esc(t('timeOfDay'))}</div>
       <div class="seg mt2" role="group"><button data-act="setDay" class="${night ? '' : 'on'}" aria-pressed="${!night}">${icon('sun')}${esc(t('day'))}</button><button data-act="setNight" class="${night ? 'on' : ''}" aria-pressed="${!!night}">${icon('moon')}${esc(t('night'))}</button></div>
+      <div class="label mt4">${esc(t('sound'))}</div>
+      <div class="seg mt2" role="group"><button data-act="soundOn" class="${store.get().sound !== false ? 'on' : ''}">${esc(t('soundOn'))}</button><button data-act="soundOff" class="${store.get().sound === false ? 'on' : ''}">${esc(t('soundOff'))}</button></div>
       <button class="list-btn mt4" data-act="library"><div class="tile">${icon('book')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('library'))}</div><div class="cap mt1">${esc(t('librarySub'))}</div></div>${icon('arrow')}</button>
       <div class="acct mt4"><div class="tile">${icon('key')}</div><div class="grow"><div class="cap">${esc(t('account'))}</div><div style="font-weight:600;font-size:16px;line-height:20px">${esc(store.user() === 'guest' ? t('guestName') : store.user())} · ${esc(t('keyCount', { n: store.get().keys ?? 5 }))}</div></div><button class="btn btn-secondary" data-act="logout" style="height:40px">${esc(t('logout'))}</button></div>
       <button class="btn btn-ghost mt3 danger" data-act="resetAsk" style="padding:0 4px">${icon('reset')}<span>${esc(t('restartTitle'))}</span></button>
@@ -185,6 +193,7 @@ export class App {
   act(a, ds) {
     if (a === 'menu') return this.show(this.view === 'menu' ? 'home' : 'menu');
     if (a === 'theme') { this.setTheme(!store.get().night); return this.rerender(); }
+    if (a === 'soundOn' || a === 'soundOff') { store.set({ sound: a === 'soundOn' }); sfx.setEnabled(a === 'soundOn'); return this.rerender(); }
     if (a === 'setDay' || a === 'setNight') { this.setTheme(a === 'setNight'); return this.rerender(); }
     if (a === 'lang') { store.set({ lang: ds.l }); setLang(ds.l); this.book && this.book.rerender(); return this.rerender(); }
     if (a === 'home') { this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1 }, 1.2); return this.show('home'); }
@@ -209,8 +218,9 @@ export class App {
   tap(ndc) {
     if (this.view === 'mission' || this.view === 'onboard' || this.busy) return;
     this.ray.setFromCamera(ndc, this.engine.camera);
-    const hit = this.ray.intersectObjects([...this.city.hits, this.city.libHit], false)[0];
+    const hit = this.ray.intersectObjects([...this.city.hits, this.city.libHit, ...(this.city.islandHits || [])], false)[0];
     if (!hit) return;
+    if (hit.object.userData.island) { sfx.play('lock'); return this.toast(t('lockedLevel', { n: hit.object.userData.island - 1 })); }
     if (hit.object.userData.library) return this.book.open('toc');
     this.show('district', hit.object.userData.district);
   }
@@ -321,7 +331,7 @@ export class App {
     const c = this.city.districts[i];
     this.rig.autoOrbit = false;
     await this.rig.flyTo({ target: [c.center[0], 0.6, c.center[1]], zoom: 0.75, az: c.cam.az - 0.5, pol: 0.86 }, 1.2, true);
-    if (!wasBuilt) this.city.setBuilt(this.built(), i); else this.city.stationAll(true);
+    sfx.play('build'); if (!wasBuilt) this.city.setBuilt(this.built(), i); else this.city.stationAll(true);
     this.city.wave(c.center[0], c.center[1]);
     this.qadam.cheer();
     this.renderHud();

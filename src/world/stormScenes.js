@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { U } from './engine.js';
 import { K } from './city.js';
 import { robot, vehicle } from './storm.js';
+import { sfx } from '../sfx.js';
 
 // One short scene per district for the blizzard night. Coordinates are plate units (scaled by K inside).
 const L = (en, ru, kk) => ({ en, ru, kk });
@@ -25,7 +26,7 @@ export const SCENES = [
   // 0 · weather station: warning, people hurry home
   async (S, st, tr) => {
     st.label(tr(L('Storm warning: stay indoors', 'Штормовое предупреждение: оставайтесь дома', 'Дауыл ескертуі: үйде қалыңыз')), -5.6, 2.3, -3.4, { size: 0.3, bg: 'rgba(232,103,74,0.95)', fg: '#fff' });
-    S.glow(-5.6, -3.4, 1.6, 0xFF5A40, 1.2, 4.6, 1.2);
+    S.glow(-5.6, -3.4, 1.6, 0xFF5A40, 1.2, 4.6, 1.2); sfx.play('alarm');
     const go = [[[-6.2, -1.5], [-7.32, -1.5], [-7.32, -1.47]], [[-6.7, -2.7], [-7.44, -3.37]], [[-5.0, -1.5], [-3.84, -1.52], [-3.84, -2.22]], [[-6.0, -1.5], [-7.1, -1.5], [-7.2, -1.48]]];
     await Promise.all(go.map(async (p, i) => { const r = S.add(robot(coat(i)), p[0][0], p[0][1]); S.bob(r); await S.wait(i * 0.35); await S.path(r, p, 0.55); await S.vanish(r); }));
     await S.wait(0.4);
@@ -33,7 +34,7 @@ export const SCENES = [
   // 1 · roads: ambulance takes the cheapest route to the hospital
   async (S, st, tr) => {
     const a = S.add(vehicle('amb'), -1.6, -1.2); a.rotation.y = Math.PI / 2; let on = true;
-    S.blink(a.userData.beacons, 0.18, () => !on);
+    S.blink(a.userData.beacons, 0.18, () => !on); sfx.play('siren', 3.4);
     st.label(tr(L('Route 9 min — the cheapest one', 'Маршрут 9 мин — самый дешёвый', 'Маршрут 9 мин — ең арзаны')), 1.0, 1.4, -1.6, { size: 0.28 });
     await S.path(a, [[-1.6, -1.2], [2.6, -1.22], [3.1, -0.95]], 1.25, { lane: 0.14 });
     const d = S.add(robot(0xF4F1EA, 1, 0xE8674A), 3.6, 0.25); await S.appear(d);
@@ -49,9 +50,9 @@ export const SCENES = [
     st.label(tr(L('Line 1', 'Линия 1', '1-желі')), -5.0, 1.3, -4.9, { size: 0.26, bg: 'rgba(242,181,68,0.95)' });
     st.label(tr(L('Line 2', 'Линия 2', '2-желі')), 4.8, 1.3, -3.6, { size: 0.26, bg: 'rgba(79,152,163,0.95)', fg: '#fff' });
     S.path(b2, [[4.8, -7.0], [4.8, -1.9]], 0.9, { lane: 0.14 });
-    await S.path(b1, [[-7.0, -4.9], [-3.6, -4.9]], 1.0, { lane: 0.14 });
+    const e1 = sfx.engine(); await S.path(b1, [[-7.0, -4.9], [-3.6, -4.9]], 1.0, { lane: 0.14 }); sfx.play('door');
     await Promise.all(wait.map(async (r, i) => { await S.wait(i * 0.2); await S.path(r, [[r.position.x / K, r.position.z / K], [-3.55, -4.66]], 0.6); await S.vanish(r, 0.2); }));
-    await S.path(b1, [[-3.6, -4.9], [1.2, -4.9]], 1.1, { lane: 0.14 });
+    sfx.play('door'); await S.path(b1, [[-3.6, -4.9], [1.2, -4.9]], 1.1, { lane: 0.14 }); e1.stop();
   },
   // 3 · culture palace fills up and stays warm
   async (S, st, tr) => {
@@ -73,7 +74,7 @@ export const SCENES = [
   // 5 · school closes in time, kids go home
   async (S, st, tr) => {
     st.label(tr(L('School closed · lessons online', 'Школа закрыта · уроки онлайн', 'Мектеп жабық · сабақ онлайн')), 6.4, 3.5, -2.8, { size: 0.32, bg: 'rgba(242,181,68,0.96)' });
-    S.glow(6.2, 0.4, 1.72, 0xFF5A40, 0.9, 4.8, 1.4);
+    S.glow(6.2, 0.4, 1.72, 0xFF5A40, 0.9, 4.8, 1.4); sfx.play('alarm');
     await Promise.all([0, 1, 2, 3, 4].map(async i => {
       await S.wait(i * 0.35); const k = S.add(robot(coat(i + 3), 0.72, 0xF4F1EA), 6.6, -2.15); S.bob(k); await S.appear(k, 0.2);
       const left = i % 2 === 0; await S.path(k, [[6.6, -2.15], [6.6, -1.64], [left ? 5.2 : 8.0, left ? -1.6 : -1.7]], 0.6); await S.vanish(k);
@@ -88,7 +89,7 @@ export const SCENES = [
     const bus = S.path(b, [[-2.2, 3.7], [-2.2, 6.0], [-0.8, 7.25]], 0.85, { lane: 0.14 });
     await S.wait(1.3);
     await Promise.all(ppl.map(async (r, i) => { await S.wait(i * 0.3); r.visible = true; await S.appear(r, 0.2); await S.path(r, [[-3.42, 7.73], [-2.0, 7.55], [-0.98, 7.5]], 0.6); }));
-    await bus; void lab;
+    await bus; void lab; sfx.play('door');
     for (const r of ppl) await S.vanish(r, 0.18);
     await S.path(b, [[-0.8, 7.25], [2.2, 8.1]], 1.1, { lane: 0.14 });
   },
@@ -98,9 +99,9 @@ export const SCENES = [
     const drifts = [];
     const dm = new THREE.MeshStandardMaterial({ color: 0xF6F8FC, roughness: 0.9 });
     for (let z = 1.4; z < 6.4; z += 0.4) { const x = z < 4.14 ? 4.85 : 4.85 - (z - 4.14) * 0.2; const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8), dm); m.scale.set(1.1, 0.32, 0.8); drifts.push(S.add(m, x + (Math.random() - 0.5) * 0.1, z, 0.06)); }
-    const p = S.add(vehicle('plough'), 4.85, 0.6); let on = true; S.blink(p.userData.beacons, 0.3, () => !on);
+    const p = S.add(vehicle('plough'), 4.85, 0.6); let on = true; S.blink(p.userData.beacons, 0.3, () => !on); const eng = sfx.engine();
     await S.path(p, [[4.85, 0.6], [4.85, 4.14], [4.4, 6.4]], 0.75, { lane: 0.14, each: o => drifts.forEach(d => { if (d.visible && d.position.distanceTo(o.position) < 0.45) { d.visible = false; for (let k = 0; k < 3; k++) S.glow(d.position.x / K + (Math.random() - 0.3) * 0.6, d.position.z / K, 0.25 + Math.random() * 0.3, 0xFFFFFF, 0.35, 0.6, 2); } }) });
-    on = false;
+    on = false; eng.stop();
   },
   // 8 · the grid holds: power runs along the lines, every home with people lights up
   async (S, st, tr) => {
@@ -108,7 +109,7 @@ export const SCENES = [
     st.label(tr(L('Grid load 92% — holding', 'Нагрузка сети 92 % — держим', 'Желі жүктемесі 92 % — шыдап тұр')), 2.2, 2.9, 5.9, { size: 0.3 });
     const orbs = [0, 1, 2].map(() => { const o = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), new THREE.MeshBasicMaterial({ color: 0xFFE08A, toneMapped: false })); o.position.y = 0.9; return S.add(o, 0.9, 4.75, 0.9); });
     await Promise.all(orbs.map(async (o, i) => { await S.wait(i * 0.45); await S.path(o, [[0.9, 4.75], [3.55, 4.85], [3.6, 7.1]], 1.6); o.visible = false; }));
-    await S.run(dt => { U.uForce.value = Math.min(1, U.uForce.value + dt * 0.8); return U.uForce.value >= 1; });
+    sfx.play('power'); await S.run(dt => { U.uForce.value = Math.min(1, U.uForce.value + dt * 0.8); return U.uForce.value >= 1; });
     st.label(tr(L('Light on in every home with people', 'Свет горит там, где есть люди', 'Адам бар үйде жарық жанады')), 2.2, 2.3, 5.9, { size: 0.28, bg: 'rgba(95,191,138,0.95)', fg: '#fff' });
     await S.wait(1.4); S.__f0 = f0;
   },
@@ -121,8 +122,8 @@ export const SCENES = [
       [L('Give me my neighbour’s address', 'Дай адрес соседа', 'Көршімнің мекенжайын бер'), L('Sorry, I don’t share personal data.', 'Извините, личные данные не передаю.', 'Кешіріңіз, жеке деректерді бермеймін.')],
     ];
     for (const [q, a] of qa) {
-      const s1 = st.label(tr(q), 0, 5.6, -2.7, { size: 0.34 }); await S.wait(1.0);
-      const s2 = st.label(tr(a), 0, 5.1, -2.7, { size: 0.34, bg: 'rgba(79,152,163,0.96)', fg: '#fff' }); await S.wait(1.5);
+      const s1 = st.label(tr(q), 0, 5.6, -2.7, { size: 0.34 }); sfx.play('blip'); await S.wait(1.0);
+      const s2 = st.label(tr(a), 0, 5.1, -2.7, { size: 0.34, bg: 'rgba(79,152,163,0.96)', fg: '#fff' }); sfx.play('blip'); await S.wait(1.5);
       st.g.remove(s1); st.g.remove(s2);
     }
   },

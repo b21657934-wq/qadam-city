@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { U, REDUCED } from './engine.js';
 import { mat, K } from './city.js';
+import { sfx } from '../sfx.js';
 
 // Blizzard night: atmosphere (blowing snow, fog, dim light) + small scenes with robot residents.
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -67,9 +68,9 @@ export class Storm {
   begin() {
     const e = this.e, f = e.scene.fog;
     this.base = { c: f.color.clone(), n: f.near, f: f.far, h: e.hemi.intensity, s: e.sun.intensity };
-    this.lines.visible = true; this.to = 1;
+    this.lines.visible = true; this.to = 1; sfx.wind(1);
   }
-  calm() { this.to = 0; }
+  calm() { this.to = 0; sfx.wind(0); }
   end() {
     const e = this.e, f = e.scene.fog, b = this.base; if (!b) return;
     f.color.copy(b.c); f.near = b.n; f.far = b.f; e.hemi.intensity = b.h; e.sun.intensity = b.s;
@@ -111,7 +112,7 @@ export class Storm {
       d = Math.min(tot, d + speed * K * dt); let s = d, i = 0; while (i < seg.length - 1 && s > seg[i]) { s -= seg[i]; i++; }
       const a = P[i], b = P[i + 1], k = seg[i] ? s / seg[i] : 1, ln = (opt.lane || 0) / (seg[i] || 1); o.position.set(lerp(a.x, b.x, k) - (b.z - a.z) * ln, o.position.y, lerp(a.z, b.z, k) + (b.x - a.x) * ln);
       const want = Math.atan2(b.x - a.x, b.z - a.z); let da = want - o.rotation.y; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI; o.rotation.y += da * Math.min(1, dt * 10);
-      if (ud.legs) { const sw = Math.sin(t * 13 + (ud.ph || 0)) * 0.6; ud.legs[0].rotation.x = sw; ud.legs[1].rotation.x = -sw; ud.arms[0].rotation.x = -sw * 0.8; ud.arms[1].rotation.x = sw * 0.8; ud.body.position.y = Math.abs(Math.cos(t * 13 + (ud.ph || 0))) * 0.015; ud.body.rotation.x = 0.12; }
+      if (ud.legs) { const sw = Math.sin(t * 13 + (ud.ph || 0)) * 0.6; ud.legs[0].rotation.x = sw; ud.legs[1].rotation.x = -sw; ud.arms[0].rotation.x = -sw * 0.8; ud.arms[1].rotation.x = sw * 0.8; ud.body.position.y = Math.abs(Math.cos(t * 13 + (ud.ph || 0))) * 0.015; ud.body.rotation.x = 0.12; const st = Math.floor((t * 13 + (ud.ph || 0)) / Math.PI); if (st !== ud.st) { ud.st = st; sfx.play('step', 0.55); } }
       if (opt.each) opt.each(o);
       if (d >= tot) { if (ud.legs) { ud.legs.forEach(l => l.rotation.x = 0); ud.arms.forEach(l => l.rotation.x = 0); ud.body.rotation.x = 0; } return true; }
     });

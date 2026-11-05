@@ -1,3 +1,4 @@
+import { sfx } from '../sfx.js';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { U, REDUCED } from './engine.js';
@@ -41,7 +42,7 @@ export class Qadam {
       else {
         const want = Math.atan2(d.x, d.z); let da = want - g.rotation.y; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
         g.rotation.y += da * Math.min(1, dt * 6);
-        if (Math.abs(da) < 0.6) g.position.addScaledVector(d.normalize(), Math.min(L, dt * 2.4));
+        if (Math.abs(da) < 0.6) { const mv = Math.min(L, dt * 2.4); g.position.addScaledVector(d.normalize(), mv); this.stepAcc = (this.stepAcc || 0) + mv; if (this.stepAcc > 0.22) { this.stepAcc = 0; sfx.play('step', 0.9); } }
       }
     }
     this.body.position.y = Math.abs(Math.sin(t * (this.target ? 9 : 2))) * (this.target ? 0.03 : 0.012);

@@ -28,7 +28,8 @@ export function mat(c, o = {}) {
   return mcache.get(k);
 }
 const glow = []; // [material, dayIntensity, nightIntensity]
-function glowMat(color, day, night, o = {}) { const m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: day, roughness: 0.4, ...o }); glow.push([m, day, night]); return m; }
+export function registerGlow(m, day, night) { glow.push([m, day, night]); return m; }
+export function glowMat(color, day, night, o = {}) { const m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: day, roughness: 0.4, ...o }); glow.push([m, day, night]); return m; }
 const gcache = new Map();
 function rbox(w, h, d, r = 0.08, s = 3) { const k = [w, h, d, r, s].join(); if (!gcache.has(k)) gcache.set(k, new RoundedBoxGeometry(w, h, d, s, Math.min(r, w / 2.2, h / 2.2, d / 2.2))); return gcache.get(k); }
 function mesh(g, m, cast = true, recv = true) { const o = new THREE.Mesh(g, m); o.castShadow = cast; o.receiveShadow = recv; return o; }
@@ -94,7 +95,7 @@ export class City {
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-    g.setIndex(idx); g.computeVertexNormals();
+    g.setIndex(idx); g.computeVertexNormals(); this.topGeo = g;
     this.root.add(mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.93 }), false, true));
     // river ribbon, clipped to the plate
     const rp = [], ri = [], n = 280, rr = R0 - 0.02;
@@ -105,7 +106,7 @@ export class City {
     }
     const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3)); rg.setIndex(ri); rg.computeVertexNormals();
     this.riverMat = new THREE.MeshStandardMaterial({ color: P.river, roughness: 0.2, metalness: 0.05, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 });
-    const riv = mesh(rg, this.riverMat, false, true); this.root.add(riv);
+    const riv = mesh(rg, this.riverMat, false, true); this.root.add(riv); this.riverGeo = rg;
     // ice floes drifting on the river
     const floeG = new THREE.CylinderGeometry(0.12, 0.13, 0.03, 7);
     this.floes = new THREE.InstancedMesh(floeG, mat(0xE8F1F4, { roughness: 0.4 }), 18);
@@ -121,7 +122,7 @@ export class City {
     const bands = [[-0.3, P.snow], [-0.36, 0xE4E9EE], [-0.95, P.earth1], [-1.55, P.earth2], [-9, P.earth3]];
     for (let i = 0; i < p.count; i++) { const y = p.getY(i); const c = new THREE.Color(bands.find(b => y > b[0])[1]); lc.push(c.r, c.g, c.b); }
     lg.setAttribute('color', new THREE.Float32BufferAttribute(lc, 3));
-    this.root.add(mesh(lg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }), false, false));
+    this.root.add(mesh(lg, this.sideMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }), false, false)); this.sideGeo = lg;
     // soft contact shadow
     const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
     const gr = x.createRadialGradient(64, 64, 22, 64, 64, 64); gr.addColorStop(0, 'rgba(20,25,45,0.42)'); gr.addColorStop(1, 'rgba(20,25,45,0)');
