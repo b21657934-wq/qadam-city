@@ -62,7 +62,9 @@ export class City {
     this.layout();
     this.buildWindows();
     this.trees();
+    this.crossings();
     this.cars();
+    this.peds();
     this.beaconBuild();
     this.waves = [];
     engine.on(this);
@@ -176,17 +178,25 @@ export class City {
     for (let i = 0; i <= n; i++) {
       const t = i / n, p = curve.getPoint(t), tg = curve.getTangent(t), nx = -tg.z, nz = tg.x;
       pos.push(p.x + nx * w / 2, 0.075, p.z + nz * w / 2, p.x - nx * w / 2, 0.075, p.z - nz * w / 2);
-      if (i < n) idx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);
+      if (i < n) idx.push(i * 2, i * 2 + 2, i * 2 + 1, i * 2 + 1, i * 2 + 2, i * 2 + 3);
     }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
     const m = mesh(g, mat(P.road, { roughness: 0.75, polygonOffset: true, polygonOffsetFactor: -3 }), false, true);
     const L = curve.getLength();
+    // sidewalks on both sides (people walk here, never on the carriageway)
+    const strip = (o1, o2, y) => {
+      const sp = [];
+      for (let i = 0; i <= n; i++) { const t = i / n, p = curve.getPoint(t), tg = curve.getTangent(t), nx = -tg.z, nz = tg.x; sp.push(p.x + nx * o2, y, p.z + nz * o2, p.x + nx * o1, y, p.z + nz * o1); }
+      const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); sg.setIndex(idx.slice()); sg.computeVertexNormals();
+      return mesh(sg, mat(0xD8D2C8, { roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2 }), false, true);
+    };
+    const walks = [strip(w / 2 + 0.03, w / 2 + 0.19, 0.088), strip(-w / 2 - 0.19, -w / 2 - 0.03, 0.088)];
     const dashes = []; for (let s = 0.3; s < L - 0.2; s += 0.6) dashes.push(s / L);
     const dm = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.2, 0.04).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xF4F1EA, polygonOffset: true, polygonOffsetFactor: -4 }), dashes.length);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion();
     dashes.forEach((t, i) => { const p = curve.getPoint(t), tg = curve.getTangent(t); q.setFromAxisAngle(Y, -Math.atan2(tg.z, tg.x)); m4.compose(V3(p.x, 0.085, p.z), q, V3(1, 1, 1)); dm.setMatrixAt(i, m4); });
     // street lamps on alternating sides
-    const lamps = []; for (let s = 0.5, k = 0; s < L - 0.2; s += 1.5, k++) { const t = s / L, p = curve.getPoint(t), tg = curve.getTangent(t), sd = k % 2 ? 1 : -1; lamps.push([p.x - tg.z * 0.42 * sd, p.z + tg.x * 0.42 * sd]); }
+    const lamps = []; for (let s = 0.5, k = 0; s < L - 0.2; s += 1.5, k++) { const t = s / L, p = curve.getPoint(t), tg = curve.getTangent(t), sd = k % 2 ? 1 : -1; lamps.push([p.x - tg.z * (w / 2 + 0.25) * sd, p.z + tg.x * (w / 2 + 0.25) * sd]); }
     const pole = new THREE.CylinderGeometry(0.016, 0.022, 0.62, 6).translate(0, 0.31, 0), head = new THREE.SphereGeometry(0.05, 12, 8).translate(0, 0.66, 0);
     const lp = new THREE.InstancedMesh(pole, mat(P.steel, { roughness: 0.5 }), lamps.length), lh = new THREE.InstancedMesh(head, this.lampMat || (this.lampMat = glowMat(0xFFD08A, 0, 2.4)), lamps.length);
     lamps.forEach((p, i) => { m4.makeTranslation(p[0], 0, p[1]); lp.setMatrixAt(i, m4); lh.setMatrixAt(i, m4); });
@@ -197,9 +207,9 @@ export class City {
     this.lightPools.push(pm);
     const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.85, 0.85).rotateX(-Math.PI / 2), pm, lamps.length);
     lamps.forEach((p, i) => { m4.makeTranslation(p[0], 0.09, p[1]); pools.setMatrixAt(i, m4); });
-    const grp = new THREE.Group(); grp.add(m, dm, lp, lh, pools);
-    for (let s = 0; s < L; s += 0.4) { const p = curve.getPoint(s / L); this.block(p.x, p.z, w / 2 + 0.12, w / 2 + 0.12); }
-    const r = { curve, L, mesh: m, n, parts: [[dm, dashes.length], [lp, lamps.length], [lh, lamps.length], [pools, lamps.length]], district: d.i };
+    const grp = new THREE.Group(); grp.add(m, dm, lp, lh, pools, ...walks);
+    for (let s = 0; s < L; s += 0.4) { const p = curve.getPoint(s / L); this.block(p.x, p.z, w / 2 + 0.26, w / 2 + 0.26); }
+    const r = { curve, L, w, walks, mesh: m, n, cross: [], dashT: dashes, lampXZ: lamps, lp, lh, pools, dm, parts: [[dm, dashes.length], [lp, lamps.length], [lh, lamps.length], [pools, lamps.length]], district: d.i };
     grp.userData.road = r; d.roads.push(r); this.roads.push(r);
     return this.item(grp, d.items.length * 0.12);
   }
@@ -450,7 +460,9 @@ export class City {
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const pole = mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.6, 6), mat(P.steel)); pole.position.y = 0.3; g.add(pole);
     const box = mesh(rbox(0.09, 0.22, 0.07, 0.025, 2), mat(P.ink)); box.position.y = 0.66; g.add(box);
-    [[0xE8674A, 0.73], [P.gold, 0.66], [0x5FBF8A, 0.59]].forEach(([c, y], k) => { const l = mesh(new THREE.SphereGeometry(0.02, 8, 6), glowMat(c, k === 2 ? 0.8 : 0.08, k === 2 ? 2.2 : 0.4), false); l.position.set(0, y, 0.037); g.add(l); });
+    const tl = { x, z, lamps: [], on: [], off: [] };
+    [[0xE8674A, 0.73], [P.gold, 0.66], [0x5FBF8A, 0.59]].forEach(([c, y], k) => { const on = glowMat(c, 0.9, 2.4), off = glowMat(c, 0.04, 0.25); const l = mesh(new THREE.SphereGeometry(0.022, 8, 6), k === 2 ? on : off, false); l.position.set(0, y, 0.037); g.add(l); tl.lamps.push(l); tl.on.push(on); tl.off.push(off); });
+    (this.tLights || (this.tLights = [])).push(tl); g.userData.nobake = true;
     return this.item(g, this.cur.items.length * 0.1);
   }
   sirenTower(x, z) {
@@ -570,6 +582,79 @@ export class City {
     for (const [g, m] of gs) { const im = new THREE.InstancedMesh(g, m, pts.length); im.castShadow = im.receiveShadow = true; pts.forEach((p, i) => { q.setFromAxisAngle(Y, p[3]); m4.compose(V3(p[0], 0, p[1]), q, V3(p[2], p[2], p[2])); im.setMatrixAt(i, m4); }); this.root.add(im); }
   }
   // ---------- traffic ----------
+  // every place where two roads meet: cars take turns (traffic-light phases), people never cross here
+  crossings() {
+    const R2 = this.roads, X = this.cross = [];
+    const samp = r => { const n = Math.ceil(r.L / 0.06), a = []; for (let i = 0; i <= n; i++) { const p = r.curve.getPointAt(i / n); a.push([p.x, p.z, i / n]); } return a; };
+    const S = R2.map(samp);
+    for (let a = 0; a < R2.length; a++) for (let b = a + 1; b < R2.length; b++) {
+      let best = null;
+      for (const pa of S[a]) for (const pb of S[b]) { const d = Math.hypot(pa[0] - pb[0], pa[1] - pb[1]); if (d < 0.2 && (!best || d < best.d)) best = { d, sa: pa[2], sb: pb[2], x: (pa[0] + pb[0]) / 2, z: (pa[1] + pb[1]) / 2 }; }
+      if (!best) continue;
+      const x = { a: R2[a], b: R2[b], sa: best.sa, sb: best.sb, x: best.x, z: best.z, off: X.length * 3.7, inA: false, inB: false };
+      X.push(x); R2[a].cross.push({ X: x, s: best.sa, other: R2[b] }); R2[b].cross.push({ X: x, s: best.sb, other: R2[a] });
+    }
+    // inside a crossing: no sidewalk, no lane dashes, no lamps
+    const z0 = new THREE.Matrix4().makeScale(0, 0, 0);
+    for (const r of R2) {
+      if (!r.cross.length) continue;
+      const near = (x, z, pad) => r.cross.some(c => Math.hypot(c.X.x - x, c.X.z - z) < c.other.w / 2 + pad);
+      r.dashT.forEach((t, i) => { const p = r.curve.getPoint(t); if (near(p.x, p.z, 0.1)) r.dm.setMatrixAt(i, z0); }); r.dm.instanceMatrix.needsUpdate = true;
+      r.lampXZ.forEach((p, i) => { if (near(p[0], p[1], 0.3)) { r.lp.setMatrixAt(i, z0); r.lh.setMatrixAt(i, z0); r.pools.setMatrixAt(i, z0); } });
+      [r.lp, r.lh, r.pools].forEach(m => { m.instanceMatrix.needsUpdate = true; });
+      r.walks.forEach(wm => {
+        const ix = wm.geometry.index.array;
+        for (let i = 0; i < r.n; i++) { const t = (i + 0.5) / r.n, p = r.curve.getPoint(t); if (near(p.x, p.z, 0.2)) for (let k = 0; k < 6; k++) ix[i * 6 + k] = i * 2; }
+        wm.geometry.index.needsUpdate = true;
+      });
+    }
+    // each traffic light follows the nearest crossing
+    (this.tLights || []).forEach(tl => { let bd = 9; X.forEach(x => { const d = Math.hypot(x.x - tl.x, x.z - tl.z); if (d < bd) { bd = d; tl.X = x; } }); if (bd > 1.2) tl.X = null; });
+    // zebra stripes (shown only when both roads exist)
+    const zg = new THREE.PlaneGeometry(0.045, 0.16).rotateX(-Math.PI / 2);
+    this.zebra = new THREE.InstancedMesh(zg, new THREE.MeshBasicMaterial({ color: 0xF4F1EA, polygonOffset: true, polygonOffsetFactor: -5 }), X.length * 2 * 2 * 6);
+    this.zebra.count = 0; this.root.add(this.zebra);
+  }
+  greenFor(x, t) { const ph = (t + x.off) % 13; return ph < 5.5 ? x.a : ph >= 6.5 && ph < 12 ? x.b : null; }
+  zebras() {
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(); let k = 0;
+    for (const x of this.cross) {
+      if (!x.a.live || !x.b.live) continue;
+      for (const [r, s0, o] of [[x.a, x.sa, x.b], [x.b, x.sb, x.a]]) for (const sd of [-1, 1]) {
+        const s = s0 + sd * (o.w / 2 + 0.34) / r.L; if (s < 0.01 || s > 0.99) continue;
+        const p = r.curve.getPointAt(s), tg = r.curve.getTangentAt(s), nx = -tg.z, nz = tg.x; q.setFromAxisAngle(Y, -Math.atan2(tg.z, tg.x) + Math.PI / 2);
+        for (let i = 0; i < 6; i++) { const lo = -r.w / 2 + 0.05 + i * (r.w - 0.1) / 5; m4.compose(V3(p.x + nx * lo, 0.087, p.z + nz * lo), q, V3(1, 1, 1)); this.zebra.setMatrixAt(k++, m4); }
+      }
+    }
+    this.zebra.count = k; this.zebra.instanceMatrix.needsUpdate = true;
+  }
+  // people on the sidewalks: they walk between crossings and turn around before reaching one
+  peds() {
+    const N = 32, c = new THREE.Color();
+    const body = new RoundedBoxGeometry(0.1, 0.15, 0.08, 2, 0.03).translate(0, 0.17, 0), head = new RoundedBoxGeometry(0.085, 0.08, 0.08, 2, 0.028).translate(0, 0.29, 0), visor = new THREE.BoxGeometry(0.068, 0.03, 0.01).translate(0, 0.295, 0.042), legs = new THREE.BoxGeometry(0.07, 0.1, 0.04).translate(0, 0.05, 0);
+    this.pedB = new THREE.InstancedMesh(body, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }), N);
+    this.pedH = new THREE.InstancedMesh(head, new THREE.MeshStandardMaterial({ color: 0xF4F1EA, roughness: 0.4, emissive: 0xF4F1EA, emissiveIntensity: 0.15 }), N);
+    this.pedV = new THREE.InstancedMesh(visor, new THREE.MeshBasicMaterial({ color: 0x6FD3E6 }), N);
+    this.pedL = new THREE.InstancedMesh(legs, mat(0x2E3550), N);
+    const cols = [0x4F98A3, 0xE8674A, 0x3D6FB0, 0x9C5B8A, 0x5FBF8A, 0xF08A3C, 0x8A6A4F, 0xF2B544];
+    for (let i = 0; i < N; i++) this.pedB.setColorAt(i, c.set(cols[i % cols.length]));
+    this.pedB.castShadow = true;
+    this.pedS = []; [this.pedB, this.pedH, this.pedV, this.pedL].forEach(m => { m.count = 0; this.root.add(m); });
+  }
+  assignPeds() {
+    const live = this.roads.filter(r => r.live), segs = [];
+    for (const r of live) {
+      const cut = r.cross.filter(c => c.other.live).map(c => [c.s - (c.other.w / 2 + 0.45) / r.L, c.s + (c.other.w / 2 + 0.45) / r.L]).sort((a, b) => a[0] - b[0]);
+      let s0 = 0.03; for (const [a, b] of cut) { if (a - s0 > 1.2 / r.L) segs.push([r, s0, a]); s0 = Math.max(s0, b); } if (0.97 - s0 > 1.2 / r.L) segs.push([r, s0, 0.97]);
+    }
+    const tot = segs.reduce((a, g) => a + (g[2] - g[1]) * g[0].L, 0), N = Math.min(this.pedB.instanceMatrix.count, Math.round(tot / 2.6));
+    this.pedS = [];
+    for (let i = 0; i < N; i++) {
+      let u = rnd() * tot, g = segs[0]; for (const x of segs) { const l = (x[2] - x[1]) * x[0].L; if (u < l) { g = x; break; } u -= l; }
+      this.pedS.push({ r: g[0], s0: g[1], s1: g[2], s: g[1] + rnd() * (g[2] - g[1]), dir: rnd() < 0.5 ? 1 : -1, side: rnd() < 0.5 ? 1 : -1, v: 0.16 + rnd() * 0.12, ph: rnd() * 6 });
+    }
+    [this.pedB, this.pedH, this.pedV, this.pedL].forEach(m => { m.count = N; });
+  }
   cars() {
     const N = 34;
     const body = new RoundedBoxGeometry(0.2, 0.12, 0.38, 2, 0.04).translate(0, 0.16, 0), cab = new RoundedBoxGeometry(0.17, 0.09, 0.2, 2, 0.035).translate(0, 0.26, -0.02);
@@ -582,11 +667,23 @@ export class City {
     this.carBody.count = this.carCab.count = 0; this.carLights.count = 0;
     this.root.add(this.carBody, this.carCab, this.carLights);
   }
+  traffic(on) { [this.carBody, this.carCab, this.carLights, this.pedB, this.pedH, this.pedV, this.pedL].forEach(m => { m.visible = on; }); }
   assignCars() {
     const live = this.roads.filter(r => r.live);
     const N = live.length ? Math.min(this.carS.length, Math.round(live.reduce((a, r) => a + r.L, 0) / 2.2)) : 0;
     this.carS.forEach((c, i) => { c.road = i < N ? live[i % live.length] : null; });
     this.carBody.count = this.carCab.count = N; this.carLights.count = N * 2;
+    // spread cars evenly per road and direction, never inside a crossing
+    live.forEach(r => [1, -1].forEach(dir => {
+      const cs = this.carS.filter(c => c.road === r).filter((c, k) => (k % 2 ? -1 : 1) === dir);
+      cs.forEach((c, k) => {
+        c.dir = dir; let s = (k + 0.5) / cs.length + (dir > 0 ? 0 : 0.5 / cs.length);
+        for (let g = 0; g < 20 && r.cross.some(cr => Math.abs(cr.s - (s % 1)) * r.L < cr.other.w / 2 + 0.5); g++) s += 0.6 / r.L;
+        c.s = s % 1;
+      });
+    }));
+    this.carS.forEach(c => { c.cv = c.v; });
+    this.zebras(); this.assignPeds();
   }
   // ---------- beacon over the next district ----------
   beaconBuild() {
@@ -661,8 +758,8 @@ export class City {
   // merge a finished district's static meshes: one draw call per material
   bake(d) {
     if (d.baked || !d.built) return;
-    d.bakeGroup = this.bakeObjects(d.items.filter(o => !o.userData.station && !o.userData.road && o.visible));
-    d.items.forEach(o => { if (!o.userData.station && !o.userData.road && o.visible) { o.visible = false; o.userData.baked = true; } });
+    d.bakeGroup = this.bakeObjects(d.items.filter(o => !o.userData.station && !o.userData.road && !o.userData.nobake && o.visible));
+    d.items.forEach(o => { if (!o.userData.station && !o.userData.road && !o.userData.nobake && o.visible) { o.visible = false; o.userData.baked = true; } });
     d.baked = true;
   }
   bakeObjects(objs) {
@@ -687,7 +784,7 @@ export class City {
   }
   unbake(d) { if (!d.baked) return; this.root.remove(d.bakeGroup); d.bakeGroup.traverse(m => m.geometry && m.geometry.dispose()); d.items.forEach(o => { o.userData.baked = false; }); d.baked = false; }
   roadK(r, k) {
-    r.mesh.geometry.setDrawRange(0, Math.floor(r.n * k) * 6);
+    r.mesh.geometry.setDrawRange(0, Math.floor(r.n * k) * 6); r.walks.forEach(x => x.geometry.setDrawRange(0, Math.floor(r.n * k) * 6));
     r.parts.forEach(([m, c]) => { m.count = Math.floor(c * k); });
   }
   stationAll(on) { const p = this.station.parts; for (const k in p) p[k].scale.setScalar(on ? 1 : 0.001); this.ledMats.forEach(m => m.emissiveIntensity = on ? 1.4 : 0); }
@@ -735,18 +832,49 @@ export class City {
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion();
     this.floeT.forEach((f, i) => { f[0] += dt * 0.25 * f[2]; if (f[0] > R) f[0] = -R; const x = f[0], z = riverZ(x) + f[1]; const vis = Math.hypot(x, z) < R0 - 0.3 ? f[2] : 0.0001; q.setFromAxisAngle(Y, x * 0.8); m4.compose(V3(x, 0.06, z), q, V3(vis, 1, vis)); this.floes.setMatrixAt(i, m4); });
     this.floes.instanceMatrix.needsUpdate = true;
-    // cars
-    const n = this.carBody.count;
+    // cars: keep distance, take turns at crossings
+    const n = this.carBody.count, act = [];
+    for (let i = 0; i < n; i++) if (this.carS[i].road) act.push(this.carS[i]);
+    for (const x of this.cross) { x.wasA = x.inA; x.wasB = x.inB; x.inA = x.inB = false; }
+    for (const c of act) { const r = c.road; for (const cr of r.cross) { if (!cr.other.live) continue; const d = ((((cr.s - c.s) * c.dir) % 1) + 1) % 1 * r.L, zone = cr.other.w / 2 + 0.22; if (d < zone || r.L - d < zone) { if (cr.X.a === r) cr.X.inA = true; else cr.X.inB = true; } } }
+    for (const c of act) {
+      const r = c.road; let lim = 1, ahead = 9;
+      for (const o of act) { if (o === c || o.road !== r || o.dir !== c.dir) continue; const g = ((((o.s - c.s) * c.dir) % 1) + 1) % 1 * r.L; if (g > 0.001 && g < ahead) ahead = g; }
+      if (ahead < 1) lim = Math.min(lim, Math.max(0, Math.min(1, (ahead - 0.5) / 0.35)));
+      for (const cr of r.cross) {
+        if (!cr.other.live) continue;
+        const d = ((((cr.s - c.s) * c.dir) % 1) + 1) % 1 * r.L, stop = cr.other.w / 2 + 0.3;
+        if (d > stop - 0.06 && d < stop + 0.9) {
+          const X = cr.X, mine = X.a === r, otherIn = mine ? X.wasB : X.wasA, go = this.greenFor(X, t) === r && !otherIn;
+          if (!go) lim = Math.min(lim, Math.max(0, Math.min(1, (d - stop) / 0.4)));
+        }
+      }
+      c.cv += (c.v * lim - c.cv) * Math.min(1, dt * 5);
+      c.s = (c.s + dt * c.cv * c.dir / r.L + 1) % 1;
+    }
     for (let i = 0; i < n; i++) {
       const c = this.carS[i], r = c.road; if (!r) continue;
-      c.s = (c.s + dt * c.v * c.dir / r.L + 1) % 1;
-      const p = r.curve.getPointAt(c.s), tg = r.curve.getTangentAt(c.s), off = 0.13 * c.dir;
+      const p = r.curve.getPointAt(c.s), tg = r.curve.getTangentAt(c.s), off = 0.14 * c.dir;
       const x = p.x - tg.z * off, z = p.z + tg.x * off, ang = Math.atan2(tg.x * c.dir, tg.z * c.dir);
       const edge = Math.min(1, Math.min(c.s, 1 - c.s) * r.L * 3);
       q.setFromAxisAngle(Y, ang); m4.compose(V3(x, 0, z), q, V3(edge, edge, edge));
       this.carBody.setMatrixAt(i, m4); this.carCab.setMatrixAt(i, m4);
       for (let k = 0; k < 2; k++) { const v = V3(k ? 0.06 : -0.06, 0.17, 0.2).applyAxisAngle(Y, ang); m4.makeTranslation(x + v.x, v.y, z + v.z); m4.scale(V3(edge, edge, edge)); this.carLights.setMatrixAt(i * 2 + k, m4); }
     }
+    // traffic lights show the phase of their crossing
+    (this.tLights || []).forEach(tl => { if (!tl.X) return; const g = this.greenFor(tl.X, t), ph = (t + tl.X.off) % 13, st = g === tl.X.a ? 2 : (ph >= 5.5 && ph < 6.5) ? 1 : 0; tl.lamps.forEach((l, k) => { l.material = k === st ? tl.on[k] : tl.off[k]; }); });
+    // people on sidewalks
+    const pn = this.pedS.length;
+    for (let i = 0; i < pn; i++) {
+      const pd = this.pedS[i], r = pd.r;
+      pd.s += pd.dir * pd.v * dt / r.L; if (pd.s > pd.s1) { pd.s = pd.s1; pd.dir = -1; } else if (pd.s < pd.s0) { pd.s = pd.s0; pd.dir = 1; }
+      const p = r.curve.getPointAt(pd.s), tg = r.curve.getTangentAt(pd.s), off = (r.w / 2 + 0.11) * pd.side;
+      const x = p.x - tg.z * off, z = p.z + tg.x * off, ang = Math.atan2(tg.x * pd.dir, tg.z * pd.dir), bob = Math.abs(Math.sin(t * 9 + pd.ph)) * 0.012;
+      q.setFromAxisAngle(Y, ang); m4.compose(V3(x, 0.088 + bob, z), q, V3(1.15, 1.15, 1.15));
+      this.pedB.setMatrixAt(i, m4); this.pedH.setMatrixAt(i, m4); this.pedV.setMatrixAt(i, m4);
+      m4.compose(V3(x, 0.088, z), q, V3(1.15, 1 - bob * 4, 1.15)); this.pedL.setMatrixAt(i, m4);
+    }
+    if (pn) [this.pedB, this.pedH, this.pedV, this.pedL].forEach(m => { m.instanceMatrix.needsUpdate = true; });
     this.carBody.instanceMatrix.needsUpdate = this.carCab.instanceMatrix.needsUpdate = this.carLights.instanceMatrix.needsUpdate = true;
     // beacon
     if (this.beacon.visible) {

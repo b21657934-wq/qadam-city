@@ -109,7 +109,7 @@ export class Storm {
     if (REDUCED) { o.position.copy(P[P.length - 1]); return Promise.resolve(); }
     return this.run((dt, t) => {
       d = Math.min(tot, d + speed * K * dt); let s = d, i = 0; while (i < seg.length - 1 && s > seg[i]) { s -= seg[i]; i++; }
-      const a = P[i], b = P[i + 1], k = seg[i] ? s / seg[i] : 1; o.position.set(lerp(a.x, b.x, k), o.position.y, lerp(a.z, b.z, k));
+      const a = P[i], b = P[i + 1], k = seg[i] ? s / seg[i] : 1, ln = (opt.lane || 0) / (seg[i] || 1); o.position.set(lerp(a.x, b.x, k) - (b.z - a.z) * ln, o.position.y, lerp(a.z, b.z, k) + (b.x - a.x) * ln);
       const want = Math.atan2(b.x - a.x, b.z - a.z); let da = want - o.rotation.y; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI; o.rotation.y += da * Math.min(1, dt * 10);
       if (ud.legs) { const sw = Math.sin(t * 13 + (ud.ph || 0)) * 0.6; ud.legs[0].rotation.x = sw; ud.legs[1].rotation.x = -sw; ud.arms[0].rotation.x = -sw * 0.8; ud.arms[1].rotation.x = sw * 0.8; ud.body.position.y = Math.abs(Math.cos(t * 13 + (ud.ph || 0))) * 0.015; ud.body.rotation.x = 0.12; }
       if (opt.each) opt.each(o);

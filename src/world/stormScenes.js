@@ -26,7 +26,7 @@ export const SCENES = [
   async (S, st, tr) => {
     st.label(tr(L('Storm warning: stay indoors', 'Штормовое предупреждение: оставайтесь дома', 'Дауыл ескертуі: үйде қалыңыз')), -5.6, 2.3, -3.4, { size: 0.3, bg: 'rgba(232,103,74,0.95)', fg: '#fff' });
     S.glow(-5.6, -3.4, 1.6, 0xFF5A40, 1.2, 4.6, 1.2);
-    const go = [[[-6.4, -1.0], [-7.32, -1.47]], [[-6.7, -2.7], [-7.44, -3.37]], [[-5.0, -1.0], [-3.84, -2.22]], [[-6.0, -1.1], [-7.2, -1.5]]];
+    const go = [[[-6.2, -1.5], [-7.32, -1.5], [-7.32, -1.47]], [[-6.7, -2.7], [-7.44, -3.37]], [[-5.0, -1.5], [-3.84, -1.52], [-3.84, -2.22]], [[-6.0, -1.5], [-7.1, -1.5], [-7.2, -1.48]]];
     await Promise.all(go.map(async (p, i) => { const r = S.add(robot(coat(i)), p[0][0], p[0][1]); S.bob(r); await S.wait(i * 0.35); await S.path(r, p, 0.55); await S.vanish(r); }));
     await S.wait(0.4);
   },
@@ -35,7 +35,7 @@ export const SCENES = [
     const a = S.add(vehicle('amb'), -1.6, -1.2); a.rotation.y = Math.PI / 2; let on = true;
     S.blink(a.userData.beacons, 0.18, () => !on);
     st.label(tr(L('Route 9 min — the cheapest one', 'Маршрут 9 мин — самый дешёвый', 'Маршрут 9 мин — ең арзаны')), 1.0, 1.4, -1.6, { size: 0.28 });
-    await S.path(a, [[-1.6, -1.2], [2.6, -1.22], [3.1, -0.95]], 1.25);
+    await S.path(a, [[-1.6, -1.2], [2.6, -1.22], [3.1, -0.95]], 1.25, { lane: 0.14 });
     const d = S.add(robot(0xF4F1EA, 1, 0xE8674A), 3.6, 0.25); await S.appear(d);
     await S.path(d, [[3.6, 0.25], [3.5, -0.75]], 0.5);
     st.label(tr(L('Medicine delivered', 'Лекарства доставлены', 'Дәрі жеткізілді')), 3.3, 1.7, -0.6, { size: 0.3, bg: 'rgba(95,191,138,0.95)', fg: '#fff' });
@@ -48,10 +48,10 @@ export const SCENES = [
     const b2 = S.add(vehicle('bus'), 4.8, -7.0); b2.children[0].material = b2.children[0].material.clone(); b2.children[0].material.color.set(0x4F98A3);
     st.label(tr(L('Line 1', 'Линия 1', '1-желі')), -5.0, 1.3, -4.9, { size: 0.26, bg: 'rgba(242,181,68,0.95)' });
     st.label(tr(L('Line 2', 'Линия 2', '2-желі')), 4.8, 1.3, -3.6, { size: 0.26, bg: 'rgba(79,152,163,0.95)', fg: '#fff' });
-    S.path(b2, [[4.8, -7.0], [4.8, -1.9]], 0.9);
-    await S.path(b1, [[-7.0, -4.9], [-3.6, -4.9]], 1.0);
-    await Promise.all(wait.map(async (r, i) => { await S.wait(i * 0.2); await S.path(r, [[r.position.x / K, r.position.z / K], [-3.55, -4.8]], 0.6); await S.vanish(r, 0.2); }));
-    await S.path(b1, [[-3.6, -4.9], [1.2, -4.9]], 1.1);
+    S.path(b2, [[4.8, -7.0], [4.8, -1.9]], 0.9, { lane: 0.14 });
+    await S.path(b1, [[-7.0, -4.9], [-3.6, -4.9]], 1.0, { lane: 0.14 });
+    await Promise.all(wait.map(async (r, i) => { await S.wait(i * 0.2); await S.path(r, [[r.position.x / K, r.position.z / K], [-3.55, -4.66]], 0.6); await S.vanish(r, 0.2); }));
+    await S.path(b1, [[-3.6, -4.9], [1.2, -4.9]], 1.1, { lane: 0.14 });
   },
   // 3 · culture palace fills up and stays warm
   async (S, st, tr) => {
@@ -66,8 +66,8 @@ export const SCENES = [
     const cars = [0, 1, 2, 3].map(i => { const c = S.add(vehicle('car'), 0.6 - i * 0.9, -1.22); c.children[0].material = c.children[0].material.clone(); c.children[0].material.color.set(coat(i + 1)); return c; });
     const cross = [0, 1].map(i => S.add(vehicle('car'), 4.8, -4.6 - i * 0.9));
     await Promise.all([
-      ...cars.map(async (c, i) => { await S.wait(i * 0.25); await S.path(c, [[0.6 - i * 0.9, -1.22], [8.0, -1.4]], 1.6); c.visible = false; }),
-      ...cross.map(async (c, i) => { await S.wait(2.6 + i * 0.3); await S.path(c, [[4.8, -4.6 - i * 0.9], [4.82, 1.2]], 1.6); }),
+      ...cars.map(async (c, i) => { await S.wait(i * 0.25); await S.path(c, [[0.6 - i * 0.9, -1.22], [8.0, -1.4]], 1.6, { lane: 0.14 }); c.visible = false; }),
+      ...cross.map(async (c, i) => { await S.wait(2.6 + i * 0.3); await S.path(c, [[4.8, -4.6 - i * 0.9], [4.82, 1.2]], 1.6, { lane: 0.14 }); }),
     ]);
   },
   // 5 · school closes in time, kids go home
@@ -76,7 +76,7 @@ export const SCENES = [
     S.glow(6.2, 0.4, 1.72, 0xFF5A40, 0.9, 4.8, 1.4);
     await Promise.all([0, 1, 2, 3, 4].map(async i => {
       await S.wait(i * 0.35); const k = S.add(robot(coat(i + 3), 0.72, 0xF4F1EA), 6.6, -2.15); S.bob(k); await S.appear(k, 0.2);
-      const left = i % 2 === 0; await S.path(k, [[6.6, -2.15], [6.6, -1.45], [left ? 5.2 : 8.0, -1.4]], 0.6); await S.vanish(k);
+      const left = i % 2 === 0; await S.path(k, [[6.6, -2.15], [6.6, -1.64], [left ? 5.2 : 8.0, left ? -1.6 : -1.7]], 0.6); await S.vanish(k);
     }));
   },
   // 6 · the GPS knows where the bus is
@@ -85,12 +85,12 @@ export const SCENES = [
     const lab = st.label(tr(L('Bus 12: arriving in 1 min', 'Автобус 12: через 1 мин', '12-автобус: 1 минуттан кейін')), -0.6, 1.6, 7.3, { size: 0.3 });
     const b = S.add(vehicle('bus'), -2.2, 3.7);
     const ppl = [0, 1, 2].map(i => { const r = S.add(robot(coat(i + 4)), -3.42, 7.73); r.visible = false; S.bob(r); return r; });
-    const bus = S.path(b, [[-2.2, 3.7], [-2.2, 6.0], [-0.8, 7.25]], 0.85);
+    const bus = S.path(b, [[-2.2, 3.7], [-2.2, 6.0], [-0.8, 7.25]], 0.85, { lane: 0.14 });
     await S.wait(1.3);
-    await Promise.all(ppl.map(async (r, i) => { await S.wait(i * 0.3); r.visible = true; await S.appear(r, 0.2); await S.path(r, [[-3.42, 7.73], [-2.4, 7.6], [-1.0, 7.5]], 0.6); }));
+    await Promise.all(ppl.map(async (r, i) => { await S.wait(i * 0.3); r.visible = true; await S.appear(r, 0.2); await S.path(r, [[-3.42, 7.73], [-2.0, 7.55], [-0.98, 7.5]], 0.6); }));
     await bus; void lab;
     for (const r of ppl) await S.vanish(r, 0.18);
-    await S.path(b, [[-0.8, 7.25], [2.2, 8.1]], 1.1);
+    await S.path(b, [[-0.8, 7.25], [2.2, 8.1]], 1.1, { lane: 0.14 });
   },
   // 7 · the snowplough goes where the expected damage is highest
   async (S, st, tr) => {
@@ -99,7 +99,7 @@ export const SCENES = [
     const dm = new THREE.MeshStandardMaterial({ color: 0xF6F8FC, roughness: 0.9 });
     for (let z = 1.4; z < 6.4; z += 0.4) { const x = z < 4.14 ? 4.85 : 4.85 - (z - 4.14) * 0.2; const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8), dm); m.scale.set(1.1, 0.32, 0.8); drifts.push(S.add(m, x + (Math.random() - 0.5) * 0.1, z, 0.06)); }
     const p = S.add(vehicle('plough'), 4.85, 0.6); let on = true; S.blink(p.userData.beacons, 0.3, () => !on);
-    await S.path(p, [[4.85, 0.6], [4.85, 4.14], [4.4, 6.4]], 0.75, { each: o => drifts.forEach(d => { if (d.visible && d.position.distanceTo(o.position) < 0.45) { d.visible = false; for (let k = 0; k < 3; k++) S.glow(d.position.x / K + (Math.random() - 0.3) * 0.6, d.position.z / K, 0.25 + Math.random() * 0.3, 0xFFFFFF, 0.35, 0.6, 2); } }) });
+    await S.path(p, [[4.85, 0.6], [4.85, 4.14], [4.4, 6.4]], 0.75, { lane: 0.14, each: o => drifts.forEach(d => { if (d.visible && d.position.distanceTo(o.position) < 0.45) { d.visible = false; for (let k = 0; k < 3; k++) S.glow(d.position.x / K + (Math.random() - 0.3) * 0.6, d.position.z / K, 0.25 + Math.random() * 0.3, 0xFFFFFF, 0.35, 0.6, 2); } }) });
     on = false;
   },
   // 8 · the grid holds: power runs along the lines, every home with people lights up
@@ -114,7 +114,7 @@ export const SCENES = [
   },
   // 9 · Bayterek assistant answers honestly
   async (S, st, tr) => {
-    [[-0.8, -1.7], [0.7, -1.6], [0.1, -1.4], [-0.3, -1.9]].forEach((p, i) => { const r = S.add(robot(coat(i)), p[0], p[1]); r.rotation.y = Math.atan2(-p[0], -2.7 - p[1]); });
+    [[-0.8, -1.7], [0.7, -1.6], [0.1, -1.75], [-0.3, -1.9]].forEach((p, i) => { const r = S.add(robot(coat(i)), p[0], p[1]); r.rotation.y = Math.atan2(-p[0], -2.7 - p[1]); });
     const qa = [
       [L('Where can I warm up?', 'Где пункт обогрева?', 'Жылынатын жер қайда?'), L('Culture Palace, 5 min on foot.', 'Дворец культуры, 5 минут пешком.', 'Мәдениет сарайы, жаяу 5 минут.')],
       [L('Is the road to Karaganda open?', 'Трасса на Караганду открыта?', 'Қарағанды трассасы ашық па?'), L('Closed until morning. I will tell you when it opens.', 'Закрыта до утра. Сообщу, когда откроют.', 'Таңға дейін жабық. Ашылғанда хабарлаймын.')],

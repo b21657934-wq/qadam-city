@@ -263,7 +263,7 @@ export class App {
     this.cine(null, t('stormNow'), t('stormArrives'));
     this.rig.flyTo({ target: [0, 0.8, 0], zoom: 0.9, pol: 0.94, az: this.rig.az + 0.4 }, 3.2);
     await Promise.race([wait(1800), this.skipP]);
-    S.begin(); this.snow.storm = true; this.fx.to = 1;
+    S.begin(); this.snow.storm = true; this.fx.to = 1; this.city.traffic(false);
     await Promise.race([wait(3200), this.skipP]);
     for (let i = 0; i < 10 && !skip(); i++) {
       this.cine(i, `${tr(STORY[i].name)} · ${tr(D[i].title)}`, tr(STORY[i].storm), `${t('stormT')} · ${i + 1}/10`);
@@ -277,7 +277,7 @@ export class App {
     this.cine(0, t('stormDone'), t('stormMorning'), t('stormT'));
     await this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, pol: 0.9, az: this.rig.az + 0.8 }, skip() ? 1.2 : 3.2, true);
     await wait(skip() ? 300 : 1600);
-    S.end(); this.cineClose(); S.live = true;
+    S.end(); this.cineClose(); S.live = true; this.city.traffic(true);
     store.set({ storm: true }); this.hud.classList.remove('hide'); this.renderHud();
     this.rig.autoOrbit = true; this.busy = false; this.show('home');
   }
