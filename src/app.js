@@ -62,7 +62,7 @@ export class App {
   hideSheet() { this.sheet.classList.add('hide'); this.syncInset(); }
   renderHud() {
     const b = this.built(), night = store.get().night;
-    this.hud.innerHTML = `<img class="logo" src="${logoURL}" alt="Qadam City">
+    this.hud.innerHTML = `<img class="logo" src="${logoURL}" alt="QAI-QALA">
       <div class="prog"><div class="lbl">${esc(this.built() < 10 ? t('daysLeft', { n: 10 - this.built() }) : t(store.get().storm ? 'stormDone' : 'stormNow'))} · ${this.pct()} %</div><div class="bar" role="progressbar" aria-label="${esc(t('progressLabel'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${this.pct()}"><i style="width:${this.pct()}%"></i></div></div>
       <div class="chip-stars" aria-label="${store.totalStars()} / 30 ${esc(t('stars'))}">${icon('starf')}${store.totalStars()}/30</div>
       <button class="icon-btn hud-reset" data-act="resetAsk" aria-label="${esc(t('restartTitle'))}" title="${esc(t('restartTitle'))}">${icon('reset')}</button>
@@ -90,7 +90,7 @@ export class App {
     this.rig.autoOrbit = true; this.city.setBeacon(-1);
     this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, az: -0.62, pol: 0.98 }, 1.6);
     this.setSheet(`
-      <div class="login-head"><div class="login-logo">${logoSvg}</div><div><div class="h3">Qadam City</div><div class="cap">${esc(t('course'))}</div></div></div>
+      <div class="login-head"><div class="login-logo">${logoSvg}</div><div><div class="h3">QAI-QALA</div><div class="cap">${esc(t('course'))}</div></div></div>
       <form class="login-form mt4" data-lform autocomplete="on" novalidate>
         <label class="field"><span>${esc(t('nick'))}</span><input data-nick name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next"></label>
         <label class="field mt2"><span>${esc(t('pass'))}</span><input data-pass name="password" type="password" autocomplete="current-password" enterkeyhint="go"></label>
@@ -170,6 +170,7 @@ export class App {
       <div class="label mt4">${esc(t('sound'))}</div>
       <div class="seg mt2" role="group"><button data-act="soundOn" class="${store.get().sound !== false ? 'on' : ''}">${esc(t('soundOn'))}</button><button data-act="soundOff" class="${store.get().sound === false ? 'on' : ''}">${esc(t('soundOff'))}</button></div>
       <button class="list-btn mt4" data-act="library"><div class="tile">${icon('book')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('library'))}</div><div class="cap mt1">${esc(t('librarySub'))}</div></div>${icon('arrow')}</button>
+      <a class="list-btn mt2" href="comic.pdf" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><div class="tile">${icon('star')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('comic'))}</div><div class="cap mt1">${esc(t('comicSub'))}</div></div>${icon('arrow')}</a>
       <div class="acct mt4"><div class="tile">${icon('key')}</div><div class="grow"><div class="cap">${esc(t('account'))}</div><div style="font-weight:600;font-size:16px;line-height:20px">${esc(store.user() === 'guest' ? t('guestName') : store.user())} · ${esc(t('keyCount', { n: store.get().keys ?? 5 }))}</div></div><button class="btn btn-secondary" data-act="logout" style="height:40px">${esc(t('logout'))}</button></div>
       <button class="btn btn-ghost mt3 danger" data-act="resetAsk" style="padding:0 4px">${icon('reset')}<span>${esc(t('restartTitle'))}</span></button>
       <div class="cap mt3">${esc(t('team'))}<br>${esc(t('course'))}</div>`);

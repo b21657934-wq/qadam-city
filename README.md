@@ -1,10 +1,19 @@
-# Qadam City — AI book, version 2
+# QAI-QALA — AI book, version 2
+
+*QAI-QALA* = **Q**azaq + **AI** + **qala** (Kazakh for “city”): a smart city that the robot Qadam builds before a blizzard, one AI topic at a time.
 
 Interactive AI book for **AIF1303 AI Fundamentals**, Qairu University. Team 11: Yuldashov Bilal, Tashmetov Shakhrukh.
 
 Qadam the builder robot turns a snowy steppe into Astana. Every AI topic (weeks 1–10) adds a new system to the city; the finale is the night city glowing. The **Library** in the city is the book: 10 chapters with theory, diagrams, formulas, worked problems, live Python labs and quizzes, in English, Russian and Kazakh.
 
 Version 1 (islands) stays unchanged for comparison: https://b21657934-wq.github.io/qadam-archipelago/
+
+## Three ways to read QAI-QALA
+
+- **The game** — [b21657934-wq.github.io/qadam-city](https://b21657934-wq.github.io/qadam-city/): build the city, one AI topic per district.
+- **The book** — the Library inside the game (`#book`): ten full chapters with diagrams, live labs and quizzes.
+- **The comic** — [comic.pdf](comic.pdf), 25 pages: *Qadam and the Ten Days Before the Blizzard*. Each chapter is one day of the countdown and one course week; QR codes open the same chapter in the game.
+- **Presentation card** — [card.png](card.png), 16:9 with a QR code to the book.
 
 ## Version 1 vs version 2
 

@@ -31,8 +31,8 @@ const html = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#F1F4F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E1430" media="(prefers-color-scheme: dark)">
-<meta name="description" content="Qadam City — interactive AI book for AIF1303 AI Fundamentals, Qairu University. Team 11.">
-<title>Qadam City · AI Fundamentals</title>
+<meta name="description" content="QAI-QALA — a smart-city game and interactive AI book for AIF1303 AI Fundamentals, Qairu University. Team 11.">
+<title>QAI-QALA · AI Fundamentals</title>
 <link rel="icon" href="${favicon}">
 <style>${faces}</style>
 </head><body>

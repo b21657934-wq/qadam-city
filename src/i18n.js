@@ -14,7 +14,7 @@ export function tr(o, vars) {
 export function t(key, vars) { return tr(S[key] || { en: key }, vars); }
 
 export const S = {
-  appName: { en: 'Qadam City', ru: 'Qadam City', kk: 'Qadam City' },
+  appName: { en: 'QAI-QALA', ru: 'QAI-QALA', kk: 'QAI-QALA' },
   cityBuilt: { en: 'City built · {p}%', ru: 'Город построен · {p} %', kk: 'Қала салынды · {p} %' },
   nextGoal: { en: 'Next goal', ru: 'Следующая цель', kk: 'Келесі мақсат' },
   week: { en: 'Week {n}', ru: 'Неделя {n}', kk: '{n}-апта' },
@@ -44,7 +44,7 @@ export const S = {
   next: { en: 'Next', ru: 'Дальше', kk: 'Әрі қарай' },
   skip: { en: 'Skip', ru: 'Пропустить', kk: 'Өткізу' },
   startBuilding: { en: 'Start building', ru: 'Начать стройку', kk: 'Құрылысты бастау' },
-  ob1t: { en: 'Hi! I’m Qadam', ru: 'Привет! Я Qadam', kk: 'Сәлем! Мен Qadam' },
+  ob1t: { en: 'Welcome to QAI-QALA! I’m Qadam', ru: 'Добро пожаловать в QAI-QALA! Я Qadam', kk: 'QAI-QALA-ға қош келдің! Мен Qadam' },
   ob1: { en: 'A huge blizzard reaches Astana in 10 days. Each AI topic you master gives the city a system that helps it survive.', ru: 'Через 10 дней на Астану придёт сильный буран. Каждая тема ИИ, которую ты освоишь, даёт городу систему, которая поможет его пережить.', kk: '10 күннен кейін Астанаға қатты боран келеді. Сен меңгерген әр ЖИ тақырыбы қалаға одан аман шығуға көмектесетін жүйе береді.' },
   ob2t: { en: 'Follow the golden light', ru: 'Иди за золотым светом', kk: 'Алтын жарыққа ер' },
   ob2: { en: 'The glowing district is your next goal. Its resident needs help. At the end there is an exam with fresh numbers — guessing won’t work.', ru: 'Светящийся район — твоя следующая цель, там житель ждёт помощи. В конце экзамен с новыми числами — угадать не получится.', kk: 'Жарқыраған аудан — келесі мақсатың, онда тұрғын көмек күтуде. Соңында жаңа сандармен емтихан — болжап табу мүмкін емес.' },
@@ -99,7 +99,7 @@ export const S = {
   bkContents: { en: 'Contents', ru: 'Оглавление', kk: 'Мазмұны' },
   bkChapter: { en: 'Chapter {n}', ru: 'Глава {n}', kk: '{n}-тарау' },
   bkBack: { en: 'Team, AI use and sources', ru: 'Команда, ИИ и источники', kk: 'Команда, ЖИ және дереккөздер' },
-  bkTitle: { en: 'Qadam builds a smart city', ru: 'Qadam строит умный город', kk: 'Qadam ақылды қала салады' },
+  bkTitle: { en: 'QAI-QALA: Qadam builds a smart city', ru: 'QAI-QALA: Qadam строит умный город', kk: 'QAI-QALA: Qadam ақылды қала салады' },
   bkLead: { en: 'The book behind the city: ten chapters, each with theory, worked problems, a live Python lab and a checkup.', ru: 'Книга, по которой растёт город: десять глав, в каждой — теория, решённые задачи, живая Python-лаборатория и проверка.', kk: 'Қала өсетін кітап: он тарау, әрқайсында — теория, шешілген есептер, тірі Python зертханасы және тексеру.' },
   bkPart_intuition: { en: 'Intuition', ru: 'Интуиция', kk: 'Түйсік' },
   bkPart_theory: { en: 'Theory', ru: 'Теория', kk: 'Теория' },
@@ -170,6 +170,8 @@ export const S = {
   sound: { en: 'Sound', ru: 'Звук', kk: 'Дыбыс' },
   soundOn: { en: 'On', ru: 'Вкл', kk: 'Қосулы' },
   soundOff: { en: 'Off', ru: 'Выкл', kk: 'Өшірулі' },
+  comic: { en: 'The comic (PDF)', ru: 'Комикс (PDF)', kk: 'Комикс (PDF)' },
+  comicSub: { en: 'Qadam and the ten days before the blizzard · 25 pages', ru: 'Qadam и десять дней до бурана · 25 страниц', kk: 'Qadam және боранға дейінгі он күн · 25 бет' },
   examTag: { en: 'Exam', ru: 'Экзамен', kk: 'Емтихан' },
   examRule: { en: '{n} in a row', ru: '{n} подряд без ошибок', kk: 'қатарынан {n}, қатесіз' },
   yourAnswer: { en: 'Your answer', ru: 'Твой ответ', kk: 'Сенің жауабың' },

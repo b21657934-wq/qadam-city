@@ -31,7 +31,7 @@ requestAnimationFrame(() => {
   buildIslands(city);
   const qadam = new Qadam(engine, 1.8, 1.5);
   const snow = new Snow(engine);
-  if (!store.user() && Q.has('demo')) store.login('guest');
+  if (!store.user() && (Q.has('demo') || location.hash.startsWith('#book'))) store.login('guest'); // QR codes in the comic open a chapter straight away
   if (Q.has('demo')) { const n = +Q.get('demo'); for (let i = 0; i < 10; i++) if (i < n) store.get().stars[i] = store.get().stars[i] || 3; else delete store.get().stars[i]; store.set({ onboarded: true }); }
   city.setBuilt(store.builtCount());
   city.libBake();
