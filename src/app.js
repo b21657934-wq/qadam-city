@@ -173,6 +173,7 @@ export class App {
       <button class="list-btn mt4" data-act="library"><div class="tile">${icon('book')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('library'))}</div><div class="cap mt1">${esc(t('librarySub'))}</div></div>${icon('arrow')}</button>
       <a class="list-btn mt2" href="comic.html" style="text-decoration:none;color:inherit"><div class="tile">${icon('star')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('comic'))}</div><div class="cap mt1">${esc(t('comicSub'))}</div></div>${icon('arrow')}</a>
       <a class="list-btn mt2" href="poster.html" style="text-decoration:none;color:inherit"><div class="tile">${icon('city')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('poster'))}</div><div class="cap mt1">${esc(t('posterSub'))}</div></div>${icon('arrow')}</a>
+      ${store.user() === 'qwerty' ? `<button class="list-btn mt2" data-act="skipStorm"><div class="tile" style="background:var(--accent-soft,#fff3d6)">${icon('snow')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('skipStorm'))}</div><div class="cap mt1">${esc(t('skipStormSub'))}</div></div>${icon('arrow')}</button>` : ''}
       <div class="acct mt4"><div class="tile">${icon('key')}</div><div class="grow"><div class="cap">${esc(t('account'))}</div><div style="font-weight:600;font-size:16px;line-height:20px">${esc(store.user() === 'guest' ? t('guestName') : store.user())} · ${esc(t('keyCount', { n: store.get().keys ?? 5 }))}</div></div><button class="btn btn-secondary" data-act="logout" style="height:40px">${esc(t('logout'))}</button></div>
       <button class="btn btn-ghost mt3 danger" data-act="resetAsk" style="padding:0 4px">${icon('reset')}<span>${esc(t('restartTitle'))}</span></button>
       <div class="cap mt3">${esc(t('team'))}<br>${esc(t('course'))}</div>`);
@@ -208,6 +209,7 @@ export class App {
     if (a === 'mission') return this.startMission(+ds.i);
     if (a === 'tour') return this.tour();
     if (a === 'storm') return this.storm();
+    if (a === 'skipStorm') return this.skipToStorm();
     if (a === 'logout') { store.logout(); location.hash = ''; return location.reload(); }
     if (a === 'resetAsk') { if (this.mission) { this.mission.close(); } return this.show('resetAsk'); }
     if (a === 'reset') {
@@ -327,6 +329,17 @@ export class App {
     await this.rig.flyTo({ target: [0, 2.4, -2.7 * K], zoom: 0.42, pol: 1.05, az: this.rig.az + 1.8 }, 4.5, true);
     await this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, pol: 0.9, az: this.rig.az + 1.4 }, 3.5, true);
     this.rig.autoOrbit = true; this.busy = false; this.show('home');
+  }
+  async skipToStorm() {
+    if (store.user() !== 'qwerty' || this.busy) return;
+    if (this.mission) this.mission.close();
+    const sv = store.get(); for (let i = 0; i < 10; i++) sv.stars[i] = Math.max(sv.stars[i] || 0, 3);
+    store.set({ onboarded: true, storm: false });
+    this.hideSheet(); this.busy = true; this.rig.autoOrbit = false;
+    this.city.setBuilt(10); this.city.setBeacon(-1); this.renderHud(); sfx.play('build');
+    await this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, az: this.rig.az + 0.9, pol: 0.9 }, 2.2, true);
+    this.busy = false; this.toast(t('cityBuilt', { p: this.pct() }));
+    return this.storm();
   }
   async growDistrict(i, wasBuilt) {
     this.busy = true;

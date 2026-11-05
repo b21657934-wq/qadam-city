@@ -171,6 +171,8 @@ export const S = {
   soundOn: { en: 'On', ru: 'Вкл', kk: 'Қосулы' },
   soundOff: { en: 'Off', ru: 'Выкл', kk: 'Өшірулі' },
   comic: { en: 'The comic', ru: 'Комикс', kk: 'Комикс' },
+  skipStorm: { en: 'Build the whole city → blizzard', ru: 'Построить весь город → буран', kk: 'Бүкіл қаланы салу → боран' },
+  skipStormSub: { en: 'qwerty only · all 10 districts at 3★, then the storm starts', ru: 'Только для qwerty · все 10 районов на 3★, сразу буран', kk: 'Тек qwerty · 10 аудан 3★, бірден боран' },
   comicShort: { en: 'Comic', ru: 'Комикс', kk: 'Комикс' },
   poster: { en: 'Presentation card', ru: 'Постер с QR-кодом', kk: 'QR-кодты постер' },
   posterShort: { en: 'Poster', ru: 'Постер', kk: 'Постер' },
