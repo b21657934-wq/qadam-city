@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>QAI-QALA · The Comic</title>
+<meta name="description" content="QAI-QALA comic: Qadam and the ten days before the blizzard. AIF1303 AI Fundamentals, Team 11.">
+<meta name="theme-color" content="#0f1d33">
+<style>
+:root{--bg:#0f1d33;--card:#17294a;--ink:#f3f6fb;--mute:#a9b7cf;--acc:#f5b942}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;background:rgba(15,29,51,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08)}
+header h1{font-size:17px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+a.btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:12px;background:var(--card);color:var(--ink);text-decoration:none;font-weight:600;font-size:14px;white-space:nowrap}
+a.btn.acc{background:var(--acc);color:#1b1404}
+.intro{max-width:760px;margin:0 auto;padding:22px 16px 6px}
+.intro h2{margin:0 0 6px;font-size:26px}
+.intro p{margin:0;color:var(--mute)}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+main{max-width:760px;margin:0 auto;padding:12px 10px 40px}
+figure{margin:0 0 14px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.35);aspect-ratio:794/1123}
+figure img{display:block;width:100%;height:100%;object-fit:contain}
+.num{font-size:12px;color:var(--mute);text-align:center;margin:-8px 0 14px}
+footer{max-width:760px;margin:0 auto;padding:0 16px 40px;color:var(--mute);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <a class="btn" href="./">← Game</a>
+  <h1>QAI-QALA · Comic</h1>
+  <a class="btn acc" href="comic.pdf" download="QAI-QALA_Comic.pdf">PDF ↓</a>
+</header>
+<section class="intro">
+  <h2>Qadam and the ten days before the blizzard</h2>
+  <p>25 pages · 10 chapters = 10 weeks of AIF1303 AI Fundamentals. Every chapter has a QR code that opens the same chapter in the e-book.</p>
+  <div class="row">
+    <a class="btn" href="./#book">Open the e-book</a>
+    <a class="btn" href="poster.html">Presentation card</a>
+  </div>
+</section>
+<main id="pages"></main>
+<footer>Team 11 · Yuldashov Bilal, Tashmetov Shakhrukh · Qairu University</footer>
+<script>
+var m=document.getElementById('pages'),h='';
+for(var i=1;i<=25;i++){var n=(i<10?'0':'')+i;h+='<figure id="p'+i+'"><img src="comic/p'+n+'.jpg" alt="Comic page '+i+'" loading="'+(i<3?'eager':'lazy')+'" decoding="async"></figure><div class="num">'+i+' / 25</div>';}
+m.innerHTML=h;
+</script>
+</body>
+</html>

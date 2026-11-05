@@ -99,7 +99,8 @@ export class App {
       </form>
       <div class="or mt3"><span>${esc(t('or'))}</span></div>
       <button class="btn btn-secondary btn-block mt3" data-guest>${esc(t('guest'))}</button>
-      <p class="cap mt2 center">${esc(t('guestNote'))}</p>`, root => {
+      <p class="cap mt2 center">${esc(t('guestNote'))}</p>
+      <div class="row mt3" style="gap:8px"><a class="btn btn-secondary grow" href="comic.html" style="text-decoration:none">${icon('star')}${esc(t('comicShort'))}</a><a class="btn btn-secondary grow" href="poster.html" style="text-decoration:none">${icon('city')}${esc(t('posterShort'))}</a></div>`, root => {
         root.querySelector('[data-lform]').addEventListener('submit', e => {
           e.preventDefault();
           const u = store.check(root.querySelector('[data-nick]').value, root.querySelector('[data-pass]').value);
@@ -170,7 +171,8 @@ export class App {
       <div class="label mt4">${esc(t('sound'))}</div>
       <div class="seg mt2" role="group"><button data-act="soundOn" class="${store.get().sound !== false ? 'on' : ''}">${esc(t('soundOn'))}</button><button data-act="soundOff" class="${store.get().sound === false ? 'on' : ''}">${esc(t('soundOff'))}</button></div>
       <button class="list-btn mt4" data-act="library"><div class="tile">${icon('book')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('library'))}</div><div class="cap mt1">${esc(t('librarySub'))}</div></div>${icon('arrow')}</button>
-      <a class="list-btn mt2" href="comic.pdf" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><div class="tile">${icon('star')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('comic'))}</div><div class="cap mt1">${esc(t('comicSub'))}</div></div>${icon('arrow')}</a>
+      <a class="list-btn mt2" href="comic.html" style="text-decoration:none;color:inherit"><div class="tile">${icon('star')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('comic'))}</div><div class="cap mt1">${esc(t('comicSub'))}</div></div>${icon('arrow')}</a>
+      <a class="list-btn mt2" href="poster.html" style="text-decoration:none;color:inherit"><div class="tile">${icon('city')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('poster'))}</div><div class="cap mt1">${esc(t('posterSub'))}</div></div>${icon('arrow')}</a>
       <div class="acct mt4"><div class="tile">${icon('key')}</div><div class="grow"><div class="cap">${esc(t('account'))}</div><div style="font-weight:600;font-size:16px;line-height:20px">${esc(store.user() === 'guest' ? t('guestName') : store.user())} · ${esc(t('keyCount', { n: store.get().keys ?? 5 }))}</div></div><button class="btn btn-secondary" data-act="logout" style="height:40px">${esc(t('logout'))}</button></div>
       <button class="btn btn-ghost mt3 danger" data-act="resetAsk" style="padding:0 4px">${icon('reset')}<span>${esc(t('restartTitle'))}</span></button>
       <div class="cap mt3">${esc(t('team'))}<br>${esc(t('course'))}</div>`);
