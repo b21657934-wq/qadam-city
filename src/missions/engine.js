@@ -20,7 +20,7 @@ export class Mission {
     if (spec.sim) { this.sim = spec.sim(this); app.engine.hooks.push(this.sim); }
     this.render();
   }
-  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; this.running = false; this.dv = undefined; this.replaying = null; this.round = null; this.streak = 0; this.showSol = false; this.tries = 0; this.order = null; this.keyAsk = false; this.keyShown = false; this.earn = null; }
+  reset() { this.placed = {}; this.sel = null; this.q = 0; this.ws = {}; this.lock = false; this.solved = false; this.picked = null; this.wrongPick = {}; this.running = false; this.dv = undefined; this.replaying = null; this.round = null; this.streak = 0; this.showSol = false; this.tries = 0; this.order = null; this.keyAsk = false; this.keyShown = false; this.earn = null; this.tried = {}; }
   newRound() {
     const g = this.S.gens; let k; do { k = Math.floor(Math.random() * g.length); } while (g.length > 1 && k === this.lastGen);
     this.lastGen = k; this.round = g[k](); this.ws = {}; this.tries = 0; this.showSol = false; this.keyAsk = false; this.keyShown = false; this.hl = this.S.exam ? 0 : 1; this.lock = false; window.__dr = this.round;
@@ -55,7 +55,7 @@ export class Mission {
       body = `<div class="stepper mt3"><button class="icon-btn" data-dv="-1" aria-label="−" ${this.solved ? 'disabled' : ''}><span class="pm">−</span></button><div class="grow center"><div class="cap">${esc(tr(s.label))}</div><div class="pc-b">${esc(s.fmt ? s.fmt(v) : v)}</div></div><button class="icon-btn" data-dv="1" aria-label="+" ${this.solved ? 'disabled' : ''}><span class="pm">+</span></button></div><div class="live cap mt2" data-live>${esc(s.live ? s.live(this, v) : '')}</div>`;
     } else if (s.kind === 'pick') {
       if (!this.order) { this.order = s.opts.map((_, k) => k); if (!s.keep) for (let k = this.order.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [this.order[k], this.order[j]] = [this.order[j], this.order[k]]; } }
-      body = `<div class="picks ${s.opts.length === 2 ? 'two' : s.opts.length === 4 ? 'four' : ''}">${this.order.map(k => s.opts[k]).map(o => `<button class="pick ${this.picked === o.id ? 'ok' : ''} ${this.wrongPick[o.id] && !s.compare ? 'no' : ''} ${this.solved && s.compare ? 'replay' : ''} ${this.replaying === o.id ? 'busy' : ''}" data-pick="${o.id}" ${this.solved && !s.compare ? 'disabled' : ''}><span class="tile">${icon(o.icon)}</span><span class="pick-l">${esc(tr(o.l))}</span></button>`).join('')}</div>${s.live ? `<div class="live cap mt2" data-live>${esc(s.live(this))}</div>` : ''}${this.solved && s.compare && s.cmp ? `<div class="cmp">${s.cmp(this).map(r => `<div class="cmp-r ${r[2] || ''}"><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join('')}</div><p class="cap mt2">${esc(t('compareHint'))}</p>` : ''}`;
+      body = `<div class="picks ${s.opts.length === 2 ? 'two' : s.opts.length === 4 ? 'four' : ''}">${this.order.map(k => s.opts[k]).map(o => `<button class="pick ${this.picked === o.id ? 'ok' : ''} ${this.wrongPick[o.id] && !s.compare ? 'no' : ''} ${s.compare && !this.solved && this.sel === o.id ? 'chosen' : ''} ${s.compare && (this.tried || {})[o.id] && !this.solved ? 'tried' : ''} ${this.solved && s.compare ? 'replay' : ''} ${this.replaying === o.id ? 'busy' : ''}" data-pick="${o.id}" ${this.solved && !s.compare ? 'disabled' : ''}><span class="tile">${icon(o.icon)}</span><span class="pick-l">${esc(tr(o.l))}</span></button>`).join('')}</div>${s.live ? `<div class="live cap mt2" data-live>${esc(s.live(this))}</div>` : ''}${s.compare && s.cmp && s.cmp(this).length ? `<div class="cmp">${s.cmp(this).map(r => `<div class="cmp-r ${this.solved ? r[2] || '' : ''}"><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join('')}</div>` : ''}${s.compare && this.solved ? `<p class="cap mt2">${esc(t('compareHint'))}</p>` : ''}${s.compare && !this.solved ? `<p class="cap mt2">${esc(t(this.sel ? 'compareCheck' : 'compareExplore'))}</p><button class="btn btn-primary btn-block mt2" data-pcheck ${this.sel && !this.lock ? '' : 'disabled'}>${icon('check')}${esc(this.sel ? t('checkChoice', { a: tr(s.opts.find(o => o.id === this.sel).l) }) : t('check'))}</button>` : ''}`;
     } else if (s.kind === 'sort') {
       const keys = Object.keys(s.slots), left = s.cards.filter(c => !this.placed[c.id]);
       body = `<div class="slots ${keys.length === 2 ? 'two' : ''}">${keys.map(k => `<button class="slot ${this.sel ? 'ready' : ''}" data-slot="${k}" aria-label="${esc(tr(s.slots[k]))}"><span class="sl-h"><b>${k}</b>${esc(tr(s.slots[k]))}</span><span class="fill">${s.cards.filter(c => this.placed[c.id] === k).map(c => `<span class="placed">${icon('check')}${esc(tr(c.l))}</span>`).join('')}</span></button>`).join('')}</div>
@@ -127,6 +127,20 @@ export class Mission {
         this.dv = n; const v = s.values[n]; s.onChange && s.onChange(this, v);
         if (s.ok(v)) { this.render(); setTimeout(() => this.stepDone(), 700); } else { this.mistakes += s.countMistakes ? 1 : 0; this.render(); }
       }));
+    } else if (s.kind === 'pick' && s.compare) {
+      // explore first: each tap only shows that algorithm's route; the answer is checked with a separate button
+      root.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', async () => {
+        if (this.lock) return; const o = s.opts.find(x => x.id === b.dataset.pick);
+        this.lock = true; this.replaying = o.id; this.sel = o.id; this.fb(''); this.render();
+        if (o.play) await o.play(this); if (this.app.mission !== this) return;
+        this.lock = false; this.replaying = null; this.tried = Object.assign({}, this.tried, { [o.id]: true }); this.render();
+      }));
+      const pc = root.querySelector('[data-pcheck]');
+      pc && pc.addEventListener('click', () => {
+        if (this.lock || !this.sel) return; const o = s.opts.find(x => x.id === this.sel);
+        if (!o.ok) { this.mistakes++; this.wrongPick[o.id] = true; this.render(); this.fb(tr(typeof o.why === 'function' ? o.why(this) : o.why)); return; }
+        this.picked = o.id; this.spec.onPick && this.spec.onPick(this, o); this.stepDone();
+      });
     } else if (s.kind === 'pick') {
       root.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', async () => {
         if (this.lock) return;

@@ -29,6 +29,7 @@ requestAnimationFrame(() => {
   const city = new City(engine);
   const qadam = new Qadam(engine, 1.8, 1.5);
   const snow = new Snow(engine);
+  if (!store.user() && Q.has('demo')) store.login('guest');
   if (Q.has('demo')) { const n = +Q.get('demo'); for (let i = 0; i < 10; i++) if (i < n) store.get().stars[i] = store.get().stars[i] || 3; else delete store.get().stars[i]; store.set({ onboarded: true }); }
   city.setBuilt(store.builtCount());
   city.libBake();
@@ -39,7 +40,7 @@ requestAnimationFrame(() => {
   rig.onFp = on => stage.labels(!on);
   app.setTheme(night, true);
   engine.resize();
-  if (!store.get().onboarded && !Q.has('view')) app.show('onboard', 0); else app.show(Q.get('view') || 'home', Q.has('arg') ? +Q.get('arg') : undefined);
+  if (!store.user()) app.show('login'); else if (!store.get().onboarded && !Q.has('view')) app.show('onboard', 0); else app.show(Q.get('view') || 'home', Q.has('arg') ? +Q.get('arg') : undefined);
   setTimeout(() => { loader.classList.add('out'); setTimeout(() => loader.remove(), 600); }, 300);
   if (location.hash.startsWith('#book')) app.book.fromHash();
   window.__ready = true;

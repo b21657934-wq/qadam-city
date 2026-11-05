@@ -64,7 +64,7 @@ export class App {
       <button class="icon-btn" data-act="theme" aria-label="${esc(t(night ? 'day' : 'night'))}">${icon(night ? 'sun' : 'moon')}</button>
       <button class="icon-btn" data-act="menu" aria-label="${esc(t('menu'))}">${icon('menu')}</button>`;
     this.hud.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => this.act(b.dataset.act, b.dataset)));
-    this.hud.classList.toggle('hide', this.view === 'onboard');
+    this.hud.classList.toggle('hide', this.view === 'onboard' || this.view === 'login');
   }
   rerender() { this.renderHud(); const v = this.view; if (v === 'mission' && this.mission) this.mission.render(); else this.show(v, this.viewArg, true); }
 
@@ -76,8 +76,32 @@ export class App {
     if (view === 'district') return this.vDistrict(arg, quiet);
     if (view === 'menu') return this.vMenu();
     if (view === 'onboard') return this.vOnboard(arg || 0);
+    if (view === 'login') return this.vLogin();
     if (view === 'library') return this.vLibrary();
     if (view === 'resetAsk') return this.vResetAsk();
+  }
+  vLogin() {
+    this.rig.autoOrbit = true; this.city.setBeacon(-1);
+    this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, az: -0.62, pol: 0.98 }, 1.6);
+    this.setSheet(`
+      <div class="login-head"><div class="login-logo">${logoSvg}</div><div><div class="h3">Qadam City</div><div class="cap">${esc(t('course'))}</div></div></div>
+      <form class="login-form mt4" data-lform autocomplete="on" novalidate>
+        <label class="field"><span>${esc(t('nick'))}</span><input data-nick name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next"></label>
+        <label class="field mt2"><span>${esc(t('pass'))}</span><input data-pass name="password" type="password" autocomplete="current-password" enterkeyhint="go"></label>
+        <div class="feedback" data-lerr aria-live="polite"></div>
+        <button class="btn btn-primary btn-block mt1" type="submit">${esc(t('login'))}${icon('arrow')}</button>
+      </form>
+      <div class="or mt3"><span>${esc(t('or'))}</span></div>
+      <button class="btn btn-secondary btn-block mt3" data-guest>${esc(t('guest'))}</button>
+      <p class="cap mt2 center">${esc(t('guestNote'))}</p>`, root => {
+        root.querySelector('[data-lform]').addEventListener('submit', e => {
+          e.preventDefault();
+          const u = store.check(root.querySelector('[data-nick]').value, root.querySelector('[data-pass]').value);
+          if (!u) { const f = root.querySelector('[data-lerr]'); f.textContent = t('loginErr'); root.querySelectorAll('.field input').forEach(x => { x.classList.remove('no'); void x.offsetWidth; x.classList.add('no'); }); return; }
+          store.login(u); location.reload();
+        });
+        root.querySelector('[data-guest]').addEventListener('click', () => { store.login('guest'); location.reload(); });
+      });
   }
   vOnboard(i) {
     const steps = [['ob1t', 'ob1', 'city'], ['ob2t', 'ob2', 'star'], ['ob3t', 'ob3', 'book']];
@@ -138,6 +162,7 @@ export class App {
       <div class="label mt4">${esc(t('timeOfDay'))}</div>
       <div class="seg mt2" role="group"><button data-act="setDay" class="${night ? '' : 'on'}" aria-pressed="${!night}">${icon('sun')}${esc(t('day'))}</button><button data-act="setNight" class="${night ? 'on' : ''}" aria-pressed="${!!night}">${icon('moon')}${esc(t('night'))}</button></div>
       <button class="list-btn mt4" data-act="library"><div class="tile">${icon('book')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('library'))}</div><div class="cap mt1">${esc(t('librarySub'))}</div></div>${icon('arrow')}</button>
+      <div class="acct mt4"><div class="tile">${icon('key')}</div><div class="grow"><div class="cap">${esc(t('account'))}</div><div style="font-weight:600;font-size:16px;line-height:20px">${esc(store.user() === 'guest' ? t('guestName') : store.user())} · ${esc(t('keyCount', { n: store.get().keys ?? 5 }))}</div></div><button class="btn btn-secondary" data-act="logout" style="height:40px">${esc(t('logout'))}</button></div>
       <button class="btn btn-ghost mt3 danger" data-act="resetAsk" style="padding:0 4px">${icon('reset')}<span>${esc(t('restartTitle'))}</span></button>
       <div class="cap mt3">${esc(t('team'))}<br>${esc(t('course'))}</div>`);
   }
@@ -171,6 +196,7 @@ export class App {
     if (a === 'mission') return this.startMission(+ds.i);
     if (a === 'tour') return this.tour();
     if (a === 'storm') return this.storm();
+    if (a === 'logout') { store.logout(); location.hash = ''; return location.reload(); }
     if (a === 'resetAsk') { if (this.mission) { this.mission.close(); } return this.show('resetAsk'); }
     if (a === 'reset') {
       store.reset(); store.set({ onboarded: false, coach: {} }); this.book.quiz = {};

@@ -133,7 +133,7 @@ async function runSearch(m, mode) {
     rows.push(mode === 'astar' ? [`${nm(a)} → ${nm(b)}`, `g ${g} + h ${G2.h[b]} = f ${g + G2.h[b]}`] : [`${nm(a)} → ${nm(b)}`, `+${c} = ${g} ${tr(L('min', 'мин', 'мин'))}`]);
     app.calc(title, rows.slice(-6)); await s.move(car, [G2.pos[a], G2.pos[b]], c * 0.42);
   }
-  rows.push([tr(L('Total', 'Итого', 'Барлығы')), `${g} ${tr(L('min', 'мин', 'мин'))}`, g === 9 ? 'ok' : 'no']); app.calc(title, rows.slice(-6));
+  rows.push([tr(L('Total', 'Итого', 'Барлығы')), `${g} ${tr(L('min', 'мин', 'мин'))}`, m.solved ? (g === 9 ? 'ok' : 'no') : 'new']); app.calc(title, rows.slice(-6));
   await app.rig.fpEnd();
   m.last = r; m.live(); return r;
 }

@@ -9,7 +9,8 @@ window.__solve = async function (upto) {
     const m = app.mission;
     for (let st = 0; st < m.spec.steps.length; st++) {
       const s = m.S;
-      if (s.kind === 'pick') { click(Q(`[data-pick="${s.opts.find(o => o.ok).id}"]`)); for (let k = 0; k < 60 && !Q('[data-next]'); k++) await sleep(200); }
+      if (s.kind === 'pick' && s.compare) { click(Q(`[data-pick="${s.opts.find(o => o.ok).id}"]`)); for (let k = 0; k < 80 && m.lock; k++) await sleep(200); await sleep(100); click(Q('[data-pcheck]')); for (let k = 0; k < 30 && !Q('[data-next]'); k++) await sleep(200); }
+      else if (s.kind === 'pick') { click(Q(`[data-pick="${s.opts.find(o => o.ok).id}"]`)); for (let k = 0; k < 60 && !Q('[data-next]'); k++) await sleep(200); }
       else if (s.kind === 'run') { click(Q('[data-run]')); for (let k = 0; k < 80 && !Q('[data-next]'); k++) await sleep(200); }
       else if (s.kind === 'dial') { while (!Q('[data-next]') && m.dv !== s.values.indexOf(0.7)) { click(Q('[data-dv="1"]')); await sleep(200); } for (let k = 0; k < 20 && !Q('[data-next]'); k++) await sleep(200); }
       else if (s.kind === 'sort') { for (const c of s.cards) { m.sel = c.id; m.drop(c.slot); await sleep(30); } await sleep(900); }
