@@ -36,7 +36,7 @@ requestAnimationFrame(() => {
   city.setBuilt(store.builtCount());
   city.libBake();
   const stage = new Stage(engine);
-  const blizzard = new Storm(engine, rig);
+  const blizzard = new Storm(engine, rig); blizzard.city = city;
   const app = window.__app = new App({ engine, rig, city, qadam, snow });
   app.stage = stage; app.blizzard = blizzard; window.__engine = engine; window.__sc = i => app.sceneTest(i);
   rig.onFp = on => stage.labels(!on);

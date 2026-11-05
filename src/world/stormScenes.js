@@ -28,7 +28,8 @@ export const SCENES = [
     st.label(tr(L('Storm warning: stay indoors', 'Штормовое предупреждение: оставайтесь дома', 'Дауыл ескертуі: үйде қалыңыз')), -5.6, 2.3, -3.4, { size: 0.3, bg: 'rgba(232,103,74,0.95)', fg: '#fff' });
     S.glow(-5.6, -3.4, 1.6, 0xFF5A40, 1.2, 4.6, 1.2); sfx.play('alarm');
     const go = [[[-6.2, -1.5], [-7.32, -1.5], [-7.32, -1.47]], [[-6.7, -2.7], [-7.44, -3.37]], [[-5.0, -1.5], [-3.84, -1.52], [-3.84, -2.22]], [[-6.0, -1.5], [-7.1, -1.5], [-7.2, -1.48]]];
-    await Promise.all(go.map(async (p, i) => { const r = S.add(robot(coat(i)), p[0][0], p[0][1]); S.bob(r); await S.wait(i * 0.35); await S.path(r, p, 0.55); await S.vanish(r); }));
+    const used = [], homes = go.map(p => { const e = p[p.length - 1], h = S.house(S.city, e[0], e[1], { not: used }); used.push(h.userData.e); return h; });
+    await Promise.all(go.map(async (p, i) => { const r = S.add(robot(coat(i)), p[0][0], p[0][1]); S.bob(r); await S.wait(i * 0.35); if (p.length > 2) await S.path(r, p.slice(0, -1), 0.55); await S.enter(r, homes[i]); }));
     await S.wait(0.4);
   },
   // 1 · roads: ambulance takes the cheapest route to the hospital
@@ -51,15 +52,18 @@ export const SCENES = [
     st.label(tr(L('Line 2', 'Линия 2', '2-желі')), 4.8, 1.3, -3.6, { size: 0.26, bg: 'rgba(79,152,163,0.95)', fg: '#fff' });
     S.path(b2, [[4.8, -7.0], [4.8, -1.9]], 0.9, { lane: 0.14 });
     const e1 = sfx.engine(); await S.path(b1, [[-7.0, -4.9], [-3.6, -4.9]], 1.0, { lane: 0.14 }); sfx.play('door');
-    await Promise.all(wait.map(async (r, i) => { await S.wait(i * 0.2); await S.path(r, [[r.position.x / K, r.position.z / K], [-3.55, -4.66]], 0.6); await S.vanish(r, 0.2); }));
+    await Promise.all(wait.map(async (r, i) => { await S.wait(i * 0.2); await S.board(r, b1); }));
     sfx.play('door'); await S.path(b1, [[-3.6, -4.9], [1.2, -4.9]], 1.1, { lane: 0.14 }); e1.stop();
   },
   // 3 · culture palace fills up and stays warm
   async (S, st, tr) => {
     st.label(tr(L('Inside: +24 °C, tea and toguz kumalak', 'Внутри +24 °C, чай и тоғыз құмалақ', 'Ішінде +24 °C, шай және тоғыз құмалақ')), -5.8, 3.3, 5.2, { size: 0.3 });
     S.glow(-5.8, 5.2, 0.9, 0xFFB566, 3.2, 5.2, 0.4);
-    await Promise.all([0, 1, 2, 3, 4, 5].map(async i => { const a = i / 6 * Math.PI * 2 + 0.3, r = S.add(robot(coat(i)), -5.8 + Math.cos(a) * 2.9, 5.2 + Math.sin(a) * 2.5); S.bob(r); await S.wait(i * 0.25); await S.path(r, [[-5.8 + Math.cos(a) * 2.9, 5.2 + Math.sin(a) * 2.5], [-5.8 + Math.cos(a) * 1.05, 5.2 + Math.sin(a) * 0.9]], 0.65); await S.vanish(r); }));
-    await S.wait(0.6);
+    const cx = -5.8, cz = 5.2, a0 = S.facing(cx, cz);
+    const rim = a => { const wx = Math.sin(a), wz = Math.cos(a), lx = wx * Math.cos(0.5) - wz * Math.sin(0.5), lz = wx * Math.sin(0.5) + wz * Math.cos(0.5); return 1 / Math.hypot(lx / 1.15, lz / 0.92) / K; };
+    const doors = [-0.56, 0.56].map(da => { const a = a0 + da, r = rim(a) + 0.02; return S.door(cx + Math.sin(a) * r, cz + Math.cos(a) * r, a, { y: 0.1, wall: 0xF3EEE4, w: 0.46, h: 0.78, depth: 0.7 }); });
+    await Promise.all([0, 1, 2, 3, 4, 5].map(async i => { const a = a0 - 1.0 + i * 0.4, r = S.add(robot(coat(i)), cx + Math.sin(a) * 2.3, cz + Math.cos(a) * 2.3); S.bob(r); await S.wait(i * 0.3); await S.enter(r, doors[i < 3 ? 0 : 1], 0.6); }));
+    await S.wait(0.8);
   },
   // 4 · traffic lights: a green wave clears the crossroad
   async (S, st, tr) => {
@@ -75,10 +79,13 @@ export const SCENES = [
   async (S, st, tr) => {
     st.label(tr(L('School closed · lessons online', 'Школа закрыта · уроки онлайн', 'Мектеп жабық · сабақ онлайн')), 6.4, 3.5, -2.8, { size: 0.32, bg: 'rgba(242,181,68,0.96)' });
     S.glow(6.2, 0.4, 1.72, 0xFF5A40, 0.9, 4.8, 1.4); sfx.play('alarm');
+    const school = S.door(6.6, -2.05, 0, { s: 0.75, wall: 0xF2E3C6 }); school.userData.to = 1;
+    const h0 = S.house(S.city, 5.2, -1.6, { not: [] }), homes = [h0, S.house(S.city, 8.0, -1.7, { not: [h0.userData.e] })];
     await Promise.all([0, 1, 2, 3, 4].map(async i => {
-      await S.wait(i * 0.35); const k = S.add(robot(coat(i + 3), 0.72, 0xF4F1EA), 6.6, -2.15); S.bob(k); await S.appear(k, 0.2);
-      const left = i % 2 === 0; await S.path(k, [[6.6, -2.15], [6.6, -1.64], [left ? 5.2 : 8.0, left ? -1.6 : -1.7]], 0.6); await S.vanish(k);
+      await S.wait(i * 0.35); const k = S.add(robot(coat(i + 3), 0.72, 0xF4F1EA), 6.6, -2.15); S.bob(k);
+      const left = i % 2 === 0; await S.path(k, [[6.6, -2.15], [6.6, -1.64]], 0.6); await S.enter(k, homes[left ? 0 : 1], 0.6);
     }));
+    school.userData.to = 0;
   },
   // 6 · the GPS knows where the bus is
   async (S, st, tr) => {
@@ -90,7 +97,7 @@ export const SCENES = [
     await S.wait(1.3);
     await Promise.all(ppl.map(async (r, i) => { await S.wait(i * 0.3); r.visible = true; await S.appear(r, 0.2); await S.path(r, [[-3.42, 7.73], [-2.0, 7.55], [-0.98, 7.5]], 0.6); }));
     await bus; void lab; sfx.play('door');
-    for (const r of ppl) await S.vanish(r, 0.18);
+    for (const r of ppl) await S.board(r, b);
     await S.path(b, [[-0.8, 7.25], [2.2, 8.1]], 1.1, { lane: 0.14 });
   },
   // 7 · the snowplough goes where the expected damage is highest

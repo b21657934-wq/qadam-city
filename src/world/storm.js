@@ -117,6 +117,49 @@ export class Storm {
       if (d >= tot) { if (ud.legs) { ud.legs.forEach(l => l.rotation.x = 0); ud.arms.forEach(l => l.rotation.x = 0); ud.body.rotation.x = 0; } return true; }
     });
   }
+  // An entrance: a small porch with a hinged door and warm light inside. Residents walk in instead of fading out.
+  door(x, z, ry, opt = {}) {
+    const w = opt.w || 0.42, h = opt.h || 0.74, dp = opt.depth || 0.5, wall = opt.wall ?? 0xEDE6D8, s = opt.s || 1;
+    const g = new THREE.Group(); g.rotation.y = ry; g.scale.setScalar(s);
+    const wm = new THREE.MeshStandardMaterial({ color: wall, roughness: 0.6 });
+    const porch = new THREE.Mesh(new THREE.BoxGeometry(w + 0.16, h + 0.1, dp), wm); porch.position.set(0, (h + 0.1) / 2, -dp / 2); porch.castShadow = true; g.add(porch);
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.26, 0.04, dp + 0.12), new THREE.MeshStandardMaterial({ color: 0x5A6378, roughness: 0.5 })); roof.position.set(0, h + 0.12, -dp / 2 + 0.06); g.add(roof);
+    const light = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xFFC46E, toneMapped: false })); light.position.set(0, h / 2, 0.003); g.add(light);
+    const fm = new THREE.MeshStandardMaterial({ color: 0x3A3F55, roughness: 0.5 });
+    [[-w / 2 - 0.02, h / 2, 0.04, h + 0.02], [w / 2 + 0.02, h / 2, 0.04, h + 0.02], [0, h + 0.01, w + 0.08, 0.04]].forEach(([fx, fy, fw, fh]) => { const f = new THREE.Mesh(new THREE.BoxGeometry(fw, fh, 0.05), fm); f.position.set(fx, fy, 0.012); g.add(f); });
+    const hinge = new THREE.Group(); hinge.position.set(-w / 2, 0, 0.02); g.add(hinge);
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.03), new THREE.MeshStandardMaterial({ color: 0x7A4E2D, roughness: 0.55 })); panel.position.set(w / 2, h / 2, 0); hinge.add(panel);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), mat(0xF2B544, { roughness: 0.3 })); knob.position.set(w - 0.06, h * 0.48, 0.025); hinge.add(knob);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), glowBasic(0xFFE3A8)); lamp.position.set(0, h + 0.2, 0.04); g.add(lamp);
+    const spill = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.6, 0.6), new THREE.MeshBasicMaterial({ color: 0xFFB55A, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); spill.rotation.x = -Math.PI / 2; spill.position.set(0, 0.012, 0.3); g.add(spill);
+    g.userData = { hinge, spill, users: 0, open: 0, to: 0, s };
+    this.add(g, x, z, opt.y || 0);
+    this.run(dt => { const u = g.userData; u.open += (u.to - u.open) * Math.min(1, dt * 7); hinge.rotation.y = -1.85 * u.open; spill.material.opacity = 0.55 * u.open; return !g.parent; });
+    return g;
+  }
+  // the real front door of the house nearest to (x, z), covered by an animated one
+  house(city, x, z, opt = {}) {
+    let best = null, bd = 1e9; for (const e of city.entrances || []) { const dd = (e.x - x) ** 2 + (e.z - z) ** 2; if (dd < bd && !(opt.not || []).includes(e)) { bd = dd; best = e; } }
+    if (!best) return this.door(x, z, 0, { s: 0.6 });
+    const g = this.door(best.x, best.z, best.ry, { s: 0.6, wall: 0x3A4258, depth: 0.3 }); g.userData.e = best; return g;
+  }
+  // step in through the bus door on the side facing the rider
+  async board(o, bus, speed = 0.6) {
+    const ry = bus.rotation.y, rx = Math.cos(ry), rz = -Math.sin(ry), fx = Math.sin(ry), fz = Math.cos(ry), bp = bus.position;
+    const sg = Math.sign((o.position.x - bp.x) * rx + (o.position.z - bp.z) * rz) || 1, sx = bp.x + rx * sg * 0.2 + fx * 0.25, sz = bp.z + rz * sg * 0.2 + fz * 0.25;
+    await this.path(o, [[o.position.x / K, o.position.z / K], [(sx + rx * sg * 0.12) / K, (sz + rz * sg * 0.12) / K], [sx / K, sz / K]], speed);
+    this.glow(sx / K, sz / K, 0.3, 0xFFC46E, 0.5, 0.5, 1); o.visible = false;
+  }
+  // front of a building, on the side facing the camera; a = extra angle around the centre
+  facing(cx, cz, a = 0) { const c = this.e.camera.position; return Math.atan2(c.x - cx * K, c.z - cz * K) + a; }
+  async enter(o, d, speed = 0.55) {
+    const u = d.userData, ry = d.rotation.y, nx = Math.sin(ry), nz = Math.cos(ry), px = d.position.x / K, pz = d.position.z / K, f = 0.38 * u.s / K, b = 0.3 * u.s / K;
+    await this.path(o, [[o.position.x / K, o.position.z / K], [px + nx * f, pz + nz * f]], speed);
+    u.users++; if (u.to < 1) { u.to = 1; sfx.play('door', 0.7); await this.wait(0.3); }
+    await this.path(o, [[px + nx * f, pz + nz * f], [px - nx * b, pz - nz * b]], speed * 0.7);
+    o.visible = false; u.users--;
+    await this.wait(0.7); if (!u.users && u.to > 0) { u.to = 0; sfx.play('door', 0.5); }
+  }
   vanish(o, dur = 0.35) { const s0 = o.scale.x; let x = 0; return this.run(dt => { x += dt / dur; o.scale.setScalar(s0 * Math.max(0.001, 1 - x)); if (x >= 1) { o.visible = false; return true; } }); }
   appear(o, dur = 0.35) { const s0 = o.scale.x; o.scale.setScalar(0.001); let x = 0; return this.run(dt => { x += dt / dur; o.scale.setScalar(s0 * Math.min(1, x)); return x >= 1; }); }
   blink(meshes, period = 0.22, until = () => false) { return this.run((dt, t) => { meshes.forEach((m, k) => { m.visible = Math.floor(t / period + k) % 2 === 0; }); return until(); }); }

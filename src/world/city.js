@@ -163,7 +163,9 @@ export class City {
     // windows
     const floors = Math.max(1, Math.floor((h - 0.3) / 0.38)), cols = Math.max(1, Math.floor(w / 0.3)), colsD = Math.max(1, Math.floor(dd / 0.3));
     const born = this.cur.items.length * 0.18 + 0.9;
-    const cos = Math.cos(o.ry || 0), sin = Math.sin(o.ry || 0), wp = (lx, y, lz, sx, sz) => this.wins.push({ d: d.i, x: x + lx * cos + lz * sin, y, z: z - lx * sin + lz * cos, sx, sz, ry: o.ry || 0, born: born + rnd() * 0.5 });
+    const cos = Math.cos(o.ry || 0), sin = Math.sin(o.ry || 0);
+    (this.entrances || (this.entrances = [])).push({ d: d.i, x: (x + w * 0.18 * cos + (dd / 2) * sin) / K, z: (z - w * 0.18 * sin + (dd / 2) * cos) / K, ry: o.ry || 0 });
+    const wp = (lx, y, lz, sx, sz) => this.wins.push({ d: d.i, x: x + lx * cos + lz * sin, y, z: z - lx * sin + lz * cos, sx, sz, ry: o.ry || 0, born: born + rnd() * 0.5 });
     for (let f = 0; f < floors; f++) {
       const y = 0.46 + f * 0.38; if (y > h - 0.2) break;
       for (let c = 0; c < cols; c++) { const lx = -w / 2 + (c + 0.5) * w / cols; if (f === 0 && Math.abs(lx - w * 0.18) < 0.2) continue; wp(lx, y, dd / 2 + 0.006, 0.13, 0.02); wp(lx, y, -dd / 2 - 0.006, 0.13, 0.02); }

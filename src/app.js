@@ -290,7 +290,7 @@ export class App {
     c.querySelector('[data-c-t]').textContent = title; c.querySelector('[data-c-x]').textContent = text;
     const cap = c.querySelector('.cine-cap'); cap.classList.remove('in'); void cap.offsetWidth; cap.classList.add('in');
   }
-  sceneTest(i) { const v = VIEWS[i]; this.stage.clear(); this.blizzard.clear(); this.blizzard.live = true; this.rig.flyTo({ target: [v.x * K, 0.45, v.z * K], zoom: v.zoom * 1.05, az: v.az, pol: v.pol }, 0.01); return SCENES[i](this.blizzard, this.stage, tr); }
+  async sceneTest(i) { const v = VIEWS[i]; this.stage.clear(); this.blizzard.clear(); this.blizzard.live = true; this.rig.autoOrbit = false; await this.rig.flyTo({ target: [v.x * K, 0.45, v.z * K], zoom: v.zoom * 1.05, az: v.az, pol: v.pol }, 0.05, true); return SCENES[i](this.blizzard, this.stage, tr); }
   cineClose() { if (this.cineEl) { this.cineEl.remove(); this.cineEl = null; } }
   async storm() {
     const S = this.blizzard, st = this.stage, wait = ms => new Promise(r => setTimeout(r, ms));
