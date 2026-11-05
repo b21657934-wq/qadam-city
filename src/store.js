@@ -1,6 +1,7 @@
 // One save per account. The guest keeps the old key so earlier progress stays.
 const UKEY = 'qadam-city-user', ACCOUNTS = { qwerty: { pass: '000', keys: 1000 } };
 let user = null; try { user = localStorage.getItem(UKEY); } catch (e) { /* storage unavailable */ }
+const PKEY = 'qai-qala-profiles';
 const keyFor = u => u && u !== 'guest' ? 'qadam-city-v2:' + u : 'qadam-city-v2';
 const def = () => ({ stars: {}, onboarded: false, lang: null, night: null, keys: user && ACCOUNTS[user] ? ACCOUNTS[user].keys : 5, earnN: {} });
 let KEY = keyFor(user), st = def();
@@ -14,7 +15,16 @@ export const store = {
   totalStars() { return Object.values(st.stars).reduce((a, b) => a + b, 0); },
   user: () => user,
   check(nick, pass) { const n = String(nick || '').trim().toLowerCase(), a = ACCOUNTS[n]; return a && a.pass === String(pass || '') ? n : null; },
-  login(u) { try { localStorage.setItem(UKEY, u); } catch (e) { /* ignore */ } user = u; KEY = keyFor(u); st = def(); try { const raw = localStorage.getItem(KEY); if (raw) st = Object.assign(def(), JSON.parse(raw)); } catch (e) { /* ignore */ } this.save(); },
+  login(u) { try { localStorage.setItem(UKEY, u); } catch (e) { /* ignore */ } user = u; KEY = keyFor(u); st = def(); try { const raw = localStorage.getItem(KEY); if (raw) st = Object.assign(def(), JSON.parse(raw)); } catch (e) { /* ignore */ } st.seen = Date.now(); this.remember(u); this.save(); },
+  // guests pick a name; each name keeps its own save on this device
+  name(u = user) { return !u ? '' : u === 'guest' ? null : u.startsWith('g:') ? u.slice(2) : u; },
+  guestId(name) { const n = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 24); return n ? 'g:' + n : 'guest'; },
+  profiles() {
+    let list = []; try { list = JSON.parse(localStorage.getItem(PKEY) || '[]'); } catch (e) { /* ignore */ }
+    try { if (!list.includes('guest') && localStorage.getItem(keyFor('guest'))) list.push('guest'); } catch (e) { /* ignore */ }
+    return list.map(u => { let d = {}; try { d = JSON.parse(localStorage.getItem(keyFor(u)) || '{}'); } catch (e) { /* ignore */ } const stars = Object.values(d.stars || {}).reduce((a, b) => a + b, 0); return { u, stars, t: d.seen || 0 }; }).filter(p => p.u !== 'guest' || p.stars > 0).sort((a, b) => b.t - a.t);
+  },
+  remember(u) { if (!u || ACCOUNTS[u]) return; let list = []; try { list = JSON.parse(localStorage.getItem(PKEY) || '[]'); } catch (e) { /* ignore */ } list = [u, ...list.filter(x => x !== u)].slice(0, 30); try { localStorage.setItem(PKEY, JSON.stringify(list)); } catch (e) { /* ignore */ } },
   logout() { try { localStorage.removeItem(UKEY); } catch (e) { /* ignore */ } user = null; },
   reset() { const keep = { lang: st.lang, night: st.night }; st = Object.assign(def(), keep, { onboarded: true }); this.save(); },
 };

@@ -91,6 +91,7 @@ export class App {
     this.rig.flyTo({ target: [0, 0.6, 0], zoom: 1, az: -0.62, pol: 0.98 }, 1.6);
     this.setSheet(`
       <div class="login-head"><div class="login-logo">${logoSvg}</div><div><div class="h3">QAI-QALA</div><div class="cap">${esc(t('course'))}</div></div></div>
+      ${(() => { const ps = store.profiles().slice(0, 5); return ps.length ? `<div class="label mt3">${esc(t('continueAs'))}</div>${ps.map(p => `<button class="list-btn mt2" data-prof="${esc(p.u)}" style="min-height:52px"><div class="tile">${icon('star')}</div><div class="grow" style="font-weight:600">${esc(store.name(p.u) ?? t('guestName'))}</div><span class="cap">★ ${p.stars}/30</span>${icon('arrow')}</button>`).join('')}<div class="or mt3"><span>${esc(t('or'))}</span></div>` : ''; })()}
       <form class="login-form mt4" data-lform autocomplete="on" novalidate>
         <label class="field"><span>${esc(t('nick'))}</span><input data-nick name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next"></label>
         <label class="field mt2"><span>${esc(t('pass'))}</span><input data-pass name="password" type="password" autocomplete="current-password" enterkeyhint="go"></label>
@@ -98,7 +99,10 @@ export class App {
         <button class="btn btn-primary btn-block mt1" type="submit">${esc(t('login'))}${icon('arrow')}</button>
       </form>
       <div class="or mt3"><span>${esc(t('or'))}</span></div>
-      <button class="btn btn-secondary btn-block mt3" data-guest>${esc(t('guest'))}</button>
+      <form class="mt3" data-gform novalidate>
+        <label class="field"><span>${esc(t('guestNameLabel'))}</span><input data-gname name="nickname" maxlength="24" autocomplete="nickname" autocorrect="off" spellcheck="false" enterkeyhint="go" placeholder="${esc(t('guestNamePh'))}"></label>
+        <button class="btn btn-secondary btn-block mt2" type="submit" data-guest>${esc(t('guest'))}</button>
+      </form>
       <p class="cap mt2 center">${esc(t('guestNote'))}</p>
       <div class="row mt3" style="gap:8px"><a class="btn btn-secondary grow" href="comic.html" style="text-decoration:none">${icon('star')}${esc(t('comicShort'))}</a><a class="btn btn-secondary grow" href="poster.html" style="text-decoration:none">${icon('city')}${esc(t('posterShort'))}</a></div>`, root => {
         root.querySelector('[data-lform]').addEventListener('submit', e => {
@@ -107,7 +111,8 @@ export class App {
           if (!u) { const f = root.querySelector('[data-lerr]'); f.textContent = t('loginErr'); root.querySelectorAll('.field input').forEach(x => { x.classList.remove('no'); void x.offsetWidth; x.classList.add('no'); }); return; }
           store.login(u); location.reload();
         });
-        root.querySelector('[data-guest]').addEventListener('click', () => { store.login('guest'); location.reload(); });
+        root.querySelector('[data-gform]').addEventListener('submit', e => { e.preventDefault(); store.login(store.guestId(root.querySelector('[data-gname]').value)); location.reload(); });
+        root.querySelectorAll('[data-prof]').forEach(b => b.addEventListener('click', () => { store.login(b.dataset.prof); location.reload(); }));
       });
   }
   vOnboard(i) {
@@ -174,7 +179,7 @@ export class App {
       <a class="list-btn mt2" href="comic.html" style="text-decoration:none;color:inherit"><div class="tile">${icon('star')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('comic'))}</div><div class="cap mt1">${esc(t('comicSub'))}</div></div>${icon('arrow')}</a>
       <a class="list-btn mt2" href="poster.html" style="text-decoration:none;color:inherit"><div class="tile">${icon('city')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('poster'))}</div><div class="cap mt1">${esc(t('posterSub'))}</div></div>${icon('arrow')}</a>
       ${store.user() === 'qwerty' ? `<button class="list-btn mt2" data-act="skipStorm"><div class="tile" style="background:var(--accent-soft,#fff3d6)">${icon('snow')}</div><div class="grow"><div style="font-weight:600;font-size:16px;line-height:20px">${esc(t('skipStorm'))}</div><div class="cap mt1">${esc(t('skipStormSub'))}</div></div>${icon('arrow')}</button>` : ''}
-      <div class="acct mt4"><div class="tile">${icon('key')}</div><div class="grow"><div class="cap">${esc(t('account'))}</div><div style="font-weight:600;font-size:16px;line-height:20px">${esc(store.user() === 'guest' ? t('guestName') : store.user())} · ${esc(t('keyCount', { n: store.get().keys ?? 5 }))}</div></div><button class="btn btn-secondary" data-act="logout" style="height:40px">${esc(t('logout'))}</button></div>
+      <div class="acct mt4"><div class="tile">${icon('key')}</div><div class="grow"><div class="cap">${esc(t('account'))}</div><div style="font-weight:600;font-size:16px;line-height:20px">${esc(store.name() ?? t('guestName'))} · ${esc(t('keyCount', { n: store.get().keys ?? 5 }))}</div></div><button class="btn btn-secondary" data-act="logout" style="height:40px">${esc(t('logout'))}</button></div>
       <button class="btn btn-ghost mt3 danger" data-act="resetAsk" style="padding:0 4px">${icon('reset')}<span>${esc(t('restartTitle'))}</span></button>
       <div class="cap mt3">${esc(t('team'))}<br>${esc(t('course'))}</div>`);
   }
