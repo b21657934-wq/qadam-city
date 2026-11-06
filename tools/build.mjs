@@ -25,6 +25,7 @@ const faces = [
 const logo = fs.readFileSync(path.join(root, 'src/ui/logo.svg'), 'utf8');
 const favicon = 'data:image/svg+xml,' + encodeURIComponent(logo);
 
+const intro = fs.readFileSync(new URL('../src/intro/intro.html', import.meta.url), 'utf8');
 const html = `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
@@ -36,6 +37,7 @@ const html = `<!DOCTYPE html>
 <link rel="icon" href="${favicon}">
 <style>${faces}</style>
 </head><body>
+${intro}
 <div id="app"></div>
 <script>${js.replace(/<\/script/g, '<\\/script')}</script>
 </body></html>`;

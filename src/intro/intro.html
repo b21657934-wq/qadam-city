@@ -1,0 +1,49 @@
+<div id="intro" aria-label="QAI-QALA · Astana" role="img">
+<style>
+#intro{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(120% 90% at 50% 40%,#1D2A5C 0%,#0E1430 62%,#090D22 100%);color:#fff;font-family:Inter,system-ui,sans-serif;overflow:hidden;cursor:pointer;transition:opacity .7s ease,visibility .7s;-webkit-tap-highlight-color:transparent}
+#intro.out{opacity:0;visibility:hidden}
+#intro .iw{display:flex;align-items:baseline;font-weight:700;font-size:clamp(40px,12.5vw,148px);letter-spacing:.02em;line-height:1;white-space:nowrap}
+#intro .l{display:inline-block;opacity:0;transform:translateY(.45em);transition:opacity .45s ease,transform .6s cubic-bezier(.2,.9,.25,1.2),color .5s ease}
+#intro .l.on{opacity:1;transform:none}
+#intro .w2 .l{transform:translateY(-.6em)}
+#intro .w2 .l.on{transform:none}
+#intro .w1 .q{transition-delay:0s}
+#intro.gold .w1 .k{color:#F2B544;text-shadow:0 0 .35em rgba(242,181,68,.45)}
+#intro .ru{display:inline-flex;overflow:hidden;transition:max-width .55s cubic-bezier(.6,0,.3,1) .15s}
+#intro .ru .l.gone{opacity:0;transform:translateY(-.7em) rotate(-8deg) scale(.7);color:#F2B544;transition:opacity .35s ease,transform .45s ease,color .2s}
+#intro .dash{display:inline-block;width:.42em;height:.11em;margin:0 .06em;align-self:center;background:#F2B544;border-radius:.06em;transform:scaleX(0);transform-origin:left;transition:transform .35s ease}
+#intro .dash.on{transform:scaleX(1)}
+#intro .city{margin-top:.9em;font-size:clamp(15px,3.4vw,30px);font-weight:600;letter-spacing:.9em;padding-left:.9em;opacity:0;transform:translateY(10px);transition:opacity .8s ease,transform .8s ease,letter-spacing 1.4s cubic-bezier(.2,.8,.2,1);color:#C9D3F2}
+#intro .city.on{opacity:1;transform:none;letter-spacing:.42em;padding-left:.42em}
+#intro .rule{width:0;height:2px;margin-top:.9em;background:linear-gradient(90deg,transparent,#F2B544,transparent);transition:width 1.1s ease}
+#intro .rule.on{width:min(260px,50vw)}
+#intro .tap{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom));font-size:12px;letter-spacing:.12em;color:rgba(255,255,255,.35);text-transform:uppercase}
+#intro .sn{position:absolute;top:-10px;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.75);animation:introSnow linear infinite}
+@keyframes introSnow{to{transform:translate3d(-40px,110vh,0)}}
+</style>
+<div class="iw"><span class="w1"><span class="l k">Q</span><span class="l k">A</span><span class="l k">I</span><span class="ru"><span class="l">R</span><span class="l">U</span></span></span><span class="dash"></span><span class="w2"><span class="l">Q</span><span class="l">A</span><span class="l">L</span><span class="l">A</span></span></div>
+<div class="rule"></div>
+<div class="city" data-city>ASTANA</div>
+<div class="tap" data-tap></div>
+</div>
+<script>(function(){
+var I=document.getElementById('intro'),Q=location.search,force=/[?&]intro/.test(Q);
+if(!force&&(navigator.webdriver||/[?&](demo|shot|nointro)/.test(Q)||location.hash.indexOf('#book')===0)){I.remove();return;}
+var lang='en';try{var u=localStorage.getItem('qadam-city-user'),raw=localStorage.getItem(u?'qadam-city-v2:'+u:'qadam-city-v2'),s=raw&&JSON.parse(raw);lang=(s&&s.lang)||((navigator.language||'').slice(0,2));}catch(e){}
+var ru=lang==='ru',kk=lang==='kk';
+I.querySelector('[data-city]').textContent=ru||kk?'АСТАНА':'ASTANA';
+I.querySelector('[data-tap]').textContent=ru?'нажмите, чтобы пропустить':kk?'өткізу үшін басыңыз':'tap to skip';
+for(var k=0;k<26;k++){var f=document.createElement('i');f.className='sn';var z=Math.random();f.style.left=(Math.random()*110)+'%';f.style.opacity=(.25+z*.6).toFixed(2);f.style.width=f.style.height=(2+z*3).toFixed(1)+'px';f.style.animationDuration=(5+Math.random()*6).toFixed(1)+'s';f.style.animationDelay=(-Math.random()*8).toFixed(1)+'s';I.appendChild(f);}
+var L=I.querySelectorAll('.w1 .l'),R=I.querySelector('.ru'),RL=R.querySelectorAll('.l'),W2=I.querySelectorAll('.w2 .l'),D=I.querySelector('.dash'),C=I.querySelector('.city'),RU=I.querySelector('.rule'),T=[],done=false;
+var red=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function at(ms,f){T.push(setTimeout(f,red?Math.min(ms,300):ms));}
+function end(){if(done)return;done=true;T.forEach(clearTimeout);I.classList.add('out');setTimeout(function(){I.remove();},800);}
+I.addEventListener('click',end);
+at(250,function(){L.forEach(function(e,i){setTimeout(function(){e.classList.add('on');},i*80);});});
+at(1000,function(){D.classList.add('on');});
+at(1250,function(){W2.forEach(function(e,i){setTimeout(function(){e.classList.add('on');},i*90);});});
+at(2350,function(){R.style.maxWidth=R.scrollWidth+'px';void R.offsetWidth;RL.forEach(function(e,i){setTimeout(function(){e.classList.add('gone');},i*90);});R.style.maxWidth='0px';});
+at(2900,function(){I.classList.add('gold');});
+at(3300,function(){RU.classList.add('on');C.classList.add('on');});
+at(5400,end);
+})();</script>
