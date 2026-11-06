@@ -137,16 +137,17 @@ export const SCENES = [
   // 8 · the grid holds: power runs along the lines, every home with people lights up
   async (S, st, tr) => {
     const f0 = U.uForce.value;
-    st.label(tr(L('Grid load 92% — holding', 'Нагрузка сети 92 % — держим', 'Желі жүктемесі 92 % — шыдап тұр')), 2.2, 2.9, 5.9, { size: 0.3 });
+    const g1 = st.label(tr(L('Grid load 92% — holding', 'Нагрузка сети 92 % — держим', 'Желі жүктемесі 92 % — шыдап тұр')), 2.2, 2.9, 5.9, { size: 0.3 });
     const orbs = [0, 1, 2].map(() => { const o = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), new THREE.MeshBasicMaterial({ color: 0xFFE08A, toneMapped: false })); o.position.y = 0.9; return S.add(o, 0.9, 4.75, 0.9); });
     await Promise.all(orbs.map(async (o, i) => { await S.wait(i * 0.45); await S.path(o, [[0.9, 4.75], [3.55, 4.85], [3.6, 7.1]], 1.6); o.visible = false; }));
     const word = sphereText(S, 2.2, 5.9, 1.18, 0.965);
     sfx.play('power'); await S.run(dt => { U.uForce.value = Math.min(1, U.uForce.value + dt * 0.8); return U.uForce.value >= 1; });
+    const g2 = st.label(tr(L('Light on in every home with people', 'Свет горит там, где есть люди', 'Адам бар үйде жарық жанады')), 2.2, 2.3, 5.9, { size: 0.28, bg: 'rgba(95,191,138,0.95)', fg: '#fff' });
+    await S.wait(1.8); st.g.remove(g1); st.g.remove(g2);
     const wm = await word;
     const push = S.rig.flyTo({ target: [2.2 * K, 1.05, 5.9 * K], zoom: 0.2, az: S.rig.az, pol: 1.12 }, 1.8 / (S.speed || 1), true);
     await S.run(dt => { wm.opacity = Math.min(1, wm.opacity + dt * 0.9); return wm.opacity >= 1; }); await push;
-    st.label(tr(L('Light on in every home with people', 'Свет горит там, где есть люди', 'Адам бар үйде жарық жанады')), 2.2, 2.3, 5.9, { size: 0.28, bg: 'rgba(95,191,138,0.95)', fg: '#fff' });
-    await S.wait(2.6); S.__f0 = f0;
+    await S.wait(2.8); S.__f0 = f0;
   },
   // 9 · Bayterek assistant answers honestly
   async (S, st, tr) => {
@@ -160,8 +161,8 @@ export const SCENES = [
       [L('Give me my neighbour’s address', 'Дай адрес соседа', 'Көршімнің мекенжайын бер'), L('Sorry, I don’t share personal data.', 'Извините, личные данные не передаю.', 'Кешіріңіз, жеке деректерді бермеймін.')],
     ];
     for (const [q, a] of qa) {
-      const s1 = st.label(tr(q), 0, 5.6, -2.7, { size: 0.34 }); sfx.play('blip'); await S.wait(1.0);
-      const s2 = st.label(tr(a), 0, 5.1, -2.7, { size: 0.34, bg: 'rgba(79,152,163,0.96)', fg: '#fff' }); sfx.play('blip'); await S.wait(1.5);
+      const s1 = st.label(tr(q), 0, 3.55, -2.7, { size: 0.3 }); sfx.play('blip'); await S.wait(1.2);
+      const s2 = st.label(tr(a), 0, 3.0, -2.7, { size: 0.3, bg: 'rgba(79,152,163,0.96)', fg: '#fff' }); sfx.play('blip'); await S.wait(2.0);
       st.g.remove(s1); st.g.remove(s2);
     }
   },
