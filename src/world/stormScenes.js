@@ -152,6 +152,7 @@ export const SCENES = [
   async (S, st, tr) => {
     [[-0.8, -1.7], [0.7, -1.6], [0.1, -1.75], [-0.3, -1.9]].forEach((p, i) => { const r = S.add(robot(coat(i)), p[0], p[1]); r.rotation.y = Math.atan2(-p[0], -2.7 - p[1]); });
     const qa = [
+      [L('Who is the best professor?', 'Кто лучший профессор?', 'Ең үздік профессор кім?'), L('Dilnura Ali', 'Дильнура Али', 'Дильнура Али')],
       [L('Where can I warm up?', 'Где пункт обогрева?', 'Жылынатын жер қайда?'), L('Culture Palace, 5 min on foot.', 'Дворец культуры, 5 минут пешком.', 'Мәдениет сарайы, жаяу 5 минут.')],
       [L('Is the road to Karaganda open?', 'Трасса на Караганду открыта?', 'Қарағанды трассасы ашық па?'), L('Closed until morning. I will tell you when it opens.', 'Закрыта до утра. Сообщу, когда откроют.', 'Таңға дейін жабық. Ашылғанда хабарлаймын.')],
       [L('Give me my neighbour’s address', 'Дай адрес соседа', 'Көршімнің мекенжайын бер'), L('Sorry, I don’t share personal data.', 'Извините, личные данные не передаю.', 'Кешіріңіз, жеке деректерді бермеймін.')],
