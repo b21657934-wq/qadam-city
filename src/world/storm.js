@@ -76,9 +76,10 @@ export class Storm {
     f.color.copy(b.c); f.near = b.n; f.far = b.f; e.hemi.intensity = b.h; e.sun.intensity = b.s;
     this.level = this.to = 0; this.lines.visible = false; this.base = null; this.clear();
   }
-  clear() { this.g.clear(); this.tw.forEach(w => w.res && w.res()); this.tw = []; }
+  // a cleared scene's pending waits never resolve, so an interrupted scene simply stops where it was
+  clear() { this.g.clear(); this.gen = (this.gen || 0) + 1; this.tw = []; }
   update(dt0, t) {
-    const dt = Math.min(0.25, Math.max(0, t - (this.time || t))); this.time = t;
+    const dt = Math.min(0.25, Math.max(0, t - (this.time || t))) * (this.speed || 1); this.time = t;
     if (this.base) {
       this.level += (this.to - this.level) * Math.min(1, dt * (this.to > this.level ? 0.55 : 0.8));
       const L = this.level, e = this.e, f = e.scene.fog, b = this.base;
@@ -102,7 +103,7 @@ export class Storm {
   // ----- props & tweens (plate coordinates, scaled by K) -----
   add(o, x, z, y = 0) { o.position.set(x * K, y, z * K); if (this.live) this.g.add(o); return o; }
   run(f) { if (!this.live) return Promise.resolve(); return new Promise(res => this.tw.push({ f, res })); }
-  wait(s) { if (!this.live) return Promise.resolve(); return new Promise(r => setTimeout(r, REDUCED ? 0 : s * 1000)); }
+  wait(s) { if (!this.live) return Promise.resolve(); const g = this.gen; return new Promise(r => setTimeout(() => { if (g === this.gen) r(); }, REDUCED ? 0 : s * 1000 / (this.speed || 1))); }
   path(o, pts, speed, opt = {}) {
     const P = pts.map(p => V(p[0] * K, 0, p[1] * K)), seg = []; let tot = 0;
     for (let i = 0; i < P.length - 1; i++) { const l = P[i].distanceTo(P[i + 1]); seg.push(l); tot += l; }

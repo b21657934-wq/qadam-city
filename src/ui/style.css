@@ -442,6 +442,20 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webki
 .cine-top{position:absolute;left:16px;right:16px;top:calc(16px + var(--safe-t));display:flex;align-items:center;justify-content:space-between;pointer-events:auto}
 .cine-top .btn{height:40px;padding:0 14px}
 .cine-cap{position:absolute;left:50%;bottom:calc(24px + var(--safe-b));transform:translateX(-50%);width:min(560px,calc(100% - 32px));display:flex;gap:12px;align-items:center;padding:12px 16px;border-radius:var(--r3);pointer-events:auto}
+.cine-ctl{position:absolute;right:12px;top:calc(68px + var(--safe-t));width:min(212px,46vw);max-height:calc(100% - 180px - var(--safe-t) - var(--safe-b));overflow:auto;-webkit-overflow-scrolling:touch;padding:8px;border-radius:18px;pointer-events:auto;display:flex;flex-direction:column;gap:8px}
+.cine-ctl-h{display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 6px;font-weight:600;font-size:14px;color:var(--text);background:none;border:0}
+.cine-ctl-h .ic{width:18px;height:18px;transition:transform var(--t2) var(--ease);transform:rotate(90deg)}
+.cine-ctl[data-open="0"] .cine-ctl-h .ic{transform:rotate(-90deg)}
+.cine-ctl[data-open="0"] .cine-steps{display:none}
+.cine-spd{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.cine-spd button{height:32px;border-radius:10px;border:0;background:var(--surface-2,rgba(0,0,0,.06));color:var(--text);font-weight:600;font-size:13px}
+.cine-spd button.on{background:var(--accent);color:var(--accent-ink)}
+.cine-steps{display:flex;flex-direction:column;gap:2px}
+.cine-steps button{display:flex;align-items:center;gap:8px;min-height:32px;padding:3px 8px;border-radius:10px;border:0;background:none;color:var(--text);font-size:13px;text-align:left}
+.cine-steps button .n{flex:none;width:22px;height:22px;border-radius:11px;display:grid;place-items:center;background:var(--surface-2,rgba(0,0,0,.06));font-weight:700;font-size:12px}
+.cine-steps button .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cine-steps button.on{background:var(--accent-soft)}
+.cine-steps button.on .n{background:var(--accent);color:var(--accent-ink)}
 .cine-cap.in{animation:sheetIn var(--t3) var(--ease)}
 .cine-face{flex:none;width:48px;height:48px;border-radius:24px;overflow:hidden;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-text)}
 .cine-face .ic{width:24px;height:24px}

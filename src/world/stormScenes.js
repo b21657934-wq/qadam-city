@@ -143,7 +143,7 @@ export const SCENES = [
     const word = sphereText(S, 2.2, 5.9, 1.18, 0.965);
     sfx.play('power'); await S.run(dt => { U.uForce.value = Math.min(1, U.uForce.value + dt * 0.8); return U.uForce.value >= 1; });
     const wm = await word;
-    const push = S.rig.flyTo({ target: [2.2 * K, 1.05, 5.9 * K], zoom: 0.2, az: S.rig.az, pol: 1.12 }, 1.8, true);
+    const push = S.rig.flyTo({ target: [2.2 * K, 1.05, 5.9 * K], zoom: 0.2, az: S.rig.az, pol: 1.12 }, 1.8 / (S.speed || 1), true);
     await S.run(dt => { wm.opacity = Math.min(1, wm.opacity + dt * 0.9); return wm.opacity >= 1; }); await push;
     st.label(tr(L('Light on in every home with people', 'Свет горит там, где есть люди', 'Адам бар үйде жарық жанады')), 2.2, 2.3, 5.9, { size: 0.28, bg: 'rgba(95,191,138,0.95)', fg: '#fff' });
     await S.wait(2.6); S.__f0 = f0;

@@ -264,6 +264,7 @@ export class App {
       <div class="cine-cap glass" aria-live="polite"><div class="cine-face"></div><div class="grow"><div class="say-n" data-c-t></div><p data-c-x></p></div></div>`;
     document.body.appendChild(c);
     this.stormSkip = false; this.skipP = new Promise(r => { this.skipR = r; });
+    if (store.user() === 'qwerty') this.cineCtl(c);
     c.querySelector('[data-c-skip]').addEventListener('click', () => { this.stormSkip = true; this.skipR(); });
     const cv = c.querySelector('canvas'), x = cv.getContext('2d'), fl = [];
     for (let i = 0; i < 170; i++) fl.push([Math.random(), Math.random(), 0.4 + Math.random() * 0.9, Math.random()]);
@@ -288,6 +289,20 @@ export class App {
     };
     requestAnimationFrame(draw);
   }
+  // qwerty only: jump to any blizzard scene and change the playback speed
+  cineCtl(c) {
+    const SP = [1, 1.5, 2, 3], p = document.createElement('div'); p.className = 'cine-ctl glass'; p.dataset.open = innerWidth >= 700 ? '1' : '0';
+    p.innerHTML = `<button class="cine-ctl-h" data-c-tog><span>${esc(t('scenes'))}</span>${icon('arrow')}</button>
+      <div class="cine-spd" role="group" aria-label="${esc(t('speed'))}">${SP.map(v => `<button data-c-sp="${v}">${v}×</button>`).join('')}</div>
+      <div class="cine-steps">${D.map((d, k) => `<button data-c-go="${k}"><span class="n">${k + 1}</span><span class="tt">${esc(tr(d.title))}</span></button>`).join('')}</div>`;
+    c.appendChild(p);
+    const mark = () => p.querySelectorAll('[data-c-sp]').forEach(b => b.classList.toggle('on', +b.dataset.cSp === this.blizzard.speed));
+    p.querySelector('[data-c-tog]').addEventListener('click', () => { p.dataset.open = p.dataset.open === '1' ? '0' : '1'; });
+    p.querySelectorAll('[data-c-sp]').forEach(b => b.addEventListener('click', () => { this.stormSpeed = this.blizzard.speed = +b.dataset.cSp; mark(); sfx.play('tap'); }));
+    p.querySelectorAll('[data-c-go]').forEach(b => b.addEventListener('click', () => { if (!this.cutR) return; this.jump = +b.dataset.cGo; this.cutR(); sfx.play('tap'); }));
+    this.blizzard.speed = this.blizzard.speed || 1; mark();
+  }
+  cineStep(i) { const c = this.cineEl; if (c) c.querySelectorAll('[data-c-go]').forEach(b => b.classList.toggle('on', +b.dataset.cGo === i)); if (i < 0) this.cutR = null; }
   cine(i, title, text, n) {
     const c = this.cineEl; if (!c) return;
     c.querySelector('[data-c-n]').textContent = n || t('stormT');
@@ -298,7 +313,8 @@ export class App {
   async sceneTest(i) { const v = VIEWS[i]; this.stage.clear(); this.blizzard.clear(); this.blizzard.live = true; this.rig.autoOrbit = false; await this.rig.flyTo({ target: [v.x * K, 0.45, v.z * K], zoom: v.zoom * 1.05, az: v.az, pol: v.pol }, 0.05, true); return SCENES[i](this.blizzard, this.stage, tr); }
   cineClose() { if (this.cineEl) { this.cineEl.remove(); this.cineEl = null; } }
   async storm() {
-    const S = this.blizzard, st = this.stage, wait = ms => new Promise(r => setTimeout(r, ms));
+    const S = this.blizzard, st = this.stage, wait = ms => new Promise(r => setTimeout(r, ms / (S.speed || 1)));
+    S.speed = store.user() === 'qwerty' ? (this.stormSpeed || 1) : 1;
     this.busy = true; this.hideSheet(); this.rig.autoOrbit = false; this.hud.classList.add('hide');
     if (!store.get().night) this.setTheme(true);
     const f0 = U.uForce.value; S.live = true; st.clear();
@@ -311,13 +327,18 @@ export class App {
     await Promise.race([wait(1800), this.skipP]);
     S.begin(); this.snow.storm = true; this.fx.to = 1; this.city.traffic(false);
     await Promise.race([wait(3200), this.skipP]);
-    for (let i = 0; i < 10 && !skip(); i++) {
+    let i = 0;
+    while (i < 10 && !skip()) {
+      this.jump = null; this.cutP = new Promise(r => { this.cutR = r; }); this.cineStep(i);
+      const stop = [this.skipP, this.cutP];
       this.cine(i, `${tr(STORY[i].name)} · ${tr(D[i].title)}`, tr(STORY[i].storm), `${t('stormT')} · ${i + 1}/10`);
-      await Promise.race([fly(VIEWS[i], 1.5), this.skipP]); if (skip()) break;
-      await Promise.race([SCENES[i](S, gst, tr), this.skipP]);
-      await Promise.race([wait(500), this.skipP]);
+      await Promise.race([fly(VIEWS[i], 1.5 / S.speed), ...stop]); if (skip()) break;
+      if (this.jump == null) await Promise.race([SCENES[i](S, gst, tr), ...stop]);
+      if (this.jump == null) await Promise.race([wait(500), ...stop]);
       st.clear(); S.clear();
+      if (this.jump != null) { i = this.jump; U.uForce.value = i > 8 ? 1 : f0; } else i++;
     }
+    this.cineStep(-1);
     S.live = false; st.clear(); S.clear();
     S.calm(); this.snow.storm = false; this.fx.to = 0; U.uForce.value = f0;
     this.cine(0, t('stormDone'), t('stormMorning'), t('stormT'));
