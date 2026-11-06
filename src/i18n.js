@@ -162,7 +162,7 @@ export const S = {
   guest: { en: 'Continue as guest', ru: 'Войти как гость', kk: 'Қонақ ретінде кіру' },
   guestNote: { en: 'No sign-up · 5 keys · progress is saved for each name on this device', ru: 'Без регистрации · 5 ключей · прогресс сохраняется для каждого имени на этом устройстве', kk: 'Тіркелусіз · 5 кілт · әр есімнің прогресі осы құрылғыда сақталады' },
   guestNameLabel: { en: 'Guest — your name', ru: 'Гость — твоё имя', kk: 'Қонақ — есіміңіз' },
-  guestNamePh: { en: 'e.g. Aruzhan (optional)', ru: 'например, Аружан (необязательно)', kk: 'мысалы, Аружан (міндетті емес)' },
+  guestNamePh: { en: 'e.g. Dilnura Ali (optional)', ru: 'например, Дильнура Али (необязательно)', kk: 'мысалы, Дильнура Әли (міндетті емес)' },
   continueAs: { en: 'Continue', ru: 'Продолжить', kk: 'Жалғастыру' },
   loginErr: { en: 'Wrong nickname or password.', ru: 'Неверный ник или пароль.', kk: 'Лақап ат не құпиясөз қате.' },
   account: { en: 'Account', ru: 'Аккаунт', kk: 'Аккаунт' },
