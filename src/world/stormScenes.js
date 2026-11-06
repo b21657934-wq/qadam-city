@@ -9,6 +9,30 @@ const L = (en, ru, kk) => ({ en, ru, kk });
 const COATS = [0x4F98A3, 0xE8674A, 0x3D6FB0, 0x9C5B8A, 0x5FBF8A, 0xF08A3C, 0x8A6A4F, 0x22305A];
 const coat = i => COATS[i % COATS.length];
 
+// Lettering printed on the Nur Alem glass: a curved patch of the sphere turned toward the camera.
+async function sphereText(S, cx, cz, cy, r) {
+  try { await Promise.all([document.fonts.load('italic 700 150px Lora'), document.fonts.load('600 46px Inter')]); } catch (e) { /* fall back to system fonts */ }
+  const W = 1400, H = 640, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
+  c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.lineJoin = 'round';
+  // a soft deep-navy halo so white letters stay readable on bright blue glass
+  const ink = (txt, font, y, fill, stroke, sw, blur) => { c.font = font; c.save(); c.shadowColor = 'rgba(9,24,56,0.85)'; c.shadowBlur = blur; c.lineWidth = sw; c.strokeStyle = stroke; c.strokeText(txt, W / 2, y); c.restore(); c.fillStyle = fill; c.fillText(txt, W / 2, y); };
+  ink('Dilnura Ali', 'italic 700 236px Lora, Georgia, serif', 318, '#FFFFFF', 'rgba(14,36,78,0.92)', 20, 30);
+  // gold rule with a small diamond, like a signature flourish
+  c.save(); c.shadowColor = 'rgba(9,24,56,0.8)'; c.shadowBlur = 10; c.strokeStyle = '#F5B942'; c.lineWidth = 6; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(W / 2 - 420, 392); c.lineTo(W / 2 - 38, 392); c.moveTo(W / 2 + 38, 392); c.lineTo(W / 2 + 420, 392); c.stroke();
+  c.fillStyle = '#F5B942'; c.beginPath(); c.moveTo(W / 2, 370); c.lineTo(W / 2 + 22, 392); c.lineTo(W / 2, 414); c.lineTo(W / 2 - 22, 392); c.closePath(); c.fill(); c.restore();
+  c.letterSpacing = '16px';
+  ink('IS TEACHING HERE', '700 84px Inter, Arial, sans-serif', 520, '#FFE7B0', 'rgba(14,36,78,0.92)', 12, 20);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const pl = 1.9, tl = 0.87, tc = Math.PI / 2 - 0.1;
+  const geo = new THREE.SphereGeometry(r, 72, 36, Math.PI / 2 - pl / 2, pl, tc - tl / 2, tl);
+  const m = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false, side: THREE.FrontSide });
+  const patch = new THREE.Mesh(geo, m); patch.renderOrder = 3;
+  const g = new THREE.Group(); g.add(patch); S.add(g, cx, cz, cy);
+  const cam = S.e.camera.position; g.rotation.y = Math.atan2(cam.x - cx * K, cam.z - cz * K);
+  return m;
+}
+
 export const VIEWS = [
   { x: -6.3, z: -2.4, zoom: 0.33, az: -0.9, pol: 0.98 },
   { x: 1.2, z: -1.0, zoom: 0.36, az: -0.2, pol: 0.96 },
@@ -116,9 +140,13 @@ export const SCENES = [
     st.label(tr(L('Grid load 92% — holding', 'Нагрузка сети 92 % — держим', 'Желі жүктемесі 92 % — шыдап тұр')), 2.2, 2.9, 5.9, { size: 0.3 });
     const orbs = [0, 1, 2].map(() => { const o = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), new THREE.MeshBasicMaterial({ color: 0xFFE08A, toneMapped: false })); o.position.y = 0.9; return S.add(o, 0.9, 4.75, 0.9); });
     await Promise.all(orbs.map(async (o, i) => { await S.wait(i * 0.45); await S.path(o, [[0.9, 4.75], [3.55, 4.85], [3.6, 7.1]], 1.6); o.visible = false; }));
+    const word = sphereText(S, 2.2, 5.9, 1.18, 0.965);
     sfx.play('power'); await S.run(dt => { U.uForce.value = Math.min(1, U.uForce.value + dt * 0.8); return U.uForce.value >= 1; });
+    const wm = await word;
+    const push = S.rig.flyTo({ target: [2.2 * K, 1.05, 5.9 * K], zoom: 0.2, az: S.rig.az, pol: 1.12 }, 1.8, true);
+    await S.run(dt => { wm.opacity = Math.min(1, wm.opacity + dt * 0.9); return wm.opacity >= 1; }); await push;
     st.label(tr(L('Light on in every home with people', 'Свет горит там, где есть люди', 'Адам бар үйде жарық жанады')), 2.2, 2.3, 5.9, { size: 0.28, bg: 'rgba(95,191,138,0.95)', fg: '#fff' });
-    await S.wait(1.4); S.__f0 = f0;
+    await S.wait(2.6); S.__f0 = f0;
   },
   // 9 · Bayterek assistant answers honestly
   async (S, st, tr) => {
